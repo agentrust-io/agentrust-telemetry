@@ -7,8 +7,10 @@ Current `0.1.0-dev` limitations:
 - OTel span events, Logs, and basic metrics are implemented against caller-owned
   providers; collector/backend interoperability is not yet exercised.
 - No metrics projector or AGT adapter is implemented.
-- TRACE finalization is software-only, requires explicitly complete evidence and
-  trusted caller configuration, and cannot yet emit a tool transcript.
+- TRACE finalization is software-only and requires explicitly complete evidence
+  plus trusted caller configuration.
+- Action telemetry records resolved attempts only; it does not expose in-flight
+  lifecycle transitions.
 - Evidence memory mode is not durable. Callback mode defines acknowledgement and
   retry behavior but the adopter owns storage, idempotency, and recovery.
 - Propagation currently supports mutable string mappings; framework-specific HTTP,

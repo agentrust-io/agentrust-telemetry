@@ -17,6 +17,7 @@ SCHEMA_DIR = ROOT / "spec" / "schema"
 FIXTURE_DIR = ROOT / "conformance" / "fixtures"
 
 EVENT_SCHEMAS = {
+    "action.executed": "action.schema.json",
     "policy.decision": "policy-decision.schema.json",
     "usage.recorded": "usage.schema.json",
     "data_flow.observed": "data-flow.schema.json",

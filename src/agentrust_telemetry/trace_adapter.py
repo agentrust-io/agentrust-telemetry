@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -43,6 +45,7 @@ def finalize_trace(
 
     bundle_hash, enforcement_mode = _policy_binding(events)
     data_class = _highest_data_class(events, config)
+    tool_transcript = _tool_transcript(snapshot)
     record: dict[str, Any] = {
         "eat_profile": trace.TRACE_PROFILE_V0_2,
         "iat": max(event["time_unix_nano"] for event in events) // 1_000_000_000,
@@ -61,6 +64,7 @@ def finalize_trace(
             "enforcement_mode": enforcement_mode,
         },
         "data_class": data_class,
+        **({"tool_transcript": tool_transcript} if tool_transcript else {}),
         "origin": {
             "kind": config.origin_kind,
             "producer": config.origin_producer,
@@ -186,6 +190,27 @@ def _appraisal(events: list[dict[str, Any]]) -> str:
     if outcomes or approval_types:
         return "affirming"
     return "none"
+
+
+def _tool_transcript(snapshot: EvidenceSnapshot) -> dict[str, Any] | None:
+    actions = [
+        {"sequence": entry.sequence, "event": entry.event}
+        for entry in snapshot.entries
+        if entry.event["event_type"] == "action.executed"
+    ]
+    if not actions:
+        return None
+    canonical = json.dumps(
+        actions,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+    return {
+        "hash": "sha256:" + hashlib.sha256(canonical).hexdigest(),
+        "call_count": len(actions),
+    }
 
 
 def _trace_package() -> Any:

@@ -25,7 +25,7 @@ policy / approval / usage / data hooks
 
 ### Normative contract
 
-JSON Schema 2020-12 files in `spec/schema` define the five event families. Closed schemas reject unknown top-level fields. A shared envelope supplies event, run, workflow, agent, task, producer, trace, and span correlation.
+JSON Schema 2020-12 files in `spec/schema` define the six event families. Closed schemas reject unknown top-level fields. A shared envelope supplies event, run, workflow, agent, task, producer, trace, and span correlation.
 
 ### Conformance suite
 

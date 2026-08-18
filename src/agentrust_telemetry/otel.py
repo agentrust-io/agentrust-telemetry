@@ -51,6 +51,12 @@ class OTelMetricEmitter:
         self._approval_count = meter.create_counter(
             "agentrust.approval.events", unit="{event}", description="Approval lifecycle events"
         )
+        self._action_count = meter.create_counter(
+            "agentrust.action.executions", unit="{execution}", description="Resolved action attempts"
+        )
+        self._action_duration = meter.create_histogram(
+            "agentrust.action.duration", unit="s", description="Resolved action duration"
+        )
         self._data_flow_count = meter.create_counter(
             "agentrust.data_flow.events", unit="{event}", description="Classified data-flow events"
         )
@@ -79,6 +85,14 @@ class OTelMetricEmitter:
                     "agentrust.approval.actor_type": event["actor_type"],
                 },
             )
+            return True
+        if event_type == "action.executed":
+            attributes = {
+                "agentrust.action.kind": event["action_kind"],
+                "agentrust.action.outcome": event["outcome"],
+            }
+            self._action_count.add(1, attributes)
+            self._action_duration.record(event["duration_ns"] / 1_000_000_000, attributes)
             return True
         if event_type == "data_flow.observed":
             value = event["classification"]["value"]
