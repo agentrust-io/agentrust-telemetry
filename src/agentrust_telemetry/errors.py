@@ -20,3 +20,7 @@ class EvidenceError(RuntimeError):
 
 class EvidencePersistenceError(EvidenceError):
     """The configured durable evidence callback did not acknowledge an entry."""
+
+
+class TraceFinalizationError(RuntimeError):
+    """A TRACE record cannot be produced without overstating available evidence."""

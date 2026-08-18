@@ -29,8 +29,10 @@ Security = "https://github.com/agentrust-io/agentrust-telemetry/security/policy"
 
 [project.optional-dependencies]
 otel = ["opentelemetry-api>=1.30,<2"]
+trace = ["agentrust-trace>=0.9,<1; python_version >= '3.11'"]
 test = [
   "opentelemetry-sdk>=1.30,<2",
+  "agentrust-trace>=0.9,<1; python_version >= '3.11'",
   "tomli>=2,<3; python_version < '3.11'",
 ]
 
