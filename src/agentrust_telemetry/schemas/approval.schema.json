@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentrust.io/telemetry/v0.1/schema/approval.schema.json",
+  "allOf": [
+    {"$ref": "envelope.schema.json"},
+    {
+      "type": "object",
+      "required": ["agent_id", "event_type", "approval_id", "action_digest", "actor_type", "requested_at_unix_nano"],
+      "properties": {
+        "event_type": {"enum": ["approval.requested", "approval.approved", "approval.rejected", "approval.expired", "approval.cancelled", "approval.execution_started", "approval.execution_completed", "approval.execution_failed"]},
+        "approval_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "action_digest": {"$ref": "common.schema.json#/$defs/digest"},
+        "actor_type": {"enum": ["human", "service", "policy", "system"]},
+        "actor_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "requested_at_unix_nano": {"$ref": "common.schema.json#/$defs/time_unix_nano"},
+        "expires_at_unix_nano": {"$ref": "common.schema.json#/$defs/time_unix_nano"},
+        "reason_codes": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/nonempty"}, "uniqueItems": true, "maxItems": 32}
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

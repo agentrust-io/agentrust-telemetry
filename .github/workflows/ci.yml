@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[test]" build
+      - run: python tools/check_versions.py
+      - run: python tools/check_schemas.py
+      - run: python conformance/runner/validate.py
+      - run: python -m unittest discover -s tests -v
+      - run: python -m compileall -q src
+      - if: matrix.python-version == '3.12'
+        run: python -m build
+      - if: matrix.python-version == '3.12'
+        run: |
+          python tools/smoke_wheel.py dist/*.whl
+          python tools/smoke_wheel.py dist/*.tar.gz

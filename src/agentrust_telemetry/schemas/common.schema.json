@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentrust.io/telemetry/v0.1/schema/common.schema.json",
+  "$defs": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "time_unix_nano": {"type": "integer", "minimum": 0},
+    "nonempty": {"type": "string", "minLength": 1, "maxLength": 512},
+    "trace_id": {"type": "string", "pattern": "^[0-9a-f]{32}$", "not": {"const": "00000000000000000000000000000000"}},
+    "span_id": {"type": "string", "pattern": "^[0-9a-f]{16}$", "not": {"const": "0000000000000000"}},
+    "digest": {
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {"enum": ["sha256", "sha384", "sha512"]},
+        "value": {"type": "string", "pattern": "^[0-9a-f]+$", "minLength": 64, "maxLength": 128}
+      },
+      "additionalProperties": false
+    },
+    "producer": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"$ref": "#/$defs/nonempty"},
+        "version": {"$ref": "#/$defs/nonempty"},
+        "instance_id": {"$ref": "#/$defs/nonempty"}
+      },
+      "additionalProperties": false
+    },
+    "attributes": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[a-z][a-z0-9_.-]{0,127}$"},
+      "additionalProperties": {"type": ["string", "number", "integer", "boolean"]},
+      "maxProperties": 32
+    }
+  }
+}

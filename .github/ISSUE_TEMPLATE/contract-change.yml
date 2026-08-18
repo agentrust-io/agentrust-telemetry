@@ -1,0 +1,36 @@
+name: Contract change
+description: Propose a telemetry schema or semantic change
+title: "contract: "
+labels: ["contract"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Instrumentable problem
+      description: Explain what runtime fact can be observed and why existing fields cannot represent it.
+    validations:
+      required: true
+  - type: textarea
+    id: signal
+    attributes:
+      label: Proposed signal and fields
+    validations:
+      required: true
+  - type: textarea
+    id: capture
+    attributes:
+      label: Capture point and privacy impact
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: OpenTelemetry and compatibility mapping
+    validations:
+      required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Reference scenario and negative fixture
+    validations:
+      required: true

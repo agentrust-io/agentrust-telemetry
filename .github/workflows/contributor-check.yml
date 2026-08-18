@@ -1,0 +1,38 @@
+name: Contributor reputation check
+
+on:
+  pull_request_target:
+    types: [opened]
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      username:
+        description: GitHub username to check
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: |
+      github.actor != 'dependabot[bot]' &&
+      github.actor != 'github-actions[bot]' &&
+      github.actor != 'imran-siddique'
+    steps:
+      - name: Checkout reviewed organization action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: agentrust-io/.github
+          ref: 0fe4520ee71a743fcd33f409fe366ee3e1da6f86 # reviewed main, 2026-08-01
+          persist-credentials: false
+          sparse-checkout: |
+            scripts
+            .github/actions/contributor-check
+      - uses: ./.github/actions/contributor-check
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

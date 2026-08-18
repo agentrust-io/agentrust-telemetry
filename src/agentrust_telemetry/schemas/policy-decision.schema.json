@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentrust.io/telemetry/v0.1/schema/policy-decision.schema.json",
+  "allOf": [
+    {"$ref": "envelope.schema.json"},
+    {
+      "type": "object",
+      "required": ["agent_id", "event_type", "decision", "policy", "action_type", "resource_type", "enforcement_mode", "evaluation_duration_ns"],
+      "properties": {
+        "event_type": {"const": "policy.decision"},
+        "decision": {"enum": ["allow", "deny", "challenge", "not_applicable", "error"]},
+        "policy": {
+          "type": "object",
+          "required": ["engine", "engine_version"],
+          "properties": {
+            "engine": {"$ref": "common.schema.json#/$defs/nonempty"},
+            "engine_version": {"$ref": "common.schema.json#/$defs/nonempty"},
+            "policy_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+            "bundle_digest": {"$ref": "common.schema.json#/$defs/digest"},
+            "input_digest": {"$ref": "common.schema.json#/$defs/digest"}
+          },
+          "additionalProperties": false
+        },
+        "action_type": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "resource_type": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "enforcement_mode": {"enum": ["enforce", "monitor", "disabled"]},
+        "evaluation_duration_ns": {"type": "integer", "minimum": 0},
+        "reason_codes": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/nonempty"}, "uniqueItems": true, "maxItems": 32}
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

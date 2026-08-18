@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentrust.io/telemetry/v0.1/schema/evidence.schema.json",
+  "allOf": [
+    {"$ref": "envelope.schema.json"},
+    {
+      "type": "object",
+      "required": ["event_type", "sequence", "capture_profile", "completeness"],
+      "properties": {
+        "event_type": {"enum": ["evidence.run_opened", "evidence.checkpointed", "evidence.run_closed", "evidence.trace_finalized", "evidence.finalization_failed"]},
+        "sequence": {"type": "integer", "minimum": 0},
+        "capture_profile": {"enum": ["metadata_only", "digests", "content_opt_in"]},
+        "completeness": {"enum": ["complete", "incomplete", "unknown"]},
+        "chain_digest": {"$ref": "common.schema.json#/$defs/digest"},
+        "failure_code": {"$ref": "common.schema.json#/$defs/nonempty"}
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

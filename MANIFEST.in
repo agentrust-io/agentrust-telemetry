@@ -1,0 +1,18 @@
+include CHANGELOG.md
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.md
+include GOVERNANCE.md
+include LIMITATIONS.md
+include MAINTAINERS.md
+include NOTICE
+include PRIVACY.md
+include REPOSITORY-SETUP.md
+include ROADMAP.md
+include SECURITY.md
+include SUPPORT.md
+include VERSIONING.md
+recursive-include conformance *.json *.py *.txt
+recursive-include docs *.md
+recursive-include examples *.py
+recursive-include spec VERSION *.json
+recursive-include tools *.py

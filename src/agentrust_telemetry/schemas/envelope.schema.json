@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentrust.io/telemetry/v0.1/schema/envelope.schema.json",
+  "type": "object",
+  "required": ["spec_version", "event_id", "event_type", "time_unix_nano", "run_id", "producer"],
+  "properties": {
+    "spec_version": {"const": "0.1.0-dev"},
+    "event_id": {"$ref": "common.schema.json#/$defs/event_id"},
+    "event_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$", "maxLength": 128},
+    "time_unix_nano": {"$ref": "common.schema.json#/$defs/time_unix_nano"},
+    "run_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+    "workflow_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+    "agent_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+    "parent_agent_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+    "task_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+    "trace_id": {"$ref": "common.schema.json#/$defs/trace_id"},
+    "span_id": {"$ref": "common.schema.json#/$defs/span_id"},
+    "producer": {"$ref": "common.schema.json#/$defs/producer"},
+    "attributes": {"$ref": "common.schema.json#/$defs/attributes"}
+  }
+}
