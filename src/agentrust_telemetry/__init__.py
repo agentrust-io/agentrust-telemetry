@@ -1,6 +1,12 @@
 """AgentTrust governance telemetry reference SDK."""
 
-from .adapters import EventFactory, cedar_policy_decision, opa_decision_log
+from .adapters import (
+    AgtGovernanceEventSink,
+    EventFactory,
+    agt_policy_decision,
+    cedar_policy_decision,
+    opa_decision_log,
+)
 from .client import EmitResult, TelemetryClient
 from .context import ContextIds, active_context_ids
 from .errors import (
@@ -21,6 +27,7 @@ from .validation import SchemaValidator
 __all__ = [
     "ContextIds",
     "ContextMismatchError",
+    "AgtGovernanceEventSink",
     "EmitResult",
     "EventValidationError",
     "EventFactory",
@@ -39,6 +46,7 @@ __all__ = [
     "TraceConfiguration",
     "TraceFinalizationError",
     "active_context_ids",
+    "agt_policy_decision",
     "cedar_policy_decision",
     "extract_context",
     "inject_context",
