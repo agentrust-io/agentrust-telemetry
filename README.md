@@ -96,6 +96,7 @@ python examples/manual_governance.py
 - [Architecture](docs/architecture.md)
 - [OpenTelemetry projection](docs/otel-projection.md)
 - [Action execution events](docs/action-events.md)
+- [Event factories and policy adapters](docs/adapters.md)
 - [Evidence chain profile](docs/evidence-chain.md)
 - [TRACE finalization](docs/trace-finalization.md)
 - [Privacy](PRIVACY.md)
