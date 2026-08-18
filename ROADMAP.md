@@ -12,7 +12,7 @@
 
 - Concrete OTel Logs and metrics projectors.
 - Additional W3C propagation carrier adapters beyond mutable string mappings.
-- Durable evidence accumulator and official TRACE adapter.
+- Official TRACE adapter over sealed evidence snapshots.
 - AGT, OPA, Cedar, and generic approval adapters.
 - TypeScript SDK and mixed-language conformance.
 

@@ -94,6 +94,7 @@ python examples/manual_governance.py
 
 - [Architecture](docs/architecture.md)
 - [OpenTelemetry projection](docs/otel-projection.md)
+- [Evidence chain profile](docs/evidence-chain.md)
 - [Privacy](PRIVACY.md)
 - [Limitations](LIMITATIONS.md)
 - [Roadmap](ROADMAP.md)

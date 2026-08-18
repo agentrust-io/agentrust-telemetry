@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Callable, Protocol
 
@@ -20,6 +21,10 @@ class LogEmitter(Protocol):
     def emit(self, record: dict[str, Any]) -> None: ...
 
 
+class EvidenceSink(Protocol):
+    def append(self, event: dict[str, Any]) -> Any: ...
+
+
 @dataclass(frozen=True)
 class EmitResult:
     accepted: bool
@@ -27,6 +32,7 @@ class EmitResult:
     log_emitted: bool
     context: ContextIds | None
     projection_errors: tuple[str, ...] = ()
+    evidence_persisted: bool = False
 
 
 class TelemetryClient:
@@ -36,13 +42,20 @@ class TelemetryClient:
         *,
         span_resolver: Callable[[], SpanLike | None] | None = None,
         log_emitter: LogEmitter | None = None,
+        evidence_sink: EvidenceSink | None = None,
     ):
         self._validator = validator
         self._span_resolver = span_resolver
         self._log_emitter = log_emitter
+        self._evidence_sink = evidence_sink
 
     def emit(self, event: dict[str, Any]) -> EmitResult:
         self._validator.validate(event)
+        evidence_persisted = False
+        if self._evidence_sink is not None:
+            # Evidence is accepted before any best-effort operational projection.
+            self._evidence_sink.append(deepcopy(event))
+            evidence_persisted = True
         resolver = self._span_resolver or current_span
         span = resolver()
         context = active_context_ids(lambda: span)
@@ -73,4 +86,11 @@ class TelemetryClient:
             except Exception as exc:  # exporter implementations are external
                 errors.append(f"log projection failed: {type(exc).__name__}: {exc}")
 
-        return EmitResult(True, span_emitted, log_emitted, context, tuple(errors))
+        return EmitResult(
+            True,
+            span_emitted,
+            log_emitted,
+            context,
+            tuple(errors),
+            evidence_persisted,
+        )
