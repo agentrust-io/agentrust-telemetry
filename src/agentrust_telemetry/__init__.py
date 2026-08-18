@@ -1,5 +1,6 @@
 """AgentTrust governance telemetry reference SDK."""
 
+from .adapters import EventFactory, cedar_policy_decision, opa_decision_log
 from .client import EmitResult, TelemetryClient
 from .context import ContextIds, active_context_ids
 from .errors import (
@@ -22,6 +23,7 @@ __all__ = [
     "ContextMismatchError",
     "EmitResult",
     "EventValidationError",
+    "EventFactory",
     "EvidenceAccumulator",
     "EvidenceEntry",
     "EvidenceError",
@@ -37,8 +39,10 @@ __all__ = [
     "TraceConfiguration",
     "TraceFinalizationError",
     "active_context_ids",
+    "cedar_policy_decision",
     "extract_context",
     "inject_context",
+    "opa_decision_log",
     "finalize_trace",
 ]
 
