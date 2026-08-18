@@ -11,7 +11,7 @@
 ## Next
 
 - Concrete OTel Logs and metrics projectors.
-- W3C propagation helpers with synchronous-parent and asynchronous-link tests.
+- Additional W3C propagation carrier adapters beyond mutable string mappings.
 - Durable evidence accumulator and official TRACE adapter.
 - AGT, OPA, Cedar, and generic approval adapters.
 - TypeScript SDK and mixed-language conformance.
