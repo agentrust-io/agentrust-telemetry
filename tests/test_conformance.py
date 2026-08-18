@@ -47,6 +47,15 @@ class ConformanceTests(unittest.TestCase):
         record["trace_id"] = record["trace_id"].upper()
         self.assertTrue(validate.validate_record(record))
 
+    def test_action_payload_field_is_rejected_by_schema_and_privacy_gate(self):
+        record = json.loads(
+            (ROOT / "conformance" / "fixtures" / "valid" / "action.json").read_text()
+        )
+        record["tool_arguments"] = {"path": "sensitive.py"}
+        errors = validate.validate_record(record)
+        self.assertTrue(any("unevaluated" in error.lower() for error in errors))
+        self.assertTrue(any("tool_arguments" in error and "privacy" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

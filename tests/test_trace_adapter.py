@@ -66,6 +66,24 @@ class TraceAdapterTests(unittest.TestCase):
         self.assertEqual(record["appraisal"]["status"], "contraindicated")
         self.assertNotIn("tool_transcript", record)
 
+    def test_action_events_create_truthful_tool_transcript(self):
+        action = fixture("action.json")
+        snapshot = self.snapshot(extra_events=(action,))
+        record = finalize_trace(snapshot, self.config, signing_key=self.key)
+        self.assertEqual(record["tool_transcript"]["call_count"], 1)
+        self.assertRegex(record["tool_transcript"]["hash"], r"^sha256:[0-9a-f]{64}$")
+
+        changed = fixture("action.json")
+        changed["outcome"] = "error"
+        changed["error_type"] = "remote_error"
+        changed_record = finalize_trace(
+            self.snapshot(extra_events=(changed,)), self.config, signing_key=self.key
+        )
+        self.assertNotEqual(
+            record["tool_transcript"]["hash"],
+            changed_record["tool_transcript"]["hash"],
+        )
+
     def test_refuses_unsealed_or_incomplete_evidence(self):
         accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
         accumulator.append(fixture("policy-decision.json"))

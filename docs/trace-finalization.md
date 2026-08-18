@@ -15,8 +15,10 @@ Finalization fails when evidence is open, incomplete, empty, inconsistently boun
 to policy, missing classified data flows, or contains an unranked classification.
 It emits `runtime.platform: software-only`; it cannot manufacture attestation.
 
-No `tool_transcript` is emitted yet because the telemetry contract has no
-dedicated tool-call event. Governance-event count is not tool-call count.
+When `action.executed` events are present, `tool_transcript.hash` covers their
+normalized bytes and evidence sequence in acceptance order, and `call_count`
+equals the number of those action events. Other governance events are excluded.
+When no action evidence is present, the optional transcript remains absent.
 
 The signed record remains subject to TRACE's documented trust-anchor, freshness,
 revocation, transparency, and software-only limitations.

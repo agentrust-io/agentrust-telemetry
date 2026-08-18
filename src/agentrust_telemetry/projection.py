@@ -23,6 +23,8 @@ DIRECT_ATTRIBUTES = {
     "policy_decision": "agentrust.data_flow.policy_decision",
     "capture_profile": "agentrust.evidence.capture_profile",
     "completeness": "agentrust.evidence.completeness",
+    "action_kind": "agentrust.action.kind",
+    "outcome": "agentrust.action.outcome",
 }
 
 

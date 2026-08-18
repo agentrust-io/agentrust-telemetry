@@ -1,0 +1,16 @@
+{
+  "spec_version": "0.1.0-dev",
+  "event_id": "018f0f7d-7a13-7cc2-8000-000000000096",
+  "event_type": "action.executed",
+  "time_unix_nano": 1787079650000000000,
+  "run_id": "run-governed-sdlc-001",
+  "agent_id": "spiffe://example.test/agent/coder",
+  "producer": {"name": "invalid-action-adapter", "version": "0.1.0"},
+  "action_id": "tool-call-missing-binding",
+  "action_kind": "tool",
+  "action_name": "filesystem.write",
+  "operation": "write",
+  "outcome": "success",
+  "duration_ns": 1000
+}
+

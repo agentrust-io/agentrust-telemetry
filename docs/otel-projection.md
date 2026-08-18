@@ -28,6 +28,8 @@ When a recording span is active, the SDK calls `add_event` with:
 | `policy_decision` | `agentrust.data_flow.policy_decision` |
 | `capture_profile` | `agentrust.evidence.capture_profile` |
 | `completeness` | `agentrust.evidence.completeness` |
+| `action_kind` | `agentrust.action.kind` |
+| `outcome` | `agentrust.action.outcome` |
 
 Nested normalized objects are projected only through explicit mappings. They are never serialized wholesale into span attributes. Raw content fields are prohibited before projection.
 
@@ -53,6 +55,7 @@ caller-owned Logger and never installs a provider or exporter.
 
 - `agentrust.policy.decisions` and `agentrust.policy.evaluation.duration`;
 - `agentrust.approval.events`;
+- `agentrust.action.executions` and `agentrust.action.duration`;
 - `agentrust.data_flow.events`;
 - `agentrust.usage.tokens` and `agentrust.usage.cost`.
 

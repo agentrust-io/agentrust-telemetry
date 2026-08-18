@@ -1,0 +1,28 @@
+{
+  "spec_version": "0.1.0-dev",
+  "event_id": "018f0f7d-7a13-7cc2-8000-000000000006",
+  "event_type": "action.executed",
+  "time_unix_nano": 1787079650000000000,
+  "run_id": "run-governed-sdlc-001",
+  "workflow_id": "workflow-build-feature",
+  "agent_id": "spiffe://example.test/agent/coder",
+  "producer": {"name": "example-action-adapter", "version": "0.1.0"},
+  "action_id": "tool-call-001",
+  "action_kind": "mcp",
+  "action_name": "github.create_pull_request",
+  "operation": "create",
+  "outcome": "success",
+  "duration_ns": 42000000,
+  "action_digest": {
+    "algorithm": "sha256",
+    "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "result_digest": {
+    "algorithm": "sha256",
+    "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+  },
+  "target": {"kind": "git.repository", "id": "example/repository"},
+  "policy_event_id": "018f0f7d-7a13-7cc2-8000-000000000001",
+  "approval_id": "approval-001"
+}
+

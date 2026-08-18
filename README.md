@@ -20,6 +20,7 @@ The application keeps its collector, backend, policy engine, workflow framework,
 | Approval lifecycle | Requested through terminal decision and execution outcome, bound to an action digest |
 | Usage | Per-call/run token and cost facts with explicit cost provenance |
 | Data flow | Classified source-to-destination metadata without payload capture |
+| Action execution | Resolved tool, MCP, A2A, file, HTTP, and database attempts |
 | Evidence lifecycle | Run checkpoints, completeness, and optional TRACE finalization status |
 
 ## Current contents
@@ -94,6 +95,7 @@ python examples/manual_governance.py
 
 - [Architecture](docs/architecture.md)
 - [OpenTelemetry projection](docs/otel-projection.md)
+- [Action execution events](docs/action-events.md)
 - [Evidence chain profile](docs/evidence-chain.md)
 - [TRACE finalization](docs/trace-finalization.md)
 - [Privacy](PRIVACY.md)

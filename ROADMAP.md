@@ -12,7 +12,7 @@
 
 - Additional metric views and collector interoperability fixtures.
 - Additional W3C propagation carrier adapters beyond mutable string mappings.
-- Dedicated tool/action events and TRACE tool-transcript mapping.
+- Action lifecycle expansion if adopters need in-flight attempt telemetry.
 - AGT, OPA, Cedar, and generic approval adapters.
 - TypeScript SDK and mixed-language conformance.
 

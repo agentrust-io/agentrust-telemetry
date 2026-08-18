@@ -143,6 +143,22 @@ class OTelProjectorTests(unittest.TestCase):
                 Meter(), classification_values=frozenset(f"class-{i}" for i in range(65))
             )
 
+    def test_action_metrics_exclude_action_and_agent_identifiers(self):
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import InMemoryMetricReader
+
+        reader = InMemoryMetricReader()
+        meter = MeterProvider(metric_readers=[reader]).get_meter("agentrust-action-test")
+        emitter = OTelMetricEmitter(meter)
+        self.assertTrue(emitter.emit(fixture("action.json")))
+        metrics = reader.get_metrics_data().resource_metrics[0].scope_metrics[0].metrics
+        for metric in metrics:
+            for point in metric.data.data_points:
+                self.assertEqual(
+                    set(point.attributes),
+                    {"agentrust.action.kind", "agentrust.action.outcome"},
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
