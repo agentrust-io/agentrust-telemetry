@@ -10,7 +10,7 @@
 
 ## Next
 
-- Concrete OTel Logs and metrics projectors.
+- Additional metric views and collector interoperability fixtures.
 - Additional W3C propagation carrier adapters beyond mutable string mappings.
 - Dedicated tool/action events and TRACE tool-transcript mapping.
 - AGT, OPA, Cedar, and generic approval adapters.

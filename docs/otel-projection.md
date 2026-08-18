@@ -42,7 +42,24 @@ Every accepted event may also be sent to a caller-owned log emitter. The record 
 - the validated normalized event as `body`;
 - active `trace_id` and `span_id` when available.
 
-The SDK does not install a logger provider or exporter. Adapters may translate this projection to an OTel log record without changing the normalized body.
+`OTelLogEmitter` translates this projection to an OTel Event using `event_name`,
+the normalized event body, the event timestamp, and allowlisted attributes. The
+active OTel context supplies trace correlation. The adapter requires a
+caller-owned Logger and never installs a provider or exporter.
+
+## Metrics
+
+`OTelMetricEmitter` accepts a caller-owned Meter and records:
+
+- `agentrust.policy.decisions` and `agentrust.policy.evaluation.duration`;
+- `agentrust.approval.events`;
+- `agentrust.data_flow.events`;
+- `agentrust.usage.tokens` and `agentrust.usage.cost`.
+
+Metric dimensions are intentionally bounded. Run, workflow, task, event, and
+agent identifiers never become metric attributes; query the structured usage
+events for per-agent or per-workflow totals. Classification values must be
+explicitly allowlisted or they collapse to `_other`.
 
 ## No active span
 
@@ -54,4 +71,5 @@ An event remains valid without a span. It may be emitted as a structured log usi
 - Supplied context disagrees with active context: reject.
 - Span exporter failure during `add_event`: report projection failure and do not claim emission.
 - Log emitter failure: report projection failure independently.
+- Metric emitter failure: report projection failure independently.
 - One projection failure does not rewrite or mutate the normalized event.

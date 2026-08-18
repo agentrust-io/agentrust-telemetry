@@ -25,6 +25,10 @@ class EvidenceSink(Protocol):
     def append(self, event: dict[str, Any]) -> Any: ...
 
 
+class MetricEmitter(Protocol):
+    def emit(self, event: dict[str, Any]) -> bool: ...
+
+
 @dataclass(frozen=True)
 class EmitResult:
     accepted: bool
@@ -33,6 +37,7 @@ class EmitResult:
     context: ContextIds | None
     projection_errors: tuple[str, ...] = ()
     evidence_persisted: bool = False
+    metrics_emitted: bool = False
 
 
 class TelemetryClient:
@@ -43,19 +48,16 @@ class TelemetryClient:
         span_resolver: Callable[[], SpanLike | None] | None = None,
         log_emitter: LogEmitter | None = None,
         evidence_sink: EvidenceSink | None = None,
+        metric_emitter: MetricEmitter | None = None,
     ):
         self._validator = validator
         self._span_resolver = span_resolver
         self._log_emitter = log_emitter
         self._evidence_sink = evidence_sink
+        self._metric_emitter = metric_emitter
 
     def emit(self, event: dict[str, Any]) -> EmitResult:
         self._validator.validate(event)
-        evidence_persisted = False
-        if self._evidence_sink is not None:
-            # Evidence is accepted before any best-effort operational projection.
-            self._evidence_sink.append(deepcopy(event))
-            evidence_persisted = True
         resolver = self._span_resolver or current_span
         span = resolver()
         context = active_context_ids(lambda: span)
@@ -64,6 +66,13 @@ class TelemetryClient:
                 raise ContextMismatchError("event trace_id disagrees with active span")
             if event.get("span_id") not in (None, context.span_id):
                 raise ContextMismatchError("event span_id disagrees with active span")
+
+        evidence_persisted = False
+        if self._evidence_sink is not None:
+            # Evidence is accepted after correlation validation and before any
+            # best-effort operational projection.
+            self._evidence_sink.append(deepcopy(event))
+            evidence_persisted = True
 
         errors: list[str] = []
         span_emitted = False
@@ -86,6 +95,13 @@ class TelemetryClient:
             except Exception as exc:  # exporter implementations are external
                 errors.append(f"log projection failed: {type(exc).__name__}: {exc}")
 
+        metrics_emitted = False
+        if self._metric_emitter is not None:
+            try:
+                metrics_emitted = self._metric_emitter.emit(deepcopy(event))
+            except Exception as exc:
+                errors.append(f"metric projection failed: {type(exc).__name__}: {exc}")
+
         return EmitResult(
             True,
             span_emitted,
@@ -93,4 +109,5 @@ class TelemetryClient:
             context,
             tuple(errors),
             evidence_persisted,
+            metrics_emitted,
         )
