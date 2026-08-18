@@ -56,6 +56,26 @@ result = client.emit(normalized_event)
 
 The SDK uses the caller's current OpenTelemetry span when `opentelemetry-api` is installed. It never installs a provider or exporter. A caller may additionally supply a structured-log emitter.
 
+For synchronous cross-process agent calls, propagate the caller's W3C context and
+durable AgenTrust identifiers, then use the extracted context as the receiving
+span's remote parent:
+
+```python
+from agentrust_telemetry import extract_context, inject_context
+
+carrier = {}
+inject_context(carrier, run_id="run-123", agent_id="planner")
+
+remote = extract_context(carrier)
+with tracer.start_as_current_span("worker", context=remote.otel_context):
+    event.update(remote.event_fields(agent_id="worker"))
+```
+
+For asynchronous queue handoffs, start a new trace with
+`links=[remote.link()]`. This preserves causality without representing queued
+work as a synchronous child span. Propagated metadata is untrusted input and
+does not establish agent identity or authorization.
+
 Run the synthetic example:
 
 ```shell

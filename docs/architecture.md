@@ -45,10 +45,13 @@ A caller-owned structured-log emitter may receive a defensive deep copy of the v
 - `trace_id` and `span_id` are optional lowercase W3C identifiers.
 - When an active span exists, supplied IDs must match it.
 - Without an active span, the SDK never fabricates context; logs remain correlated by `run_id`.
-- Synchronous cross-process work will use remote-parent continuation.
-- Asynchronous handoff/fan-in will use OTel span links and explicit agent delegation metadata.
-
-The propagation helpers in the last two points are designed but not implemented in this revision.
+- Synchronous cross-process work uses `extract_context(...).otel_context` as the
+  remote parent when starting the receiving span.
+- Asynchronous handoff/fan-in uses `extract_context(...).link()` and starts a new
+  root span, preserving causal correlation without asserting synchronous parentage.
+- `x-agentrust-run-id`, `x-agentrust-workflow-id`, and `x-agentrust-agent-id`
+  preserve durable run and agent-delegation metadata alongside standard W3C
+  `traceparent`/`tracestate`. Extracted metadata is untrusted input.
 
 ## Delivery semantics
 
