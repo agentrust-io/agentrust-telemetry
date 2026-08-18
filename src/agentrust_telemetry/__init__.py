@@ -13,6 +13,7 @@ from .errors import (
 )
 from .evidence import EvidenceAccumulator, EvidenceEntry, EvidenceSnapshot
 from .propagation import ExtractedContext, extract_context, inject_context
+from .otel import OTelLogEmitter, OTelMetricEmitter
 from .trace_adapter import TraceConfiguration, finalize_trace
 from .validation import SchemaValidator
 
@@ -28,6 +29,8 @@ __all__ = [
     "EvidenceSnapshot",
     "ExtractedContext",
     "ProjectionError",
+    "OTelLogEmitter",
+    "OTelMetricEmitter",
     "PropagationError",
     "SchemaValidator",
     "TelemetryClient",

@@ -4,7 +4,8 @@ Current `0.1.0-dev` limitations:
 
 - The contract and SDK are experimental and may change incompatibly.
 - Only a Python reference SDK exists.
-- OTel span events are implemented; the structured-log path is an emitter protocol rather than a concrete OTel Logs adapter.
+- OTel span events, Logs, and basic metrics are implemented against caller-owned
+  providers; collector/backend interoperability is not yet exercised.
 - No metrics projector or AGT adapter is implemented.
 - TRACE finalization is software-only, requires explicitly complete evidence and
   trusted caller configuration, and cannot yet emit a tool transcript.

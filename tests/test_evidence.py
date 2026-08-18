@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from agentrust_telemetry import (  # noqa: E402
+    ContextMismatchError,
     EvidenceAccumulator,
     EvidenceError,
     EvidencePersistenceError,
@@ -91,6 +92,28 @@ class EvidenceTests(unittest.TestCase):
                 evidence_sink=accumulator,
             ).emit(fixture("policy-decision.json"))
         self.assertEqual(span.events, [])
+
+    def test_context_mismatch_never_enters_evidence(self):
+        accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
+        event = fixture("policy-decision.json")
+        event["span_id"] = "1111111111111111"
+
+        class Context:
+            is_valid = True
+            trace_id = int(event["trace_id"], 16)
+            span_id = int("2222222222222222", 16)
+
+        class Span:
+            def get_span_context(self):
+                return Context()
+
+        with self.assertRaises(ContextMismatchError):
+            TelemetryClient(
+                self.validator,
+                span_resolver=lambda: Span(),
+                evidence_sink=accumulator,
+            ).emit(event)
+        self.assertEqual(accumulator.snapshot().entries, ())
 
     def test_client_reports_evidence_persistence(self):
         accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
