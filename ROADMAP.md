@@ -13,7 +13,7 @@
 - Additional metric views and collector interoperability fixtures.
 - Additional W3C propagation carrier adapters beyond mutable string mappings.
 - Action lifecycle expansion if adopters need in-flight attempt telemetry.
-- AGT audit-entry adapters and framework integrations.
+- Framework integrations and future consolidated-core native event surfaces.
 - TypeScript SDK and mixed-language conformance.
 
 Roadmap items are intentions, not shipped behavior or compatibility commitments.

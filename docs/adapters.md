@@ -45,6 +45,20 @@ version, and chronology against the supplied request. Individual
 The final chain-entry digest is retained as source-reported approval evidence;
 the adapter does not independently verify the chain.
 
+Agent Mesh `AuditEntry` records, including those installed through
+`agent-governance-toolkit-core`, can be mapped as policy decisions or completed
+actions. Policy mapping requires a trusted bundle digest and explicit resource
+classification. Action mapping requires the caller's digest of the full governed
+action; `arguments_hash` is deliberately insufficient because it covers only
+arguments. Free-form `data` and `resource` are not copied.
+
+Agent Mesh audit hash version 1.0 does not cover later-added policy decision,
+policy version, argument hash, approver, timing, trace, or environment fields.
+Calling the source object's `verify_hash()` therefore must not be represented as
+integrity proof for those fields. The minimal Agent OS `AuditEntry` has no stable
+source event ID, trace context, bundle identity, or action digest and is not
+mapped automatically.
+
 Adapters report source facts; they do not evaluate policy or prove source
 authenticity. Callers remain responsible for trusted bundle digests and correct
 action/resource classification.
