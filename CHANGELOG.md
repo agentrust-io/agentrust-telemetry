@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add TypeScript metadata-only data-flow primitives plus AGT data-access,
+  audit-policy, and completed-action adapters.
+- Enforce the documented no-URL metadata identifier boundary in both SDKs.
 - Add TypeScript action-bound AGT policy, approval-request, and terminal
   approval-resolution adapters with deterministic cross-language linkage.
 - Require every AGT approval binding field to be present before comparing it,

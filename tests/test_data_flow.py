@@ -86,7 +86,10 @@ class DataFlowTests(unittest.TestCase):
             )
 
     def test_metadata_identifiers_reject_prose_paths_and_query_values(self):
-        for value in ("customer secret text", "/customers/42.txt", "token=secret", "x?key=y"):
+        for value in (
+            "customer secret text", "/customers/42.txt", "https://example.test/secret",
+            "token=secret", "x?key=y",
+        ):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, "metadata identifier"):
                 DataEndpoint("source", value)
         with self.assertRaisesRegex(ValueError, "metadata identifier"):

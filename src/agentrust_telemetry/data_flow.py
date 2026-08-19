@@ -70,6 +70,7 @@ def classified_data_flow(
     _identifier(purpose, "purpose")
     if media_type is not None and (
         not isinstance(media_type, str) or _MEDIA_TYPE.fullmatch(media_type) is None
+        or len(media_type) > 255
     ):
         raise ValueError("media_type must be a parameter-free type/subtype identifier")
     optional = {
@@ -99,7 +100,11 @@ def classified_data_flow(
 
 
 def _identifier(value: Any, field: str) -> str:
-    if not isinstance(value, str) or _IDENTIFIER.fullmatch(value) is None:
+    if (
+        not isinstance(value, str)
+        or _IDENTIFIER.fullmatch(value) is None
+        or "://" in value
+    ):
         raise ValueError(
             f"{field} must be a 1-256 character metadata identifier without whitespace, "
             "query strings, fragments, or key/value delimiters"
