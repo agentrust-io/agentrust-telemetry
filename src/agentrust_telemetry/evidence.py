@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from copy import deepcopy
 from dataclasses import dataclass
 from threading import Lock
 from typing import Any, Callable, Literal
+
+import rfc8785
 
 from .errors import EvidenceError, EvidencePersistenceError
 from .validation import SchemaValidator
 
 
 Completeness = Literal["complete", "incomplete", "unknown"]
-CANONICALIZATION_PROFILE = "agentrust-json-v1"
+CANONICALIZATION_PROFILE = "rfc8785-jcs-v1"
 _GENESIS_DIGEST = bytes(32)
 
 
@@ -94,7 +95,7 @@ class EvidenceAccumulator:
             previous = self._entries[-1].digest if self._entries else None
             try:
                 digest = _entry_digest(sequence, previous, event_copy)
-            except (TypeError, ValueError) as exc:
+            except (TypeError, ValueError, rfc8785.CanonicalizationError) as exc:
                 raise EvidenceError(
                     f"event_id={event_id} cannot be canonicalized under "
                     f"{CANONICALIZATION_PROFILE}"
@@ -145,13 +146,7 @@ class EvidenceAccumulator:
 
 
 def _entry_digest(sequence: int, previous_digest: str | None, event: dict[str, Any]) -> str:
-    canonical = json.dumps(
-        event,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    ).encode("utf-8")
+    canonical = rfc8785.dumps(event)
     previous = bytes.fromhex(previous_digest) if previous_digest else _GENESIS_DIGEST
     material = previous + sequence.to_bytes(8, "big") + canonical
     return hashlib.sha256(material).hexdigest()
