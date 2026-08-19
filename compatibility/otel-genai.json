@@ -1,0 +1,58 @@
+{
+  "profile": "agentrust-otel-genai-compatibility-v1",
+  "captured_at": "2026-08-18",
+  "upstream": {
+    "repository": "https://github.com/open-telemetry/semantic-conventions-genai",
+    "commit": "a685613a207a580163353b8e48a7ad88967e7b42",
+    "status": "development",
+    "schema_url": null
+  },
+  "relations": ["exact", "extension", "complementary", "non_equivalent", "deferred"],
+  "span_attributes": [
+    {"agentrust": "gen_ai.agent.id", "otel": "gen_ai.agent.id", "relation": "exact", "note": "Exact only when agent_id is a stable agent resource identifier; transient process instance IDs must not use this field."},
+    {"agentrust": "agentrust.telemetry.spec_version", "otel": null, "relation": "extension", "note": "AgentTrust contract version."},
+    {"agentrust": "agentrust.event.id", "otel": null, "relation": "extension", "note": "Durable event identifier."},
+    {"agentrust": "agentrust.run.id", "otel": null, "relation": "extension", "note": "Durable governed execution correlation; not a conversation or trace ID."},
+    {"agentrust": "agentrust.workflow.id", "otel": "gen_ai.workflow.name", "relation": "non_equivalent", "note": "AgentTrust stores a high-cardinality instance ID; OTel defines a low-cardinality workflow name."},
+    {"agentrust": "agentrust.agent.parent.id", "otel": null, "relation": "extension", "note": "Durable logical parent across process boundaries; OTel span parentage and links remain authoritative for trace causality."},
+    {"agentrust": "agentrust.task.id", "otel": null, "relation": "extension", "note": "Governed task instance identifier."},
+    {"agentrust": "agentrust.policy.decision", "otel": null, "relation": "extension", "note": "Policy outcome, not a GenAI response outcome."},
+    {"agentrust": "agentrust.approval.id", "otel": null, "relation": "extension", "note": "Action-bound approval lifecycle identifier."},
+    {"agentrust": "agentrust.usage.scope", "otel": "gen_ai.operation.name", "relation": "non_equivalent", "note": "Attribution boundary, not operation type."},
+    {"agentrust": "agentrust.data_flow.direction", "otel": null, "relation": "extension", "note": "Classified metadata flow direction."},
+    {"agentrust": "agentrust.data_flow.policy_decision", "otel": null, "relation": "extension", "note": "Policy result attached to a classified flow."},
+    {"agentrust": "agentrust.evidence.capture_profile", "otel": null, "relation": "extension", "note": "Evidence privacy profile."},
+    {"agentrust": "agentrust.evidence.completeness", "otel": null, "relation": "extension", "note": "Durable evidence completeness claim."},
+    {"agentrust": "agentrust.action.kind", "otel": "gen_ai.operation.name", "relation": "non_equivalent", "note": "Broad governed action category; only tool actions may coexist with execute_tool spans."},
+    {"agentrust": "agentrust.action.outcome", "otel": "error.type", "relation": "non_equivalent", "note": "Lifecycle outcome; error.type is an error class and only applies on failure."}
+  ],
+  "metrics": [
+    {"agentrust": "agentrust.policy.decisions", "instrument": "counter", "otel": null, "relation": "extension"},
+    {"agentrust": "agentrust.policy.evaluation.duration", "instrument": "histogram", "otel": null, "relation": "extension"},
+    {"agentrust": "agentrust.approval.events", "instrument": "counter", "otel": null, "relation": "extension"},
+    {"agentrust": "agentrust.action.executions", "instrument": "counter", "otel": null, "relation": "extension"},
+    {"agentrust": "agentrust.action.duration", "instrument": "histogram", "otel": "gen_ai.execute_tool.duration", "relation": "non_equivalent", "note": "AgentTrust includes non-tool and denied actions and does not claim the GenAI tool metric."},
+    {"agentrust": "agentrust.data_flow.events", "instrument": "counter", "otel": null, "relation": "extension"},
+    {"agentrust": "agentrust.usage.tokens", "instrument": "counter", "otel": "gen_ai.client.token.usage", "relation": "non_equivalent", "note": "OTel specifies a histogram per client operation with input/output token type; AgentTrust records additive reported facts across attribution scopes and additional token categories."},
+    {"agentrust": "agentrust.usage.cost", "instrument": "counter", "otel": null, "relation": "extension", "note": "Includes explicit currency and provenance; the pinned OTel GenAI model has no general cost metric."}
+  ],
+  "event_families": [
+    {"agentrust": "action.executed", "otel": "gen_ai.execute_tool", "relation": "complementary", "note": "A governed tool action may correlate with an OTel tool span, but AgentTrust also represents denied attempts and non-tool actions."},
+    {"agentrust": "policy.decision", "otel": null, "relation": "extension"},
+    {"agentrust": "usage.recorded", "otel": "gen_ai.client.token.usage", "relation": "complementary", "note": "Structured attribution fact; does not replace model client metrics or span usage attributes."},
+    {"agentrust": "data_flow.observed", "otel": null, "relation": "extension"},
+    {"agentrust": "approval.*", "otel": null, "relation": "extension"},
+    {"agentrust": "evidence.*", "otel": null, "relation": "extension"}
+  ],
+  "native_context": [
+    {"agentrust": "trace_id/span_id", "otel": "W3C Trace Context", "relation": "exact", "note": "Never duplicated as attributes; active OTel context is authoritative."}
+  ],
+  "deliberate_omissions": [
+    {"otel": "gen_ai.input.messages", "relation": "deferred", "note": "Content-bearing and outside the metadata-only profile."},
+    {"otel": "gen_ai.output.messages", "relation": "deferred", "note": "Content-bearing and outside the metadata-only profile."},
+    {"otel": "gen_ai.operation.name", "relation": "deferred", "note": "Owned by the GenAI span instrumentation; AgentTrust does not create or mutate those spans."},
+    {"otel": "gen_ai.provider.name", "relation": "deferred", "note": "Provider identity remains on model/provider telemetry; usage records retain caller-observed provider metadata."},
+    {"otel": "gen_ai.request.model", "relation": "deferred", "note": "AgentTrust structured usage retains the requested model but does not duplicate it onto arbitrary governance span events."},
+    {"otel": "gen_ai.response.model", "relation": "deferred", "note": "AgentTrust structured usage retains the response model but does not duplicate it onto arbitrary governance span events."}
+  ]
+}

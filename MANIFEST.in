@@ -11,6 +11,7 @@ include ROADMAP.md
 include SECURITY.md
 include SUPPORT.md
 include VERSIONING.md
+recursive-include compatibility *.json
 recursive-include conformance *.json *.py *.txt
 recursive-include docs *.md
 recursive-include examples *.py

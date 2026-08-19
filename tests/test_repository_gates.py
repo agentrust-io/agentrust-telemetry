@@ -17,6 +17,7 @@ def load_tool(name):
 
 
 check_schemas = load_tool("check_schemas")
+check_otel_compatibility = load_tool("check_otel_compatibility")
 check_versions = load_tool("check_versions")
 
 
@@ -49,6 +50,36 @@ class RepositoryGateTests(unittest.TestCase):
 
     def test_declared_versions_are_consistent(self):
         self.assertEqual(check_versions.main(), 0)
+
+    def test_otel_matrix_matches_shipped_projection(self):
+        self.assertEqual(check_otel_compatibility.main(), 0)
+
+    def test_source_manifest_includes_otel_matrix(self):
+        manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
+        self.assertIn("recursive-include compatibility *.json", manifest.splitlines())
+
+    def test_otel_matrix_gate_detects_attribute_metric_and_family_drift(self):
+        document = json.loads(
+            (ROOT / "compatibility" / "otel-genai.json").read_text(encoding="utf-8")
+        )
+        errors = check_otel_compatibility.validate_matrix(
+            document,
+            {"gen_ai.agent.id", "agentrust.unmapped"},
+            {"agentrust.unmapped.metric": "counter"},
+        )
+        self.assertTrue(any("span attribute drift" in error for error in errors))
+        self.assertTrue(any("metric drift" in error for error in errors))
+        document["event_families"].pop()
+        family_errors = check_otel_compatibility.validate_matrix(
+            document,
+            set(check_otel_compatibility._literal_assignment(
+                ROOT / "src" / "agentrust_telemetry" / "projection.py", "DIRECT_ATTRIBUTES"
+            ).values()),
+            check_otel_compatibility._instruments(
+                ROOT / "src" / "agentrust_telemetry" / "otel.py"
+            ),
+        )
+        self.assertTrue(any("event family drift" in error for error in family_errors))
 
     def test_issue_templates_are_valid_yaml_when_parser_available(self):
         try:
