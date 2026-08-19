@@ -1,6 +1,8 @@
 # TRACE finalization
 
-Status: experimental; requires Python 3.11+ and `agentrust-telemetry[trace]`.
+Status: experimental. Python requires 3.11+ and `agentrust-telemetry[trace]`.
+TypeScript requires a caller-supplied official TRACE codec because no official
+AgentTrust TRACE Node package is currently published.
 
 `finalize_trace` maps a sealed, explicitly complete evidence snapshot into the
 official TRACE v0.2 model, signs it with a caller-supplied key, validates it, and
@@ -22,3 +24,9 @@ When no action evidence is present, the optional transcript remains absent.
 
 The signed record remains subject to TRACE's documented trust-anchor, freshness,
 revocation, transparency, and software-only limitations.
+
+The TypeScript codec boundary must provide the v0.2 profile identifier, signing,
+structural validation, public-key derivation, and signature verification. The
+finalizer invokes all four steps and fails closed. It does not substitute a local
+shape check for official TRACE validation. Tool transcript bytes use RFC 8785 JCS
+in both SDKs.

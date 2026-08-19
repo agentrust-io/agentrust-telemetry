@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add TypeScript TRACE finalization through a caller-supplied official codec and
+  standardize tool-transcript hashing on RFC 8785 JCS across both SDKs.
 - Add TypeScript metadata-only data-flow primitives plus AGT data-access,
   audit-policy, and completed-action adapters.
 - Enforce the documented no-URL metadata identifier boundary in both SDKs.
