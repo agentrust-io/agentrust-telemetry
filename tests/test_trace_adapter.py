@@ -72,6 +72,10 @@ class TraceAdapterTests(unittest.TestCase):
         record = finalize_trace(snapshot, self.config, signing_key=self.key)
         self.assertEqual(record["tool_transcript"]["call_count"], 1)
         self.assertRegex(record["tool_transcript"]["hash"], r"^sha256:[0-9a-f]{64}$")
+        self.assertEqual(
+            record["tool_transcript"]["hash"],
+            "sha256:c697a0cb7991d61a4b4a7454de3be3a24046cbffb62f5fc14784ce52ccafe497",
+        )
 
         changed = fixture("action.json")
         changed["outcome"] = "error"

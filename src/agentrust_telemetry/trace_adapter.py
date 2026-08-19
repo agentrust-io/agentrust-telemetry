@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass
 from typing import Any, Literal
+
+import rfc8785
 
 from .errors import TraceFinalizationError
 from .evidence import EvidenceSnapshot
@@ -211,13 +212,7 @@ def _tool_transcript(snapshot: EvidenceSnapshot) -> dict[str, Any] | None:
     ]
     if not actions:
         return None
-    canonical = json.dumps(
-        actions,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    ).encode("utf-8")
+    canonical = rfc8785.dumps(actions)
     return {
         "hash": "sha256:" + hashlib.sha256(canonical).hexdigest(),
         "call_count": len(actions),

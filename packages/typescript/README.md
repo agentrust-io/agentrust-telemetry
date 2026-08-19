@@ -9,10 +9,10 @@ It never installs an OTel provider, exporter, or global propagator.
 
 This reference surface includes a fail-closed evidence accumulator using the
 same RFC 8785 digest profile as Python, conservative usage/cost rollups, and a
-caller-owned bounded-cardinality OTel metric emitter. It does not yet include
-the Python SDK's TRACE finalizer. Generic OPA, Cedar, AGT policy, approval,
-audit-action, and data-flow adapters are included. TRACE conversion remains
-explicit parity work rather than implied compatibility.
+caller-owned bounded-cardinality OTel metric emitter. Generic OPA, Cedar, AGT
+policy, approval, audit-action, and data-flow adapters are included. TRACE
+finalization is available through a caller-supplied official codec because no
+official AgentTrust TRACE package currently exists for Node.
 
 Nanosecond timestamps are decimal strings on the JSON wire and `bigint` at the
 TypeScript construction boundary, avoiding IEEE-754 precision loss.

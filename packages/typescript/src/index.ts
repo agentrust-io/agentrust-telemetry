@@ -9,5 +9,6 @@ export * from "./metrics.js";
 export * from "./projection.js";
 export * from "./propagation.js";
 export type * from "./types.js";
+export * from "./trace-finalizer.js";
 export * from "./validation.js";
 export * from "./usage.js";
