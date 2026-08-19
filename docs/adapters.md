@@ -23,8 +23,7 @@ OPA, Cedar, the generic AGT policy mapper, and the fail-closed AGT batch sink ar
 available in both Python and TypeScript. TypeScript accepts plain source records
 and has no runtime dependency on OPA, Cedar, or AGT packages. Action-bound AGT
 approval adapters are also available in TypeScript using RFC 3339 UTC timestamp
-strings. Audit-action and data-label adapters are currently Python-only and
-remain explicit TypeScript parity work.
+strings. Audit-action and data-label adapters are also available in TypeScript.
 
 The optional AGT bridge implements the batch sink shape used by Agent OS without
 making AGT a core dependency. The generic constructor accepts a runtime's result
