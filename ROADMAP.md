@@ -12,6 +12,7 @@
 
 - Additional metric views and collector interoperability fixtures.
 - Additional end-to-end scenarios for failure, asynchronous handoff, and incomplete evidence.
+- Additional classifier adapters and organization taxonomy profiles.
 - Additional W3C propagation carrier adapters beyond mutable string mappings.
 - Action lifecycle expansion if adopters need in-flight attempt telemetry.
 - Framework integrations and future consolidated-core native event surfaces.

@@ -7,12 +7,15 @@ from .adapters import (
     agt_approval_resolution,
     agt_audit_action,
     agt_audit_policy_decision,
+    agt_data_access_flow,
+    agt_data_classification,
     agt_policy_decision,
     agt_policy_decision_record,
     cedar_policy_decision,
     opa_decision_log,
 )
 from .client import EmitResult, TelemetryClient
+from .data_flow import ClassificationResult, DataClassifier, DataEndpoint, classified_data_flow
 from .context import ContextIds, active_context_ids
 from .errors import (
     ContextMismatchError,
@@ -32,6 +35,9 @@ from .validation import SchemaValidator
 __all__ = [
     "ContextIds",
     "ContextMismatchError",
+    "ClassificationResult",
+    "DataClassifier",
+    "DataEndpoint",
     "AgtGovernanceEventSink",
     "EmitResult",
     "EventValidationError",
@@ -55,9 +61,12 @@ __all__ = [
     "agt_approval_resolution",
     "agt_audit_action",
     "agt_audit_policy_decision",
+    "agt_data_access_flow",
+    "agt_data_classification",
     "agt_policy_decision",
     "agt_policy_decision_record",
     "cedar_policy_decision",
+    "classified_data_flow",
     "extract_context",
     "inject_context",
     "opa_decision_log",

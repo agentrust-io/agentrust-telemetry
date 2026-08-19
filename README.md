@@ -104,6 +104,7 @@ python examples/governed_workflow.py
 - [Architecture](docs/architecture.md)
 - [OpenTelemetry projection](docs/otel-projection.md)
 - [Action execution events](docs/action-events.md)
+- [Data-flow classification](docs/data-flow-classification.md)
 - [Event factories and policy adapters](docs/adapters.md)
 - [Evidence chain profile](docs/evidence-chain.md)
 - [TRACE finalization](docs/trace-finalization.md)
