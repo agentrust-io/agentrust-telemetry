@@ -1,6 +1,7 @@
 import sys
 import unittest
 import uuid
+import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -93,6 +94,28 @@ class UsageTests(unittest.TestCase):
         event["cost"] = {"amount": 1, "currency": "USD", "source": "aggregate"}
         with self.assertRaisesRegex(Exception, "aggregation"):
             SchemaValidator.bundled().validate(event)
+
+    def test_rollups_match_shared_cross_language_vector(self):
+        vector = json.loads(
+            (ROOT / "compatibility" / "golden" / "usage-rollup.json").read_text()
+        )
+        accumulator = UsageAccumulator()
+        for leaf in vector["leaves"]:
+            event = self.leaf(
+                run_id=vector["run_id"], workflow_id=vector["workflow_id"],
+                agent_id=leaf["agent_id"], input_tokens=leaf["input_tokens"],
+                output_tokens=leaf.get("output_tokens"),
+                cost=(CostObservation(**leaf["cost"]) if "cost" in leaf else None),
+            )
+            event["event_id"] = leaf["event_id"]
+            accumulator.add(event)
+        for scope, agent_id in (("agent_run", "agent-a"), ("workflow_run", "orchestrator")):
+            actual = accumulator.rollup(
+                self.factory, scope=scope, run_id=vector["run_id"], agent_id=agent_id,
+                workflow_id=vector["workflow_id"], operation="build",
+            )
+            for field, expected in vector["expected"][scope].items():
+                self.assertEqual(actual[field], expected)
 
 
 if __name__ == "__main__":

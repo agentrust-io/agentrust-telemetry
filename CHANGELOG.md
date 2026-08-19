@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add TypeScript usage/cost construction, coverage-labelled rollups, and
+  bounded-cardinality OpenTelemetry metric projection.
 - Add a TypeScript evidence accumulator and adopt RFC 8785 JCS for reproducible
   evidence digests across Python and TypeScript.
 - Encode nanosecond Unix timestamps as canonical decimal strings for exact

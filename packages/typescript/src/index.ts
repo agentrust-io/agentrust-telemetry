@@ -1,7 +1,9 @@
 export * from "./client.js";
 export * from "./evidence.js";
 export * from "./factory.js";
+export * from "./metrics.js";
 export * from "./projection.js";
 export * from "./propagation.js";
 export type * from "./types.js";
 export * from "./validation.js";
+export * from "./usage.js";
