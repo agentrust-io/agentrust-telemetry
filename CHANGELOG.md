@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add TypeScript action-bound AGT policy, approval-request, and terminal
+  approval-resolution adapters with deterministic cross-language linkage.
+- Require every AGT approval binding field to be present before comparing it,
+  preventing two absent values from being treated as a valid binding.
 - Add TypeScript OPA, Cedar, and generic AGT policy-decision adapters plus an
   AGT-compatible fail-closed batch sink.
 - Add TypeScript usage/cost construction, coverage-labelled rollups, and

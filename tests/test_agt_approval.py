@@ -166,6 +166,16 @@ class AgtApprovalAdapterTests(unittest.TestCase):
                 self.factory, wrong_action, self.request, run_id="run-1"
             )
 
+    def test_bindings_reject_fields_that_are_absent_on_both_records(self):
+        request = replace(self.request, policy_version=None)  # type: ignore[arg-type]
+        policy = replace(self.policy, policy_version=None)  # type: ignore[arg-type]
+        with self.assertRaisesRegex(ValueError, "policy_version must be a non-empty"):
+            agt_approval_request(self.factory, request, policy, run_id="run-1")
+
+        resolution = replace(self.resolution, policy_version=None)  # type: ignore[arg-type]
+        with self.assertRaisesRegex(ValueError, "policy_version must be a non-empty"):
+            agt_approval_resolution(self.factory, resolution, request, run_id="run-1")
+
     def test_resolution_rejects_pre_request_time_and_malformed_chain_digest(self):
         early = replace(self.resolution, resolved_at=NOW)
         with self.assertRaisesRegex(ValueError, "cannot predate"):
