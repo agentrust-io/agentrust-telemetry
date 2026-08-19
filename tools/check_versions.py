@@ -13,6 +13,24 @@ except ImportError:  # Python 3.10 development tooling
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def ecosystem_versions(contract: str) -> tuple[str, str]:
+    """Map the contract SemVer spelling to Python and npm package versions."""
+    match = re.fullmatch(
+        r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+        r"(?:-(dev|alpha|beta|rc)(?:\.(0|[1-9]\d*))?)?",
+        contract,
+    )
+    if not match:
+        raise ValueError(f"unsupported contract version: {contract}")
+    major, minor, patch, phase, sequence = match.groups()
+    release = f"{major}.{minor}.{patch}"
+    if phase is None:
+        return release, release
+    sequence = sequence or "0"
+    python_phase = {"dev": ".dev", "alpha": "a", "beta": "b", "rc": "rc"}[phase]
+    return f"{release}{python_phase}{sequence}", f"{release}-{phase}.{sequence}"
+
+
 def main() -> int:
     contract = (ROOT / "spec" / "VERSION").read_text(encoding="utf-8").strip()
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
@@ -20,11 +38,14 @@ def main() -> int:
     init_text = (ROOT / "src" / "agentrust_telemetry" / "__init__.py").read_text(encoding="utf-8")
     match = re.search(r'^__version__ = "([^"]+)"$', init_text, re.MULTILINE)
     init_version = match.group(1) if match else None
-    expected_package = contract.replace("-dev", ".dev0")
+    try:
+        expected_package, expected_npm = ecosystem_versions(contract)
+    except ValueError as error:
+        print(f"FAIL {error}", file=sys.stderr)
+        return 1
     npm_package = json.loads(
         (ROOT / "packages" / "typescript" / "package.json").read_text(encoding="utf-8")
     )["version"]
-    expected_npm = f"{contract}.0"
     if package == init_version == expected_package and npm_package == expected_npm:
         print(f"PASS contract={contract} python={package} npm={npm_package}")
         return 0
