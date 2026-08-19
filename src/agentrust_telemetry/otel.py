@@ -19,7 +19,7 @@ class OTelLogEmitter:
     def emit(self, record: dict[str, Any]) -> None:
         event = record["body"]
         self._logger.emit(
-            timestamp=record["timestamp_ns"],
+            timestamp=int(record["timestamp_ns"]),
             event_name=record["event_name"],
             body=deepcopy(event),
             attributes=span_attributes(event),

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentrust.io/telemetry/v0.1/schema/data-flow.schema.json",
+  "allOf": [
+    {"$ref": "envelope.schema.json"},
+    {
+      "type": "object",
+      "required": ["agent_id", "event_type", "direction", "source", "destination", "classification", "purpose", "policy_decision"],
+      "properties": {
+        "event_type": {"const": "data_flow.observed"},
+        "direction": {"enum": ["input", "output", "read", "write", "send", "receive"]},
+        "source": {"$ref": "#/$defs/endpoint"},
+        "destination": {"$ref": "#/$defs/endpoint"},
+        "classification": {
+          "type": "object",
+          "required": ["taxonomy", "value", "producer"],
+          "properties": {
+            "taxonomy": {"$ref": "common.schema.json#/$defs/nonempty"},
+            "value": {"$ref": "common.schema.json#/$defs/nonempty"},
+            "producer": {"$ref": "common.schema.json#/$defs/nonempty"}
+          },
+          "additionalProperties": false
+        },
+        "purpose": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "policy_decision": {"enum": ["allow", "deny", "challenge", "not_applicable", "error", "not_evaluated"]},
+        "content_digest": {"$ref": "common.schema.json#/$defs/digest"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "token_count": {"type": "integer", "minimum": 0},
+        "media_type": {"type": "string", "minLength": 1, "maxLength": 255},
+        "transformation": {"enum": ["none", "redacted", "masked", "tokenized", "aggregated", "metadata_only"]}
+      }
+    }
+  ],
+  "$defs": {
+    "endpoint": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "id": {"$ref": "common.schema.json#/$defs/nonempty"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "unevaluatedProperties": false
+}

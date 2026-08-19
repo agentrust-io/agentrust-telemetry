@@ -81,7 +81,7 @@ class TelemetryClient:
                 span.add_event(
                     event["event_type"],
                     attributes=span_attributes(event),
-                    timestamp=event["time_unix_nano"],
+                    timestamp=int(event["time_unix_nano"]),
                 )
                 span_emitted = True
             except Exception as exc:  # exporter implementations are external

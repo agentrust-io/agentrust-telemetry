@@ -1,6 +1,7 @@
-"""Check contract and Python package version declarations for consistency."""
+"""Check contract and reference package version declarations for consistency."""
 
 from pathlib import Path
+import json
 import re
 import sys
 try:
@@ -20,12 +21,16 @@ def main() -> int:
     match = re.search(r'^__version__ = "([^"]+)"$', init_text, re.MULTILINE)
     init_version = match.group(1) if match else None
     expected_package = contract.replace("-dev", ".dev0")
-    if package == init_version == expected_package:
-        print(f"PASS contract={contract} package={package}")
+    npm_package = json.loads(
+        (ROOT / "packages" / "typescript" / "package.json").read_text(encoding="utf-8")
+    )["version"]
+    expected_npm = f"{contract}.0"
+    if package == init_version == expected_package and npm_package == expected_npm:
+        print(f"PASS contract={contract} python={package} npm={npm_package}")
         return 0
     print(
         f"FAIL version drift contract={contract} expected_package={expected_package} "
-        f"pyproject={package} __init__={init_version}",
+        f"pyproject={package} __init__={init_version} expected_npm={expected_npm} npm={npm_package}",
         file=sys.stderr,
     )
     return 1

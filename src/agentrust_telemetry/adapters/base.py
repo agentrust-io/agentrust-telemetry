@@ -42,7 +42,7 @@ class EventFactory:
         trace_id: str | None = None,
         span_id: str | None = None,
         event_id: str | None = None,
-        time_unix_nano: int | None = None,
+        time_unix_nano: int | str | None = None,
         **payload: Any,
     ) -> dict[str, Any]:
         reserved = {
@@ -53,14 +53,18 @@ class EventFactory:
         collision = sorted(reserved.intersection(payload))
         if collision:
             raise ValueError(f"payload cannot override envelope fields: {collision}")
+        timestamp = self._clock_ns() if time_unix_nano is None else time_unix_nano
         event: dict[str, Any] = {
             "spec_version": "0.1.0-dev",
             "event_id": event_id or str(self._event_id_factory()),
             "event_type": event_type,
-            "time_unix_nano": self._clock_ns() if time_unix_nano is None else time_unix_nano,
+            "time_unix_nano": _unix_nano(timestamp),
             "run_id": run_id,
             "producer": deepcopy(self._producer),
-            **payload,
+            **{
+                key: _unix_nano(value) if key.endswith("_at_unix_nano") else value
+                for key, value in payload.items()
+            },
         }
         optional = {
             "agent_id": agent_id,
@@ -73,3 +77,14 @@ class EventFactory:
         event.update({key: value for key, value in optional.items() if value is not None})
         self._validator.validate(event)
         return event
+
+
+def _unix_nano(value: Any) -> str:
+    if isinstance(value, bool) or not isinstance(value, (int, str)):
+        raise TypeError("Unix nanosecond timestamps must be integers or decimal strings")
+    text = str(value)
+    if not text.isascii() or not text.isdecimal() or (len(text) > 1 and text.startswith("0")):
+        raise ValueError("Unix nanosecond timestamps must be canonical non-negative decimals")
+    if len(text) > 20:
+        raise ValueError("Unix nanosecond timestamps cannot exceed 20 digits")
+    return text

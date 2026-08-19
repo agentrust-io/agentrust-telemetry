@@ -87,7 +87,7 @@ class AgtAdapterTests(unittest.TestCase):
         event = self.map(FakeAgtEvent())[0]
         self.assertEqual(event["decision"], "challenge")
         self.assertEqual(event["event_id"], "018f0f7d-7a13-7cc2-8000-000000000042")
-        self.assertEqual(event["time_unix_nano"], 1787056496123456789)
+        self.assertEqual(event["time_unix_nano"], "1787056496123456789")
         self.assertEqual(event["evaluation_duration_ns"], 1_250_000)
         self.assertEqual(event["reason_codes"], ["approval.required"])
         serialized = repr(event)

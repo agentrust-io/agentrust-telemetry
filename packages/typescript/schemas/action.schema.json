@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentrust.io/telemetry/v0.1/schema/action.schema.json",
+  "allOf": [
+    {"$ref": "envelope.schema.json"},
+    {
+      "type": "object",
+      "required": [
+        "agent_id", "event_type", "action_id", "action_kind", "action_name",
+        "operation", "outcome", "duration_ns", "action_digest"
+      ],
+      "properties": {
+        "event_type": {"const": "action.executed"},
+        "action_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "action_kind": {"enum": ["tool", "mcp", "a2a", "file", "http", "database", "other"]},
+        "action_name": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "operation": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "outcome": {"enum": ["success", "error", "denied", "cancelled", "timeout"]},
+        "duration_ns": {"type": "integer", "minimum": 0},
+        "action_digest": {"$ref": "common.schema.json#/$defs/digest"},
+        "result_digest": {"$ref": "common.schema.json#/$defs/digest"},
+        "target": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": {"$ref": "common.schema.json#/$defs/nonempty"},
+            "id": {"$ref": "common.schema.json#/$defs/nonempty"}
+          },
+          "additionalProperties": false
+        },
+        "policy_event_id": {"$ref": "common.schema.json#/$defs/event_id"},
+        "approval_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "remote_agent_id": {"$ref": "common.schema.json#/$defs/nonempty"},
+        "error_type": {"$ref": "common.schema.json#/$defs/nonempty"}
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}
+
