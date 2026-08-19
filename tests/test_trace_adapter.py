@@ -84,6 +84,36 @@ class TraceAdapterTests(unittest.TestCase):
             changed_record["tool_transcript"]["hash"],
         )
 
+    def test_linked_terminal_approval_resolves_policy_challenge(self):
+        policy = fixture("policy-decision.json")
+        policy["decision"] = "challenge"
+        approval = fixture("approval.json")
+        approval["event_type"] = "approval.approved"
+        approval["policy_event_id"] = policy["event_id"]
+        accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
+        accumulator.append(policy)
+        accumulator.append(approval)
+        accumulator.append(fixture("data-flow.json"))
+        record = finalize_trace(
+            accumulator.seal(completeness="complete"),
+            self.config,
+            signing_key=self.key,
+        )
+        self.assertEqual(record["appraisal"]["status"], "affirming")
+
+        approval["policy_event_id"] = "018f0f7d-7a13-7cc2-8000-000000000099"
+        approval["event_id"] = "018f0f7d-7a13-7cc2-8000-000000000098"
+        accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
+        accumulator.append(policy)
+        accumulator.append(approval)
+        accumulator.append(fixture("data-flow.json"))
+        record = finalize_trace(
+            accumulator.seal(completeness="complete"),
+            self.config,
+            signing_key=self.key,
+        )
+        self.assertEqual(record["appraisal"]["status"], "warning")
+
     def test_refuses_unsealed_or_incomplete_evidence(self):
         accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
         accumulator.append(fixture("policy-decision.json"))
