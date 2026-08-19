@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.1 - 2026-08-19
+
 - Add TypeScript TRACE finalization through a caller-supplied official codec and
   standardize tool-transcript hashing on RFC 8785 JCS across both SDKs.
 - Add TypeScript metadata-only data-flow primitives plus AGT data-access,
@@ -20,8 +22,6 @@
 - Encode nanosecond Unix timestamps as canonical decimal strings for exact
   cross-language JSON behavior.
 - Add the pre-alpha TypeScript reference SDK and shared conformance gates.
-
-All notable changes will be documented here.
 
 - Initial `0.1.0-dev` event contract and conformance fixtures.
 - Initial Python reference SDK with schema/privacy validation and OTel span-event projection.

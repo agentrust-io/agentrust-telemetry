@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentrust-telemetry"
-version = "0.1.0.dev0"
+version = "0.1.0a1"
 description = "Backend-neutral governance telemetry for AI-agent runtimes"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,7 +16,7 @@ dependencies = [
 ]
 keywords = ["ai-agents", "governance", "opentelemetry", "observability", "telemetry"]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 3 - Alpha",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",

@@ -52,6 +52,22 @@ class RepositoryGateTests(unittest.TestCase):
     def test_declared_versions_are_consistent(self):
         self.assertEqual(check_versions.main(), 0)
 
+    def test_contract_versions_map_to_ecosystem_spellings(self):
+        cases = {
+            "0.1.0-dev": ("0.1.0.dev0", "0.1.0-dev.0"),
+            "0.1.0-alpha.1": ("0.1.0a1", "0.1.0-alpha.1"),
+            "0.1.0-beta.2": ("0.1.0b2", "0.1.0-beta.2"),
+            "0.1.0-rc.3": ("0.1.0rc3", "0.1.0-rc.3"),
+            "0.1.0": ("0.1.0", "0.1.0"),
+        }
+        for contract, expected in cases.items():
+            with self.subTest(contract=contract):
+                self.assertEqual(check_versions.ecosystem_versions(contract), expected)
+
+    def test_contract_version_rejects_unsupported_spellings(self):
+        with self.assertRaises(ValueError):
+            check_versions.ecosystem_versions("0.1")
+
     def test_otel_matrix_matches_shipped_projection(self):
         self.assertEqual(check_otel_compatibility.main(), 0)
 
