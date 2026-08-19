@@ -175,19 +175,30 @@ def _highest_data_class(
 
 
 def _appraisal(events: list[dict[str, Any]]) -> str:
-    outcomes = {
-        event.get("decision")
+    decisions = {
+        event["event_id"]: event["decision"]
         for event in events
         if event["event_type"] == "policy.decision"
     }
-    approval_types = {event["event_type"] for event in events if event["event_type"].startswith("approval.")}
-    if outcomes.intersection({"deny", "error"}) or approval_types.intersection(
+    approvals = [event for event in events if event["event_type"].startswith("approval.")]
+    approval_types = {event["event_type"] for event in approvals}
+    if set(decisions.values()).intersection({"deny", "error"}) or approval_types.intersection(
         {"approval.rejected", "approval.expired", "approval.execution_failed"}
     ):
         return "contraindicated"
-    if "challenge" in outcomes or "approval.cancelled" in approval_types:
+    approved_policy_events = {
+        event["policy_event_id"]
+        for event in approvals
+        if event["event_type"] == "approval.approved" and "policy_event_id" in event
+    }
+    unresolved_challenges = {
+        event_id
+        for event_id, decision in decisions.items()
+        if decision == "challenge" and event_id not in approved_policy_events
+    }
+    if unresolved_challenges or "approval.cancelled" in approval_types:
         return "warning"
-    if outcomes or approval_types:
+    if decisions or approval_types:
         return "affirming"
     return "none"
 

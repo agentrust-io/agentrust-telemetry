@@ -83,6 +83,14 @@ Run the synthetic example:
 python examples/manual_governance.py
 ```
 
+Run the complete AGT-compatible governance, OTel, durable-evidence, and TRACE
+reference workflow (Python 3.11+ with test extras installed):
+
+```shell
+python -m pip install -e ".[test]"
+python examples/governed_workflow.py
+```
+
 ## Contract principles
 
 - `run_id` is durable execution correlation; `trace_id` is an optional W3C operational trace context.
