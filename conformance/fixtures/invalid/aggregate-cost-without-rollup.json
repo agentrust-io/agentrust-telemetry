@@ -1,0 +1,1 @@
+{"agent_id":"agent-1","cost":{"amount":1,"currency":"USD","source":"aggregate"},"event_id":"018f0f7d-7a13-7cc2-8000-000000000009","event_type":"usage.recorded","operation":"chat","producer":{"name":"test","version":"1"},"run_id":"run-1","scope":"model_call","spec_version":"0.1.0-dev","time_unix_nano":1}
