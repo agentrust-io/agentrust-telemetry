@@ -24,8 +24,34 @@
           "properties": {
             "amount": {"type": "number", "minimum": 0},
             "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
-            "source": {"enum": ["provider", "caller", "price_resolver", "estimate"]},
+            "source": {"enum": ["provider", "caller", "price_resolver", "estimate", "aggregate"]},
             "pricing_version": {"$ref": "common.schema.json#/$defs/nonempty"}
+          },
+          "additionalProperties": false
+        },
+        "aggregation": {
+          "type": "object",
+          "required": ["method", "event_count", "token_coverage", "cost_coverage", "cost_sources"],
+          "properties": {
+            "method": {"const": "sum"},
+            "event_count": {"type": "integer", "minimum": 1},
+            "token_coverage": {
+              "type": "object",
+              "properties": {
+                "input_tokens": {"type": "integer", "minimum": 0},
+                "output_tokens": {"type": "integer", "minimum": 0},
+                "cache_read_tokens": {"type": "integer", "minimum": 0},
+                "cache_write_tokens": {"type": "integer", "minimum": 0},
+                "reasoning_tokens": {"type": "integer", "minimum": 0}
+              },
+              "additionalProperties": false
+            },
+            "cost_coverage": {"type": "integer", "minimum": 0},
+            "cost_sources": {
+              "type": "array",
+              "items": {"enum": ["provider", "caller", "price_resolver", "estimate"]},
+              "uniqueItems": true
+            }
           },
           "additionalProperties": false
         }
@@ -34,6 +60,19 @@
         {"required": ["input_tokens"]}, {"required": ["output_tokens"]},
         {"required": ["cache_read_tokens"]}, {"required": ["cache_write_tokens"]},
         {"required": ["reasoning_tokens"]}, {"required": ["cost"]}
+      ],
+      "allOf": [
+        {
+          "if": {"required": ["aggregation"]},
+          "then": {"properties": {"scope": {"enum": ["agent_run", "workflow_run"]}}}
+        },
+        {
+          "if": {
+            "required": ["cost"],
+            "properties": {"cost": {"properties": {"source": {"const": "aggregate"}}}}
+          },
+          "then": {"required": ["aggregation"]}
+        }
       ]
     }
   ],

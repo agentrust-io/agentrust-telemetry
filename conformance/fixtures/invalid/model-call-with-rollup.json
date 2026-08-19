@@ -1,0 +1,1 @@
+{"agent_id":"agent-1","aggregation":{"cost_coverage":0,"cost_sources":[],"event_count":1,"method":"sum","token_coverage":{"input_tokens":1}},"event_id":"018f0f7d-7a13-7cc2-8000-000000000010","event_type":"usage.recorded","input_tokens":1,"operation":"chat","producer":{"name":"test","version":"1"},"run_id":"run-1","scope":"model_call","spec_version":"0.1.0-dev","time_unix_nano":1}

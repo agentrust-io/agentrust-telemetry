@@ -30,11 +30,13 @@ from .evidence import EvidenceAccumulator, EvidenceEntry, EvidenceSnapshot
 from .propagation import ExtractedContext, extract_context, inject_context
 from .otel import OTelLogEmitter, OTelMetricEmitter
 from .trace_adapter import TraceConfiguration, finalize_trace
+from .usage import CostObservation, UsageAccumulator, usage_record
 from .validation import SchemaValidator
 
 __all__ = [
     "ContextIds",
     "ContextMismatchError",
+    "CostObservation",
     "ClassificationResult",
     "DataClassifier",
     "DataEndpoint",
@@ -56,6 +58,7 @@ __all__ = [
     "TelemetryClient",
     "TraceConfiguration",
     "TraceFinalizationError",
+    "UsageAccumulator",
     "active_context_ids",
     "agt_approval_request",
     "agt_approval_resolution",
@@ -70,6 +73,7 @@ __all__ = [
     "extract_context",
     "inject_context",
     "opa_decision_log",
+    "usage_record",
     "finalize_trace",
 ]
 
