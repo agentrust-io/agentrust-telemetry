@@ -34,6 +34,17 @@ prevents a malformed later source event from causing mapping-time partial
 delivery. Destination failures can still occur after earlier events were
 accepted, so durable evidence callbacks must remain idempotent by event ID.
 
+AGT's action-bound approval protocol maps as a linked sequence: the policy
+decision becomes a challenge, the approval request references that normalized
+policy event, and only an `ApprovalResolution` becomes approved, rejected, or
+expired. Request mapping verifies its policy decision ID, action digest, policy
+version, chain ID, and chain version against the supplied policy record.
+Resolution mapping verifies request ID, action digest, policy version, chain
+version, and chronology against the supplied request. Individual
+`ApprovalChainEntry` votes are intentionally not mapped as terminal outcomes.
+The final chain-entry digest is retained as source-reported approval evidence;
+the adapter does not independently verify the chain.
+
 Adapters report source facts; they do not evaluate policy or prove source
 authenticity. Callers remain responsible for trusted bundle digests and correct
 action/resource classification.
