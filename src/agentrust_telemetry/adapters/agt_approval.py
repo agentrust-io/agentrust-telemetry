@@ -161,8 +161,12 @@ def _verify_resolution_binding(resolution: Any, request: Any) -> None:
         ("approval_chain_version", "approval_chain_version"),
     )
     for resolution_field, request_field in pairs:
-        left = _enum_value(_field(resolution, resolution_field))
-        right = _enum_value(_field(request, request_field))
+        left = _required_string(
+            _enum_value(_field(resolution, resolution_field)), resolution_field
+        )
+        right = _required_string(
+            _enum_value(_field(request, request_field)), request_field
+        )
         if left != right:
             raise ValueError(
                 f"AGT resolution {resolution_field} does not match request {request_field}"
@@ -178,8 +182,12 @@ def _verify_request_binding(request: Any, policy_decision: Any) -> None:
         ("approval_chain_version", "approval_chain_version"),
     )
     for request_field, policy_field in pairs:
-        left = _enum_value(_field(request, request_field))
-        right = _enum_value(_field(policy_decision, policy_field))
+        left = _required_string(
+            _enum_value(_field(request, request_field)), request_field
+        )
+        right = _required_string(
+            _enum_value(_field(policy_decision, policy_field)), policy_field
+        )
         if left != right:
             raise ValueError(
                 f"AGT request {request_field} does not match policy decision {policy_field}"

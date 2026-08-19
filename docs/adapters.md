@@ -22,7 +22,8 @@ Free-form error messages are rejected to prevent accidental content leakage.
 OPA, Cedar, the generic AGT policy mapper, and the fail-closed AGT batch sink are
 available in both Python and TypeScript. TypeScript accepts plain source records
 and has no runtime dependency on OPA, Cedar, or AGT packages. Action-bound AGT
-approval, audit-action, and data-label adapters are currently Python-only and
+approval adapters are also available in TypeScript using RFC 3339 UTC timestamp
+strings. Audit-action and data-label adapters are currently Python-only and
 remain explicit TypeScript parity work.
 
 The optional AGT bridge implements the batch sink shape used by Agent OS without

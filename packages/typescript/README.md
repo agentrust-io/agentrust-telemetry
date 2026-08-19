@@ -10,8 +10,8 @@ It never installs an OTel provider, exporter, or global propagator.
 This reference surface includes a fail-closed evidence accumulator using the
 same RFC 8785 digest profile as Python, conservative usage/cost rollups, and a
 caller-owned bounded-cardinality OTel metric emitter. It does not yet include
-the Python SDK's action-bound AGT approval, audit-action, and data-flow adapters,
-or TRACE finalizer. Generic OPA, Cedar, and AGT policy adapters are included. Those
+the Python SDK's AGT audit-action and data-flow adapters, or TRACE finalizer.
+Generic OPA, Cedar, AGT policy, and action-bound approval adapters are included. Those
 remain explicit parity work rather than implied compatibility.
 
 Nanosecond timestamps are decimal strings on the JSON wire and `bigint` at the
