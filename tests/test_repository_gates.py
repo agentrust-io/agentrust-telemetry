@@ -19,6 +19,7 @@ def load_tool(name):
 check_schemas = load_tool("check_schemas")
 check_otel_compatibility = load_tool("check_otel_compatibility")
 check_versions = load_tool("check_versions")
+check_typescript_schemas = load_tool("check_typescript_schemas")
 
 
 class RepositoryGateTests(unittest.TestCase):
@@ -57,6 +58,9 @@ class RepositoryGateTests(unittest.TestCase):
     def test_source_manifest_includes_otel_matrix(self):
         manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
         self.assertIn("recursive-include compatibility *.json", manifest.splitlines())
+
+    def test_typescript_schemas_match_normative_bytes(self):
+        self.assertEqual(check_typescript_schemas.main(), 0)
 
     def test_otel_matrix_gate_detects_attribute_metric_and_family_drift(self):
         document = json.loads(

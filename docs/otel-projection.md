@@ -9,7 +9,8 @@ The normalized JSON event is the source contract. OpenTelemetry is a projection,
 When a recording span is active, the SDK calls `add_event` with:
 
 - name: normalized `event_type`;
-- timestamp: `time_unix_nano`;
+- timestamp: `time_unix_nano`, converted from its wire-safe decimal string to
+  the OTel API's native timestamp representation;
 - attributes: the allowlisted flattened mapping below.
 
 | Normalized field | OTel attribute |

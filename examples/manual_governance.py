@@ -17,7 +17,7 @@ event = {
     "spec_version": "0.1.0-dev",
     "event_id": str(uuid.uuid4()),
     "event_type": "policy.decision",
-    "time_unix_nano": time.time_ns(),
+    "time_unix_nano": str(time.time_ns()),
     "run_id": "run-example-001",
     "agent_id": "spiffe://example.test/agent/reviewer",
     "producer": {"name": "manual-example", "version": "0.1.0"},

@@ -83,6 +83,20 @@ Run the synthetic example:
 python examples/manual_governance.py
 ```
 
+## TypeScript reference SDK
+
+The pre-alpha Node package lives in `packages/typescript`:
+
+```shell
+cd packages/typescript
+npm ci
+npm run check
+```
+
+It validates the same fixtures and privacy profile as Python and preserves
+nanosecond wire timestamps as decimal strings. It does not install an OTel
+provider, exporter, or global propagator.
+
 Run the complete AGT-compatible governance, OTel, durable-evidence, and TRACE
 reference workflow (Python 3.11+ with test extras installed):
 

@@ -1,0 +1,30 @@
+{
+  "name": "@agentrust/telemetry",
+  "version": "0.1.0-dev.0",
+  "description": "TypeScript reference SDK for AgentTrust governance telemetry",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}},
+  "files": ["dist", "schemas", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsx --test test/*.test.ts",
+    "check": "npm run build && npm test && npm pack --dry-run"
+  },
+  "engines": {"node": ">=20"},
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@opentelemetry/core": "^2.0.1",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "license": "MIT",
+  "repository": {"type": "git", "url": "git+https://github.com/agentrust-io/agentrust-telemetry.git"},
+  "publishConfig": {"access": "public"}
+}

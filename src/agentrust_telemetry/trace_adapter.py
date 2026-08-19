@@ -48,7 +48,7 @@ def finalize_trace(
     tool_transcript = _tool_transcript(snapshot)
     record: dict[str, Any] = {
         "eat_profile": trace.TRACE_PROFILE_V0_2,
-        "iat": max(event["time_unix_nano"] for event in events) // 1_000_000_000,
+        "iat": max(int(event["time_unix_nano"]) for event in events) // 1_000_000_000,
         "subject": config.subject,
         "model": {
             "provider": config.model_provider,
@@ -82,7 +82,7 @@ def finalize_trace(
         "appraisal": {
             "status": _appraisal(events),
             "verifier": config.appraisal_verifier,
-            "timestamp": max(event["time_unix_nano"] for event in events)
+            "timestamp": max(int(event["time_unix_nano"]) for event in events)
             // 1_000_000_000,
         },
         **({"transparency": config.transparency} if config.transparency else {}),

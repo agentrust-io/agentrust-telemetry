@@ -47,7 +47,7 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(second.previous_digest, first.digest)
         self.assertEqual(
             second.digest,
-            "e6a03fca3d030c9c0295251fe5feaa467f32df5b3a8ec6b070dd179f3156fc10",
+            "dab5451eefd004d6616e489a8ce093c9c794b64222219ce9f0d69b30f9ca1021",
         )
 
     def test_durable_callback_acknowledges_before_local_acceptance(self):

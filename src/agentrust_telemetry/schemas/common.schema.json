@@ -3,7 +3,7 @@
   "$id": "https://agentrust.io/telemetry/v0.1/schema/common.schema.json",
   "$defs": {
     "event_id": {"type": "string", "format": "uuid"},
-    "time_unix_nano": {"type": "integer", "minimum": 0},
+    "time_unix_nano": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"},
     "nonempty": {"type": "string", "minLength": 1, "maxLength": 512},
     "trace_id": {"type": "string", "pattern": "^[0-9a-f]{32}$", "not": {"const": "00000000000000000000000000000000"}},
     "span_id": {"type": "string", "pattern": "^[0-9a-f]{16}$", "not": {"const": "0000000000000000"}},

@@ -41,7 +41,7 @@ class AdapterTests(unittest.TestCase):
         )
         self.assertEqual(event["event_id"], "018f0f7d-7a13-7cc2-8000-000000000042")
         self.assertEqual(event["producer"]["name"], "adapter-tests")
-        self.assertEqual(event["time_unix_nano"], 1787079000000000000)
+        self.assertEqual(event["time_unix_nano"], "1787079000000000000")
 
     def test_factory_prevents_envelope_override(self):
         with self.assertRaisesRegex(ValueError, "cannot override"):
@@ -53,6 +53,37 @@ class AdapterTests(unittest.TestCase):
                 operation="build",
                 input_tokens=1,
                 producer={"name": "spoofed", "version": "9"},
+            )
+
+    def test_factory_matches_cross_language_golden_event(self):
+        parity_factory = EventFactory(
+            SchemaValidator(ROOT / "spec" / "schema"),
+            producer_name="parity-test", producer_version="1.0.0",
+            clock_ns=lambda: 1787079000000000000,
+            event_id_factory=lambda: uuid.UUID("018f0f7d-7a13-7cc2-8000-000000000042"),
+        )
+        event = parity_factory.build(
+            "usage.recorded", run_id="run-1", agent_id="agent-1",
+            workflow_id="workflow-1", scope="model_call", operation="chat",
+            input_tokens=7,
+        )
+        expected = json.loads(
+            (ROOT / "compatibility" / "golden" / "event-factory.json").read_text()
+        )
+        self.assertEqual(event, expected)
+
+    def test_factory_serializes_nanoseconds_without_precision_loss(self):
+        event = self.factory.build(
+            "usage.recorded", run_id="run-1", agent_id="agent-1",
+            scope="model_call", operation="chat", input_tokens=1,
+            time_unix_nano="18446744073709551615",
+        )
+        self.assertEqual(event["time_unix_nano"], "18446744073709551615")
+        with self.assertRaisesRegex(ValueError, "canonical"):
+            self.factory.build(
+                "usage.recorded", run_id="run-1", agent_id="agent-1",
+                scope="model_call", operation="chat", input_tokens=1,
+                time_unix_nano="01",
             )
 
     def test_opa_boolean_log_maps_without_copying_input_or_result(self):
@@ -78,7 +109,7 @@ class AdapterTests(unittest.TestCase):
             bundle_digest=DIGEST,
         )
         self.assertEqual(event["decision"], "allow")
-        self.assertEqual(event["time_unix_nano"], 1787056496123456789)
+        self.assertEqual(event["time_unix_nano"], "1787056496123456789")
         self.assertEqual(event["evaluation_duration_ns"], 4200)
         self.assertNotIn("input", event)
         self.assertNotIn("result", event)
