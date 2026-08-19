@@ -9,7 +9,11 @@ description = "Backend-neutral governance telemetry for AI-agent runtimes"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-dependencies = ["jsonschema[format]>=4.23,<5", "referencing>=0.35,<1"]
+dependencies = [
+  "jsonschema[format]>=4.23,<5",
+  "referencing>=0.35,<1",
+  "rfc8785>=0.1.4,<1",
+]
 keywords = ["ai-agents", "governance", "opentelemetry", "observability", "telemetry"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",

@@ -1,0 +1,18 @@
+{
+  "profile": "rfc8785-jcs-v1",
+  "run_id": "run-governed-sdlc-001",
+  "entries": [
+    {
+      "fixture": "policy-decision.json",
+      "sequence": 0,
+      "previous_digest": null,
+      "digest": "f31be297b83550f55b569e75036a83b23a239d45965a46c40a589fd48ab30b74"
+    },
+    {
+      "fixture": "usage.json",
+      "sequence": 1,
+      "previous_digest": "f31be297b83550f55b569e75036a83b23a239d45965a46c40a589fd48ab30b74",
+      "digest": "dab5451eefd004d6616e489a8ce093c9c794b64222219ce9f0d69b30f9ca1021"
+    }
+  ]
+}

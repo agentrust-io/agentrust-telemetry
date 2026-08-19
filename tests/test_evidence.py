@@ -37,18 +37,18 @@ class EvidenceTests(unittest.TestCase):
         self.validator = SchemaValidator(ROOT / "spec" / "schema")
 
     def test_chain_is_ordered_and_has_stable_golden_digest(self):
+        golden = json.loads(
+            (ROOT / "compatibility" / "golden" / "evidence-chain.json").read_text()
+        )
         accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
         first = accumulator.append(fixture("policy-decision.json"))
         second = accumulator.append(fixture("usage.json"))
 
-        self.assertEqual(first.sequence, 0)
-        self.assertIsNone(first.previous_digest)
-        self.assertEqual(second.sequence, 1)
-        self.assertEqual(second.previous_digest, first.digest)
-        self.assertEqual(
-            second.digest,
-            "dab5451eefd004d6616e489a8ce093c9c794b64222219ce9f0d69b30f9ca1021",
-        )
+        self.assertEqual(accumulator.snapshot().canonicalization_profile, golden["profile"])
+        for actual, expected in zip((first, second), golden["entries"], strict=True):
+            self.assertEqual(actual.sequence, expected["sequence"])
+            self.assertEqual(actual.previous_digest, expected["previous_digest"])
+            self.assertEqual(actual.digest, expected["digest"])
 
     def test_durable_callback_acknowledges_before_local_acceptance(self):
         durable = []

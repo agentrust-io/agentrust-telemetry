@@ -1,4 +1,5 @@
 export * from "./client.js";
+export * from "./evidence.js";
 export * from "./factory.js";
 export * from "./projection.js";
 export * from "./propagation.js";
