@@ -19,6 +19,7 @@ def load_tool(name):
 check_schemas = load_tool("check_schemas")
 check_otel_compatibility = load_tool("check_otel_compatibility")
 check_versions = load_tool("check_versions")
+check_release_tag = load_tool("check_release_tag")
 check_typescript_schemas = load_tool("check_typescript_schemas")
 
 
@@ -68,12 +69,23 @@ class RepositoryGateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_versions.ecosystem_versions("0.1")
 
+    def test_release_tag_must_match_contract(self):
+        self.assertEqual(check_release_tag.validate_tag("v0.1.0-alpha.1"), [])
+        self.assertEqual(
+            check_release_tag.validate_tag("v0.1.0"),
+            ["release tag 'v0.1.0' must equal 'v0.1.0-alpha.1'"],
+        )
+
     def test_otel_matrix_matches_shipped_projection(self):
         self.assertEqual(check_otel_compatibility.main(), 0)
 
     def test_source_manifest_includes_otel_matrix(self):
         manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
         self.assertIn("recursive-include compatibility *.json", manifest.splitlines())
+
+    def test_source_manifest_includes_release_policy(self):
+        manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
+        self.assertIn("include RELEASING.md", manifest.splitlines())
 
     def test_typescript_schemas_match_normative_bytes(self):
         self.assertEqual(check_typescript_schemas.main(), 0)

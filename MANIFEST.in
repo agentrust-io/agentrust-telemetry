@@ -6,6 +6,7 @@ include LIMITATIONS.md
 include MAINTAINERS.md
 include NOTICE
 include PRIVACY.md
+include RELEASING.md
 include REPOSITORY-SETUP.md
 include ROADMAP.md
 include SECURITY.md

@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.event.release.target_commitish == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+          cache: pip
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: packages/typescript/package-lock.json
+      - name: Verify release identity
+        run: |
+          python tools/check_versions.py
+          python tools/check_release_tag.py "${{ github.event.release.tag_name }}"
+      - name: Build and test Python distributions
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build
+          test "$(find dist -maxdepth 1 -type f | wc -l)" -eq 2
+          python tools/smoke_wheel.py dist/*.whl
+          python tools/smoke_wheel.py dist/*.tar.gz
+      - name: Build and test npm package
+        working-directory: packages/typescript
+        run: |
+          npm ci --ignore-scripts
+          npm run check
+          mkdir -p ../../npm-dist
+          npm pack --pack-destination ../../npm-dist
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
+        with:
+          name: python-distributions
+          path: dist/*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
+        with:
+          name: npm-distribution
+          path: npm-dist/*.tgz
+          if-no-files-found: error
+
+  publish-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/agentrust-telemetry/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.0
+        with:
+          name: python-distributions
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/@agentrust/telemetry
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.0
+        with:
+          name: npm-distribution
+          path: npm-dist
+      - name: Publish to npm with trusted publishing
+        run: npm publish npm-dist/*.tgz --access public
+
+  release-assets:
+    needs: [publish-pypi, publish-npm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.0
+        with:
+          pattern: '*-distribution*'
+          path: release-assets
+          merge-multiple: true
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.0.0
+        with:
+          subject-path: release-assets/*
+      - name: Attach immutable build outputs to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" release-assets/* --repo "${{ github.repository }}"
