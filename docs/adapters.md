@@ -19,6 +19,12 @@ IDs and caller-normalized diagnostic codes. Cedar evaluation errors are recorded
 without rewriting the final decision, matching Cedar's skip-on-error semantics.
 Free-form error messages are rejected to prevent accidental content leakage.
 
+OPA, Cedar, the generic AGT policy mapper, and the fail-closed AGT batch sink are
+available in both Python and TypeScript. TypeScript accepts plain source records
+and has no runtime dependency on OPA, Cedar, or AGT packages. Action-bound AGT
+approval, audit-action, and data-label adapters are currently Python-only and
+remain explicit TypeScript parity work.
+
 The optional AGT bridge implements the batch sink shape used by Agent OS without
 making AGT a core dependency. The generic constructor accepts a runtime's result
 sentinels and is the durable integration boundary. `from_agent_os` is a legacy

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add TypeScript OPA, Cedar, and generic AGT policy-decision adapters plus an
+  AGT-compatible fail-closed batch sink.
 - Add TypeScript usage/cost construction, coverage-labelled rollups, and
   bounded-cardinality OpenTelemetry metric projection.
 - Add a TypeScript evidence accumulator and adopt RFC 8785 JCS for reproducible

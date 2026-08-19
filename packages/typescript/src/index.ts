@@ -1,3 +1,4 @@
+export * from "./adapters.js";
 export * from "./client.js";
 export * from "./evidence.js";
 export * from "./factory.js";
