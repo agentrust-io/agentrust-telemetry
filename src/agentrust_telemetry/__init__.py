@@ -3,7 +3,10 @@
 from .adapters import (
     AgtGovernanceEventSink,
     EventFactory,
+    agt_approval_request,
+    agt_approval_resolution,
     agt_policy_decision,
+    agt_policy_decision_record,
     cedar_policy_decision,
     opa_decision_log,
 )
@@ -46,7 +49,10 @@ __all__ = [
     "TraceConfiguration",
     "TraceFinalizationError",
     "active_context_ids",
+    "agt_approval_request",
+    "agt_approval_resolution",
     "agt_policy_decision",
+    "agt_policy_decision_record",
     "cedar_policy_decision",
     "extract_context",
     "inject_context",
