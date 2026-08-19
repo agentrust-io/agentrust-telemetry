@@ -103,6 +103,7 @@ python examples/governed_workflow.py
 
 - [Architecture](docs/architecture.md)
 - [OpenTelemetry projection](docs/otel-projection.md)
+- [OpenTelemetry GenAI compatibility](docs/otel-genai-compatibility.md)
 - [Action execution events](docs/action-events.md)
 - [Data-flow classification](docs/data-flow-classification.md)
 - [Usage and cost attribution](docs/usage-attribution.md)

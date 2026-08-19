@@ -8,6 +8,7 @@
 - Structured-log projection contract.
 - Reproducible package and CI gates.
 - Per-call usage facts and coverage-labelled per-agent/workflow cost rollups.
+- Executable OpenTelemetry GenAI compatibility matrix pinned to upstream source.
 
 ## Next
 
