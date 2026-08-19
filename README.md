@@ -129,6 +129,7 @@ python examples/governed_workflow.py
 - [Roadmap](ROADMAP.md)
 - [Security](SECURITY.md)
 - [Governance](GOVERNANCE.md)
+- [Releasing](RELEASING.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## What this project does not provide
