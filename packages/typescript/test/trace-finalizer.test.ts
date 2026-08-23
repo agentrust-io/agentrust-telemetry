@@ -27,11 +27,17 @@ test("tool transcript uses the shared RFC 8785 sequence/event digest", () => {
 });
 test("linked approval resolves a challenge while an unrelated approval does not", () => {
   const policy = fixture("policy-decision.json"); policy.decision = "challenge";
-  const approval = fixture("approval.json"); approval.event_type = "approval.approved"; approval.policy_event_id = policy.event_id;
-  const make = (item: NormalizedEvent) => { const accumulator = new EvidenceAccumulator("run-governed-sdlc-001", validator); accumulator.append(policy); accumulator.append(item); accumulator.append(fixture("data-flow.json")); return finalizeTrace(accumulator.seal("complete"), config, {signingKey: "private", codec: new RecordingCodec()}); };
-  assert.equal((make(approval).appraisal as Record<string, unknown>).status, "affirming");
-  approval.policy_event_id = "018f0f7d-7a13-7cc2-8000-000000000099"; approval.event_id = "018f0f7d-7a13-7cc2-8000-000000000098";
+  const request = fixture("approval.json"); Object.assign(request, {event_type: "approval.requested", event_id: "018f0f7d-7a13-7cc2-8000-000000000010", policy_event_id: policy.event_id, chain_id: "operators", chain_version: "3", expires_at_unix_nano: "1787080100000000000", time_unix_nano: "1787079500000000000"});
+  const approval = fixture("approval.json"); Object.assign(approval, {event_type: "approval.approved", policy_event_id: policy.event_id, chain_id: request.chain_id, chain_version: request.chain_version, expires_at_unix_nano: request.expires_at_unix_nano});
+  const make = (...items: NormalizedEvent[]) => { const accumulator = new EvidenceAccumulator("run-governed-sdlc-001", validator); accumulator.append(policy); items.forEach((item) => accumulator.append(item)); accumulator.append(fixture("data-flow.json")); return finalizeTrace(accumulator.seal("complete"), config, {signingKey: "private", codec: new RecordingCodec()}); };
+  assert.equal((make(request, approval).appraisal as Record<string, unknown>).status, "affirming");
   assert.equal((make(approval).appraisal as Record<string, unknown>).status, "warning");
+  approval.policy_event_id = "018f0f7d-7a13-7cc2-8000-000000000099"; approval.event_id = "018f0f7d-7a13-7cc2-8000-000000000098";
+  assert.equal((make(request, approval).appraisal as Record<string, unknown>).status, "warning");
+  approval.policy_event_id = policy.event_id; approval.action_digest = {algorithm: "sha256", value: "d".repeat(64)};
+  assert.equal((make(request, approval).appraisal as Record<string, unknown>).status, "warning");
+  approval.action_digest = request.action_digest; approval.time_unix_nano = "1787080100000000001";
+  assert.equal((make(request, approval).appraisal as Record<string, unknown>).status, "warning");
 });
 test("finalization refuses incomplete evidence, conflicts, unranked data, and missing trust inputs", () => {
   const open = new EvidenceAccumulator("run-governed-sdlc-001", validator); open.append(fixture("policy-decision.json"));
