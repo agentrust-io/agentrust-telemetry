@@ -91,11 +91,31 @@ class TraceAdapterTests(unittest.TestCase):
     def test_linked_terminal_approval_resolves_policy_challenge(self):
         policy = fixture("policy-decision.json")
         policy["decision"] = "challenge"
+        request = fixture("approval.json")
+        request.update(
+            {
+                "event_type": "approval.requested",
+                "event_id": "018f0f7d-7a13-7cc2-8000-000000000010",
+                "policy_event_id": policy["event_id"],
+                "chain_id": "operators",
+                "chain_version": "3",
+                "expires_at_unix_nano": "1787080100000000000",
+                "time_unix_nano": "1787079500000000000",
+            }
+        )
         approval = fixture("approval.json")
-        approval["event_type"] = "approval.approved"
-        approval["policy_event_id"] = policy["event_id"]
+        approval.update(
+            {
+                "event_type": "approval.approved",
+                "policy_event_id": policy["event_id"],
+                "chain_id": request["chain_id"],
+                "chain_version": request["chain_version"],
+                "expires_at_unix_nano": request["expires_at_unix_nano"],
+            }
+        )
         accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
         accumulator.append(policy)
+        accumulator.append(request)
         accumulator.append(approval)
         accumulator.append(fixture("data-flow.json"))
         record = finalize_trace(
@@ -107,6 +127,52 @@ class TraceAdapterTests(unittest.TestCase):
 
         approval["policy_event_id"] = "018f0f7d-7a13-7cc2-8000-000000000099"
         approval["event_id"] = "018f0f7d-7a13-7cc2-8000-000000000098"
+        accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
+        accumulator.append(policy)
+        accumulator.append(request)
+        accumulator.append(approval)
+        accumulator.append(fixture("data-flow.json"))
+        record = finalize_trace(
+            accumulator.seal(completeness="complete"),
+            self.config,
+            signing_key=self.key,
+        )
+        self.assertEqual(record["appraisal"]["status"], "warning")
+
+        approval["policy_event_id"] = policy["event_id"]
+        approval["action_digest"] = {
+            "algorithm": "sha256",
+            "value": "d" * 64,
+        }
+        accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
+        for event in (policy, request, approval, fixture("data-flow.json")):
+            accumulator.append(event)
+        record = finalize_trace(
+            accumulator.seal(completeness="complete"),
+            self.config,
+            signing_key=self.key,
+        )
+        self.assertEqual(record["appraisal"]["status"], "warning")
+
+        approval["action_digest"] = request["action_digest"]
+        approval["time_unix_nano"] = "1787080100000000001"
+        accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
+        for event in (policy, request, approval, fixture("data-flow.json")):
+            accumulator.append(event)
+        record = finalize_trace(
+            accumulator.seal(completeness="complete"),
+            self.config,
+            signing_key=self.key,
+        )
+        self.assertEqual(record["appraisal"]["status"], "warning")
+
+    def test_unbound_or_expired_approval_cannot_resolve_policy_challenge(self):
+        policy = fixture("policy-decision.json")
+        policy["decision"] = "challenge"
+        approval = fixture("approval.json")
+        approval["policy_event_id"] = policy["event_id"]
+
+        # The old derivation accepted this terminal event on its own.
         accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
         accumulator.append(policy)
         accumulator.append(approval)

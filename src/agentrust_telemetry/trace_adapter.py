@@ -187,11 +187,7 @@ def _appraisal(events: list[dict[str, Any]]) -> str:
         {"approval.rejected", "approval.expired", "approval.execution_failed"}
     ):
         return "contraindicated"
-    approved_policy_events = {
-        event["policy_event_id"]
-        for event in approvals
-        if event["event_type"] == "approval.approved" and "policy_event_id" in event
-    }
+    approved_policy_events = _bound_approved_policy_events(approvals)
     unresolved_challenges = {
         event_id
         for event_id, decision in decisions.items()
@@ -202,6 +198,44 @@ def _appraisal(events: list[dict[str, Any]]) -> str:
     if decisions or approval_types:
         return "affirming"
     return "none"
+
+
+def _bound_approved_policy_events(approvals: list[dict[str, Any]]) -> set[str]:
+    """Return challenges resolved by a complete, unexpired request/resolution pair."""
+    requests = [
+        event for event in approvals if event["event_type"] == "approval.requested"
+    ]
+    resolved: set[str] = set()
+    binding_fields = (
+        "approval_id",
+        "policy_event_id",
+        "action_digest",
+        "chain_id",
+        "chain_version",
+        "requested_at_unix_nano",
+        "expires_at_unix_nano",
+    )
+    for approval in approvals:
+        if approval["event_type"] != "approval.approved":
+            continue
+        for request in requests:
+            if any(
+                field not in approval
+                or field not in request
+                or approval[field] != request[field]
+                for field in binding_fields
+            ):
+                continue
+            try:
+                requested_at = int(request["requested_at_unix_nano"])
+                approved_at = int(approval["time_unix_nano"])
+                expires_at = int(request["expires_at_unix_nano"])
+            except (TypeError, ValueError):
+                continue
+            if requested_at <= approved_at <= expires_at:
+                resolved.add(str(approval["policy_event_id"]))
+                break
+    return resolved
 
 
 def _tool_transcript(snapshot: EvidenceSnapshot) -> dict[str, Any] | None:

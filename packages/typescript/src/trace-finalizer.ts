@@ -45,6 +45,36 @@ function requireFinalizable(snapshot: EvidenceSnapshot, config: TraceConfigurati
 }
 function policyBinding(events: readonly NormalizedEvent[]): [string, string] { const decisions = events.filter((event) => event.event_type === "policy.decision"); if (!decisions.length) throw new TraceFinalizationError("no policy decision evidence is present"); const bindings = decisions.map((event) => (event.policy as Record<string, unknown>).bundle_digest as Record<string, unknown> | undefined); if (bindings.some((value) => !value)) throw new TraceFinalizationError("every policy decision must carry bundle_digest"); const algorithms = new Set(bindings.map((value) => String(value!.algorithm))); const unsupported = [...algorithms].filter((value) => !new Set(["sha256", "sha384"]).has(value)).sort(); if (unsupported.length) throw new TraceFinalizationError(`TRACE does not support observed policy digest algorithms: ${unsupported.join(", ")}`); const bundles = new Set(bindings.map((value) => `${String(value!.algorithm)}:${String(value!.value)}`)); if (bundles.size !== 1) throw new TraceFinalizationError("conflicting policy bundle digests are present"); const modes = new Set(decisions.map((event) => String(event.enforcement_mode))); if (modes.size !== 1) throw new TraceFinalizationError("conflicting policy enforcement modes are present"); return [[...bundles][0]!, new Map([["enforce", "enforce"], ["monitor", "advisory"], ["disabled", "declared"]]).get([...modes][0]!)!]; }
 function highestDataClass(events: readonly NormalizedEvent[], config: TraceConfiguration): string { const flows = events.filter((event) => event.event_type === "data_flow.observed"); if (!flows.length) throw new TraceFinalizationError("no classified data-flow evidence is present"); const classifications = flows.map((event) => event.classification as Record<string, unknown>); if (classifications.some((value) => value.taxonomy !== config.classificationTaxonomy)) throw new TraceFinalizationError("data-flow taxonomy conflicts with TRACE configuration"); const rank = new Map(config.classificationOrder.map((value, index) => [value, index])); const values = classifications.map((value) => String(value.value)); const unknown = [...new Set(values.filter((value) => !rank.has(value)))].sort(); if (unknown.length) throw new TraceFinalizationError(`unranked data classifications are present: ${unknown.join(", ")}`); return values.reduce((highest, value) => rank.get(value)! > rank.get(highest)! ? value : highest); }
-function appraisal(events: readonly NormalizedEvent[]): string { const decisions = new Map(events.filter((event) => event.event_type === "policy.decision").map((event) => [event.event_id, String(event.decision)])); const approvals = events.filter((event) => event.event_type.startsWith("approval.")); const types = new Set(approvals.map((event) => event.event_type)); if ([...decisions.values()].some((value) => value === "deny" || value === "error") || ["approval.rejected", "approval.expired", "approval.execution_failed"].some((value) => types.has(value))) return "contraindicated"; const approved = new Set(approvals.filter((event) => event.event_type === "approval.approved" && typeof event.policy_event_id === "string").map((event) => String(event.policy_event_id))); if ([...decisions].some(([id, value]) => value === "challenge" && !approved.has(id)) || types.has("approval.cancelled")) return "warning"; return decisions.size || approvals.length ? "affirming" : "none"; }
+function appraisal(events: readonly NormalizedEvent[]): string {
+  const decisions = new Map(events.filter((event) => event.event_type === "policy.decision").map((event) => [event.event_id, String(event.decision)]));
+  const approvals = events.filter((event) => event.event_type.startsWith("approval."));
+  const types = new Set(approvals.map((event) => event.event_type));
+  if ([...decisions.values()].some((value) => value === "deny" || value === "error") || ["approval.rejected", "approval.expired", "approval.execution_failed"].some((value) => types.has(value))) return "contraindicated";
+  const approved = boundApprovedPolicyEvents(approvals);
+  if ([...decisions].some(([id, value]) => value === "challenge" && !approved.has(id)) || types.has("approval.cancelled")) return "warning";
+  return decisions.size || approvals.length ? "affirming" : "none";
+}
+function boundApprovedPolicyEvents(approvals: readonly NormalizedEvent[]): Set<string> {
+  const requests = approvals.filter((event) => event.event_type === "approval.requested");
+  const bindingFields = ["approval_id", "policy_event_id", "action_digest", "chain_id", "chain_version", "requested_at_unix_nano", "expires_at_unix_nano"] as const;
+  const resolved = new Set<string>();
+  for (const approval of approvals.filter((event) => event.event_type === "approval.approved")) {
+    for (const request of requests) {
+      if (bindingFields.some((field) => approval[field] === undefined || request[field] === undefined || JSON.stringify(approval[field]) !== JSON.stringify(request[field]))) continue;
+      try {
+        const requestedAt = BigInt(request.requested_at_unix_nano as string);
+        const approvedAt = BigInt(approval.time_unix_nano);
+        const expiresAt = BigInt(request.expires_at_unix_nano as string);
+        if (requestedAt <= approvedAt && approvedAt <= expiresAt) {
+          resolved.add(String(approval.policy_event_id));
+          break;
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+  return resolved;
+}
 function toolTranscript(snapshot: EvidenceSnapshot): Record<string, unknown> | undefined { const actions = snapshot.entries.filter((entry) => entry.event.event_type === "action.executed").map((entry) => ({sequence: entry.sequence, event: entry.event})); if (!actions.length) return undefined; const canonical = canonicalize(actions); if (canonical === undefined) throw new TraceFinalizationError("tool transcript cannot be canonicalized"); return {hash: `sha256:${createHash("sha256").update(canonical, "utf8").digest("hex")}`, call_count: actions.length}; }
 function latestSeconds(events: readonly NormalizedEvent[]): number { const latest = events.reduce((value, event) => { const current = BigInt(event.time_unix_nano); return current > value ? current : value; }, 0n) / 1_000_000_000n; if (latest > BigInt(Number.MAX_SAFE_INTEGER)) throw new TraceFinalizationError("TRACE issuance time exceeds the JavaScript safe-integer range"); return Number(latest); }
