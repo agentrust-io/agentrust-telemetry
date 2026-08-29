@@ -11,6 +11,7 @@ except ImportError:  # Python 3.10 development tooling
 
 
 ROOT = Path(__file__).resolve().parents[1]
+EXPECTED_NPM_NAME = "@agentrust-io/telemetry"
 
 
 def ecosystem_versions(contract: str) -> tuple[str, str]:
@@ -43,15 +44,25 @@ def main() -> int:
     except ValueError as error:
         print(f"FAIL {error}", file=sys.stderr)
         return 1
-    npm_package = json.loads(
+    npm_manifest = json.loads(
         (ROOT / "packages" / "typescript" / "package.json").read_text(encoding="utf-8")
-    )["version"]
-    if package == init_version == expected_package and npm_package == expected_npm:
-        print(f"PASS contract={contract} python={package} npm={npm_package}")
+    )
+    npm_name = npm_manifest["name"]
+    npm_package = npm_manifest["version"]
+    if (
+        package == init_version == expected_package
+        and npm_package == expected_npm
+        and npm_name == EXPECTED_NPM_NAME
+    ):
+        print(
+            f"PASS contract={contract} python={package} "
+            f"npm_name={npm_name} npm={npm_package}"
+        )
         return 0
     print(
         f"FAIL version drift contract={contract} expected_package={expected_package} "
-        f"pyproject={package} __init__={init_version} expected_npm={expected_npm} npm={npm_package}",
+        f"pyproject={package} __init__={init_version} expected_npm_name={EXPECTED_NPM_NAME} "
+        f"npm_name={npm_name} expected_npm={expected_npm} npm={npm_package}",
         file=sys.stderr,
     )
     return 1

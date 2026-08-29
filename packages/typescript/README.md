@@ -1,4 +1,4 @@
-# `@agentrust/telemetry`
+# `@agentrust-io/telemetry`
 
 TypeScript reference SDK for the AgentTrust Telemetry `0.1.0-alpha.1` contract.
 
