@@ -15,14 +15,14 @@ Configure PyPI pending trusted publishing with:
 - workflow: `release.yml`
 - environment: `pypi`
 
-Configure the npm trusted publisher for `@agentrust/telemetry` with:
+Configure the npm trusted publisher for `@agentrust-io/telemetry` with:
 
 - organization/repository: `agentrust-io/agentrust-telemetry`
 - workflow: `release.yml`
 - environment: `npm`
 - allowed action: `npm publish`
 
-The npm package must be owned by the AgentTrust npm organization before its
+The npm package must be owned by the `agentrust-io` npm organization before its
 trusted publisher can be configured. If npm does not expose publisher settings
 until the first version exists, bootstrap only that first package ownership
 using npm's interactive 2FA flow, then configure trusted publishing before any

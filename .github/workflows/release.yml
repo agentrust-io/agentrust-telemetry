@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: npm
-      url: https://www.npmjs.com/package/@agentrust/telemetry
+      url: https://www.npmjs.com/package/@agentrust-io/telemetry
     permissions:
       id-token: write
     steps:
