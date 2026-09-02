@@ -55,7 +55,7 @@ class RepositoryGateTests(unittest.TestCase):
 
     def test_contract_versions_map_to_ecosystem_spellings(self):
         cases = {
-            "0.1.0-dev": ("0.1.0.dev0", "0.1.0-dev.0"),
+            "0.1.0-alpha.1": ("0.1.0.dev0", "0.1.0-alpha.1.0"),
             "0.1.0-alpha.1": ("0.1.0a1", "0.1.0-alpha.1"),
             "0.1.0-beta.2": ("0.1.0b2", "0.1.0-beta.2"),
             "0.1.0-rc.3": ("0.1.0rc3", "0.1.0-rc.3"),

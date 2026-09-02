@@ -23,5 +23,5 @@
   cross-language JSON behavior.
 - Add the pre-alpha TypeScript reference SDK and shared conformance gates.
 
-- Initial `0.1.0-dev` event contract and conformance fixtures.
+- Initial `0.1.0-alpha.1` event contract and conformance fixtures.
 - Initial Python reference SDK with schema/privacy validation and OTel span-event projection.
