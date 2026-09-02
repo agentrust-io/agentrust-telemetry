@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.2 - 2026-09-02
+
+- Align the wire `spec_version` with `spec/VERSION`; the schema previously
+  pinned a const that appeared nowhere in the packaging.
+- Move the schema `$id` off `agentrust.io`, a domain we do not own, to
+  `agentrust-io.com`.
+- Derive the npm dist-tag from `spec/VERSION` so a prerelease can never publish
+  under `latest`.
+
 ## 0.1.0-alpha.1 - 2026-08-19
 
 - Add TypeScript TRACE finalization through a caller-supplied official codec and
@@ -23,5 +32,5 @@
   cross-language JSON behavior.
 - Add the pre-alpha TypeScript reference SDK and shared conformance gates.
 
-- Initial `0.1.0-alpha.1` event contract and conformance fixtures.
+- Initial `0.1.0-alpha.2` event contract and conformance fixtures.
 - Initial Python reference SDK with schema/privacy validation and OTel span-event projection.

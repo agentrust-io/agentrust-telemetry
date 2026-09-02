@@ -55,7 +55,7 @@ class EventFactory:
             raise ValueError(f"payload cannot override envelope fields: {collision}")
         timestamp = self._clock_ns() if time_unix_nano is None else time_unix_nano
         event: dict[str, Any] = {
-            "spec_version": "0.1.0-alpha.1",
+            "spec_version": "0.1.0-alpha.2",
             "event_id": event_id or str(self._event_id_factory()),
             "event_type": event_type,
             "time_unix_nano": _unix_nano(timestamp),

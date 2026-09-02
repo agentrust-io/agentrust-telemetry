@@ -1,6 +1,6 @@
 # `@agentrust-io/telemetry`
 
-TypeScript reference SDK for the AgentTrust Telemetry `0.1.0-alpha.1` contract.
+TypeScript reference SDK for the AgentTrust Telemetry `0.1.0-alpha.2` contract.
 
 This alpha Node package validates the same closed schemas and metadata-only
 privacy profile as the Python SDK. It supplies event construction, caller-owned
