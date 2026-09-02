@@ -46,7 +46,7 @@ export class SchemaValidator {
   }
 
   #compile(ajv: InstanceType<typeof Ajv2020>, name: string): ValidateFunction {
-    const id = `https://agentrust.io/telemetry/v0.1/schema/${name}`;
+    const id = `https://agentrust-io.com/telemetry/v0.1/schema/${name}`;
     const validator = ajv.getSchema(id);
     if (!validator) throw new EventValidationError(`required schema is missing: ${name}`);
     return validator;
