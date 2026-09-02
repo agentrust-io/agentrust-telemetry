@@ -44,5 +44,16 @@ subsequent release. Never store an npm publish token in GitHub.
 
 The workflow fails closed if the tag differs from the contract version. It
 builds each distribution once, sends the same artifacts to the registries, and
-attaches them to the GitHub release. PyPI and npm create registry provenance
+attaches them to the GitHub release.
+
+The npm dist-tag is derived from `spec/VERSION` by `tools/npm_dist_tag.py`, so a
+prerelease publishes under `alpha`, `beta`, `rc` or `dev` and only a stable
+version publishes under `latest`. npm refuses an untagged prerelease publish
+outright, and an untagged stable publish would move `latest`, so nothing here is
+left to the person running the release. If you ever must publish by hand, pass
+the same tag: `npm publish --tag "$(python tools/npm_dist_tag.py)"`.
+
+Note that npm sets `latest` on a package's very first published version whatever
+`--tag` says. That is expected on a bootstrap publish and corrects itself when
+the first stable version ships. PyPI and npm create registry provenance
 through trusted publishing; GitHub also attests the downloadable release assets.

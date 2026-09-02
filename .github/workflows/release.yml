@@ -11,6 +11,8 @@ jobs:
   build:
     if: github.event.release.target_commitish == 'main'
     runs-on: ubuntu-latest
+    outputs:
+      npm_tag: ${{ steps.npm_tag.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -29,6 +31,9 @@ jobs:
         run: |
           python tools/check_versions.py
           python tools/check_release_tag.py "${{ github.event.release.tag_name }}"
+      - name: Derive npm dist-tag from the contract version
+        id: npm_tag
+        run: echo "tag=$(python tools/npm_dist_tag.py)" >> "$GITHUB_OUTPUT"
       - name: Build and test Python distributions
         run: |
           python -m pip install --upgrade pip
@@ -89,7 +94,7 @@ jobs:
           name: npm-distribution
           path: npm-dist
       - name: Publish to npm with trusted publishing
-        run: npm publish npm-dist/*.tgz --access public
+        run: npm publish npm-dist/*.tgz --access public --tag "${{ needs.build.outputs.npm_tag }}"
 
   release-assets:
     needs: [publish-pypi, publish-npm]
