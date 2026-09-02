@@ -21,6 +21,7 @@ check_otel_compatibility = load_tool("check_otel_compatibility")
 check_versions = load_tool("check_versions")
 check_release_tag = load_tool("check_release_tag")
 check_typescript_schemas = load_tool("check_typescript_schemas")
+npm_dist_tag = load_tool("npm_dist_tag")
 
 
 class RepositoryGateTests(unittest.TestCase):
@@ -134,6 +135,29 @@ class RepositoryGateTests(unittest.TestCase):
                 self.assertIn("on", document)
                 self.assertIn("jobs", document)
 
+
+    def test_npm_dist_tag_never_moves_latest_for_a_prerelease(self):
+        for contract, expected in (
+            ("1.0.0", "latest"),
+            ("0.1.0-alpha.1", "alpha"),
+            ("0.2.0-beta.3", "beta"),
+            ("1.0.0-rc.1", "rc"),
+            ("0.1.0-dev", "dev"),
+        ):
+            with self.subTest(contract=contract):
+                self.assertEqual(npm_dist_tag.dist_tag(contract), expected)
+
+    def test_npm_dist_tag_rejects_an_unsupported_version(self):
+        with self.assertRaises(ValueError):
+            npm_dist_tag.dist_tag("0.1")
+
+    def test_npm_dist_tag_matches_the_declared_contract(self):
+        contract = (ROOT / "spec" / "VERSION").read_text(encoding="utf-8").strip()
+        _, npm_version = check_versions.ecosystem_versions(contract)
+        tag = npm_dist_tag.dist_tag(contract)
+        # A prerelease must never publish under latest, which is what an
+        # untagged npm publish would do.
+        self.assertEqual(tag == "latest", "-" not in npm_version)
 
 if __name__ == "__main__":
     unittest.main()

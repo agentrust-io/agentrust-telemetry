@@ -13,14 +13,18 @@ except ImportError:  # Python 3.10 development tooling
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_NPM_NAME = "@agentrust-io/telemetry"
 
+# The one grammar for a contract version. tools/npm_dist_tag.py reads the phase
+# group from this same pattern, so the spellings accepted by the version gate
+# and the dist-tag the release publishes under cannot diverge.
+CONTRACT_PATTERN = re.compile(
+    r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+    r"(?:-(dev|alpha|beta|rc)(?:\.(0|[1-9]\d*))?)?"
+)
+
 
 def ecosystem_versions(contract: str) -> tuple[str, str]:
     """Map the contract SemVer spelling to Python and npm package versions."""
-    match = re.fullmatch(
-        r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
-        r"(?:-(dev|alpha|beta|rc)(?:\.(0|[1-9]\d*))?)?",
-        contract,
-    )
+    match = CONTRACT_PATTERN.fullmatch(contract)
     if not match:
         raise ValueError(f"unsupported contract version: {contract}")
     major, minor, patch, phase, sequence = match.groups()
