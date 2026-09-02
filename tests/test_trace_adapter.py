@@ -74,7 +74,7 @@ class TraceAdapterTests(unittest.TestCase):
         self.assertRegex(record["tool_transcript"]["hash"], r"^sha256:[0-9a-f]{64}$")
         self.assertEqual(
             record["tool_transcript"]["hash"],
-            "sha256:3ef76a71752a93a3544873e0199b3aa5c2297f857b605e8335bf43728169128c",
+            "sha256:f3d2eae89a35a5671dd125cf25f300463cfbc31a1411933828eb81b94797e534",
         )
 
         changed = fixture("action.json")

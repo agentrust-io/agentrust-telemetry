@@ -14,7 +14,7 @@ class PrintLogEmitter:
 
 
 event = {
-    "spec_version": "0.1.0-alpha.1",
+    "spec_version": "0.1.0-alpha.2",
     "event_id": str(uuid.uuid4()),
     "event_type": "policy.decision",
     "time_unix_nano": str(time.time_ns()),

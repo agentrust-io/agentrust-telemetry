@@ -1,6 +1,6 @@
 # OpenTelemetry projection profile
 
-Status: experimental for contract `0.1.0-alpha.1`.
+Status: experimental for contract `0.1.0-alpha.2`.
 
 The normalized JSON event is the source contract. OpenTelemetry is a projection, not an alternative event model.
 

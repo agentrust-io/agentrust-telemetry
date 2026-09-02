@@ -56,8 +56,13 @@ class RepositoryGateTests(unittest.TestCase):
 
     def test_contract_versions_map_to_ecosystem_spellings(self):
         cases = {
-            "0.1.0-alpha.1": ("0.1.0.dev0", "0.1.0-alpha.1.0"),
+            # The dev case was previously a dead entry: its key duplicated the
+            # alpha key below, so Python discarded it and the dev phase was never
+            # exercised. Its npm spelling was wrong too, "0.1.0-alpha.1.0", which
+            # ecosystem_versions never produces.
+            "0.1.0-dev": ("0.1.0.dev0", "0.1.0-dev.0"),
             "0.1.0-alpha.1": ("0.1.0a1", "0.1.0-alpha.1"),
+            "0.1.0-alpha.2": ("0.1.0a2", "0.1.0-alpha.2"),
             "0.1.0-beta.2": ("0.1.0b2", "0.1.0-beta.2"),
             "0.1.0-rc.3": ("0.1.0rc3", "0.1.0-rc.3"),
             "0.1.0": ("0.1.0", "0.1.0"),
@@ -71,10 +76,10 @@ class RepositoryGateTests(unittest.TestCase):
             check_versions.ecosystem_versions("0.1")
 
     def test_release_tag_must_match_contract(self):
-        self.assertEqual(check_release_tag.validate_tag("v0.1.0-alpha.1"), [])
+        self.assertEqual(check_release_tag.validate_tag("v0.1.0-alpha.2"), [])
         self.assertEqual(
             check_release_tag.validate_tag("v0.1.0"),
-            ["release tag 'v0.1.0' must equal 'v0.1.0-alpha.1'"],
+            ["release tag 'v0.1.0' must equal 'v0.1.0-alpha.2'"],
         )
 
     def test_otel_matrix_matches_shipped_projection(self):
@@ -139,7 +144,7 @@ class RepositoryGateTests(unittest.TestCase):
     def test_npm_dist_tag_never_moves_latest_for_a_prerelease(self):
         for contract, expected in (
             ("1.0.0", "latest"),
-            ("0.1.0-alpha.1", "alpha"),
+            ("0.1.0-alpha.2", "alpha"),
             ("0.2.0-beta.3", "beta"),
             ("1.0.0-rc.1", "rc"),
             ("0.1.0-dev", "dev"),

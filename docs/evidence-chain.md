@@ -1,6 +1,6 @@
 # Evidence chain profile
 
-Status: experimental `rfc8785-jcs-v1` for contract `0.1.0-alpha.1`.
+Status: experimental `rfc8785-jcs-v1` for contract `0.1.0-alpha.2`.
 
 Each accepted event is validated and privacy-checked before entering the chain.
 Sequence numbers start at zero and represent acceptance order, not event time.
