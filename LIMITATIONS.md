@@ -1,6 +1,6 @@
 # Limitations
 
-Current `0.1.0-dev` limitations:
+Current `0.1.0-alpha.1` limitations:
 
 - The contract and SDK are experimental and may change incompatibly.
 - A Python reference SDK and a TypeScript reference SDK (`packages/typescript/`)
