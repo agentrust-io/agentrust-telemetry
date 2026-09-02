@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agentrust.io/telemetry/v0.1/schema/data-flow.schema.json",
+  "$id": "https://agentrust-io.com/telemetry/v0.1/schema/data-flow.schema.json",
   "allOf": [
     {"$ref": "envelope.schema.json"},
     {
