@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 from copy import deepcopy
 from dataclasses import dataclass
-from threading import Lock
+from threading import Lock, get_ident
 from typing import Any, Callable, Literal
 
 import rfc8785
@@ -47,6 +47,15 @@ class EvidenceAccumulator:
     A durable callback must be idempotent by ``event_id`` and return ``True`` only
     after the entry is durably committed. Callback failure leaves local state
     unchanged so callers can retry the same event.
+
+    ``append`` and ``seal`` are not reentrant: a durable callback (or anything
+    else running on the same thread while one of those calls is in progress)
+    must not call back into ``append`` or ``seal``. Doing so raises
+    :class:`EvidenceError` instead of deadlocking or silently double-writing a
+    sequence position. Genuine concurrent calls from other threads are still
+    safely serialized. ``snapshot`` has no such restriction: it only reads
+    already-committed entries, so it may be called reentrantly (it simply will
+    not observe an append that has not finished committing yet).
     """
 
     def __init__(
@@ -70,6 +79,15 @@ class EvidenceAccumulator:
         self._sealed = False
         self._completeness: Completeness = "unknown"
         self._lock = Lock()
+        # Identifies the thread currently inside the append/seal critical
+        # section, if any. `Lock` is not reentrant: without this check, a
+        # durable callback (or anything else) that calls back into `append`
+        # or `seal` on the same thread would deadlock forever rather than
+        # failing loudly. Compared under the GIL, so plain attribute
+        # read/write here is race-free the same way `threading.RLock`'s
+        # pure-Python fallback tracks ownership.
+        self._owner: int | None = None
+
 
     @property
     def mode(self) -> Literal["memory", "callback"]:
@@ -81,55 +99,79 @@ class EvidenceAccumulator:
         event_copy = deepcopy(event)
         if event_copy["run_id"] != self._run_id:
             raise EvidenceError("event run_id does not match accumulator run_id")
+        if self._owner == get_ident():
+            raise EvidenceError("reentrant evidence mutation is not supported")
+
 
         with self._lock:
-            if self._sealed:
-                raise EvidenceError("evidence run is sealed")
-            event_id = event_copy["event_id"]
-            if event_id in self._event_ids:
-                raise EvidenceError(f"duplicate event_id: {event_id}")
-            if len(self._entries) >= self._max_events:
-                raise EvidenceError(f"evidence run exceeds max_events={self._max_events}")
-
-            sequence = len(self._entries)
-            previous = self._entries[-1].digest if self._entries else None
+            self._owner = get_ident()
             try:
-                digest = _entry_digest(sequence, previous, event_copy)
-            except (TypeError, ValueError, rfc8785.CanonicalizationError) as exc:
-                raise EvidenceError(
-                    f"event_id={event_id} cannot be canonicalized under "
-                    f"{CANONICALIZATION_PROFILE}"
-                ) from exc
-            entry = EvidenceEntry(sequence, event_id, previous, digest, event_copy)
+                if self._sealed:
+                    raise EvidenceError("evidence run is sealed")
+                event_id = event_copy["event_id"]
+                if event_id in self._event_ids:
+                    raise EvidenceError(f"duplicate event_id: {event_id}")
+                if len(self._entries) >= self._max_events:
+                    raise EvidenceError(f"evidence run exceeds max_events={self._max_events}")
 
-            if self._durable_append is not None:
+                sequence = len(self._entries)
+                previous = self._entries[-1].digest if self._entries else None
                 try:
-                    acknowledged = self._durable_append(_copy_entry(entry))
-                except Exception as exc:
-                    raise EvidencePersistenceError(
-                        f"durable evidence callback failed for event_id={event_id}"
-                    ) from exc
-                if acknowledged is not True:
-                    raise EvidencePersistenceError(
-                        f"durable evidence callback did not acknowledge event_id={event_id}"
-                    )
+                    digest = _entry_digest(sequence, previous, event_copy)
+                except (TypeError, ValueError, rfc8785.CanonicalizationError) as exc:
+                    raise EvidenceError(
+                        f"event_id={event_id} cannot be canonicalized under "
+                        f"{CANONICALIZATION_PROFILE}"
 
-            self._entries.append(_copy_entry(entry))
-            self._event_ids.add(event_id)
-            return _copy_entry(entry)
+                    ) from exc
+                entry = EvidenceEntry(sequence, event_id, previous, digest, event_copy)
+
+                if self._durable_append is not None:
+                    try:
+                        acknowledged = self._durable_append(_copy_entry(entry))
+                    except Exception as exc:
+                        raise EvidencePersistenceError(
+                            f"durable evidence callback failed for event_id={event_id}"
+                        ) from exc
+                    if acknowledged is not True:
+                        raise EvidencePersistenceError(
+                            f"durable evidence callback did not acknowledge event_id={event_id}"
+                        )
+
+                self._entries.append(_copy_entry(entry))
+                self._event_ids.add(event_id)
+                return _copy_entry(entry)
+            finally:
+                self._owner = None
+
 
     def seal(self, *, completeness: Completeness) -> EvidenceSnapshot:
         """Close the run with a caller-asserted completeness assessment."""
         if completeness not in ("complete", "incomplete", "unknown"):
             raise EvidenceError(f"unsupported completeness: {completeness!r}")
+        if self._owner == get_ident():
+            raise EvidenceError("reentrant evidence mutation is not supported")
+
         with self._lock:
-            if self._sealed:
-                raise EvidenceError("evidence run is already sealed")
-            self._sealed = True
-            self._completeness = completeness
-            return self._snapshot()
+            self._owner = get_ident()
+            try:
+                if self._sealed:
+                    raise EvidenceError("evidence run is already sealed")
+                self._sealed = True
+                self._completeness = completeness
+                return self._snapshot()
+            finally:
+                self._owner = None
+
 
     def snapshot(self) -> EvidenceSnapshot:
+        # A snapshot only reads already-committed state, so it is safe to let
+        # it run reentrantly on the thread already holding `_lock` (it just
+        # will not see a mutation still in flight). Re-entering `_lock`
+        # itself would deadlock, since it is not a reentrant lock.
+        if self._owner == get_ident():
+            return self._snapshot()
+
         with self._lock:
             return self._snapshot()
 

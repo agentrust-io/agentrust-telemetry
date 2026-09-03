@@ -173,6 +173,66 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(fresh.completeness, "unknown")
         self.assertEqual(fresh.entries[0].event["run_id"], "run-governed-sdlc-001")
 
+
+    def test_reentrant_durable_append_call_is_refused_not_deadlocked(self):
+        accumulator = None
+
+        def durable_append(entry):
+            # A durable backend that (accidentally or otherwise) calls back
+            # into the same accumulator while the outer append() is still in
+            # progress must be refused, not hang the caller forever.
+            accumulator.append(fixture("usage.json"))
+            return True
+
+        accumulator = EvidenceAccumulator(
+            "run-governed-sdlc-001", self.validator, durable_append=durable_append
+        )
+        with self.assertRaises(EvidencePersistenceError):
+            accumulator.append(fixture("policy-decision.json"))
+        self.assertEqual(accumulator.snapshot().entries, ())
+
+        # The accumulator must remain fully usable afterwards: the failed
+        # reentrant attempt must not leave it permanently stuck.
+        clean = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
+        accepted = clean.append(fixture("policy-decision.json"))
+        self.assertEqual(accepted.sequence, 0)
+
+    def test_reentrant_seal_call_is_refused_not_deadlocked(self):
+        accumulator = None
+
+        def durable_append(entry):
+            accumulator.seal(completeness="complete")
+            return True
+
+        accumulator = EvidenceAccumulator(
+            "run-governed-sdlc-001", self.validator, durable_append=durable_append
+        )
+        with self.assertRaises(EvidencePersistenceError):
+            accumulator.append(fixture("policy-decision.json"))
+        snapshot = accumulator.snapshot()
+        self.assertEqual(snapshot.entries, ())
+        self.assertFalse(snapshot.sealed)
+
+    def test_reentrant_snapshot_call_is_safe_and_reflects_committed_state(self):
+        accumulator = None
+        observed = []
+
+        def durable_append(entry):
+            # Reading a snapshot from inside the callback is safe: it must
+            # not deadlock, and it must only see already-committed entries,
+            # not the one still being appended.
+            observed.append(accumulator.snapshot())
+            return True
+
+        accumulator = EvidenceAccumulator(
+            "run-governed-sdlc-001", self.validator, durable_append=durable_append
+        )
+        accepted = accumulator.append(fixture("policy-decision.json"))
+        self.assertEqual(len(observed), 1)
+        self.assertEqual(observed[0].entries, ())
+        self.assertEqual(accumulator.snapshot().entries, (accepted,))
+
+
     def test_callback_and_returned_entry_cannot_mutate_retained_evidence(self):
         callback_entries = []
 
