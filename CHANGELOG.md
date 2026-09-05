@@ -34,3 +34,7 @@
 
 - Initial `0.1.0-alpha.2` event contract and conformance fixtures.
 - Initial Python reference SDK with schema/privacy validation and OTel span-event projection.
+
+### Fixed
+
+- the Python `EvidenceAccumulator` deadlocked forever if `append` or`seal` was called reentrantly on the same thread (for example, from inside a `durable_append` callback). It now raises `EvidenceError` instead, matching the TypeScript SDK's existing reentrancy protection. `snapshot` remains safely callable reentrantly.
