@@ -28,9 +28,14 @@ jobs:
           cache: npm
           cache-dependency-path: packages/typescript/package-lock.json
       - name: Verify release identity
+        env:
+          # Passed through the environment, never interpolated into the shell:
+          # a release tag is attacker-chosen text, and ${{ }} substitution happens
+          # before the shell parses the line.
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           python tools/check_versions.py
-          python tools/check_release_tag.py "${{ github.event.release.tag_name }}"
+          python tools/check_release_tag.py "$RELEASE_TAG"
       - name: Derive npm dist-tag from the contract version
         id: npm_tag
         run: echo "tag=$(python tools/npm_dist_tag.py)" >> "$GITHUB_OUTPUT"
@@ -115,4 +120,6 @@ jobs:
       - name: Attach immutable build outputs to the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" release-assets/* --repo "${{ github.repository }}"
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          TARGET_REPO: ${{ github.repository }}
+        run: gh release upload "$RELEASE_TAG" release-assets/* --repo "$TARGET_REPO"
