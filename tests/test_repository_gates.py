@@ -63,6 +63,7 @@ class RepositoryGateTests(unittest.TestCase):
             "0.1.0-dev": ("0.1.0.dev0", "0.1.0-dev.0"),
             "0.1.0-alpha.1": ("0.1.0a1", "0.1.0-alpha.1"),
             "0.1.0-alpha.2": ("0.1.0a2", "0.1.0-alpha.2"),
+            "0.1.0-alpha.3": ("0.1.0a3", "0.1.0-alpha.3"),
             "0.1.0-beta.2": ("0.1.0b2", "0.1.0-beta.2"),
             "0.1.0-rc.3": ("0.1.0rc3", "0.1.0-rc.3"),
             "0.1.0": ("0.1.0", "0.1.0"),
@@ -76,10 +77,10 @@ class RepositoryGateTests(unittest.TestCase):
             check_versions.ecosystem_versions("0.1")
 
     def test_release_tag_must_match_contract(self):
-        self.assertEqual(check_release_tag.validate_tag("v0.1.0-alpha.2"), [])
+        self.assertEqual(check_release_tag.validate_tag("v0.1.0-alpha.3"), [])
         self.assertEqual(
             check_release_tag.validate_tag("v0.1.0"),
-            ["release tag 'v0.1.0' must equal 'v0.1.0-alpha.2'"],
+            ["release tag 'v0.1.0' must equal 'v0.1.0-alpha.3'"],
         )
 
     def test_otel_matrix_matches_shipped_projection(self):

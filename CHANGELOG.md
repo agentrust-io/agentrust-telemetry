@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.3 - 2026-09-07
+
+### Fixed
+
+- The Python `EvidenceAccumulator` deadlocked forever if `append` or `seal` was
+  called reentrantly on the same thread, for example from inside a
+  `durable_append` callback. Both now raise `EvidenceError`, matching the
+  TypeScript SDK's existing protection. `snapshot` remains safely callable
+  reentrantly.
+- Patch four `fast-uri` advisories in the TypeScript lockfile and stop tag
+  interpolation in `release.yml`.
+- `test_trace_adapter_refusals` used a duck-typed signer double, which
+  `agentrust-trace` 0.10.0 rejects. It now builds a real `Ed25519PrivateKey`, so
+  a clean install of this release runs the full suite against either 0.9 or
+  0.10.
+
+### Changed
+
+- Install CI dependencies from hash-pinned lock files, and add `actionlint`
+  plus a test-environment guard to the workflow gates.
+
 ## 0.1.0-alpha.2 - 2026-09-02
 
 - Align the wire `spec_version` with `spec/VERSION`; the schema previously
@@ -32,9 +53,5 @@
   cross-language JSON behavior.
 - Add the pre-alpha TypeScript reference SDK and shared conformance gates.
 
-- Initial `0.1.0-alpha.2` event contract and conformance fixtures.
+- Initial `0.1.0-alpha.1` event contract and conformance fixtures.
 - Initial Python reference SDK with schema/privacy validation and OTel span-event projection.
-
-### Fixed
-
-- the Python `EvidenceAccumulator` deadlocked forever if `append` or`seal` was called reentrantly on the same thread (for example, from inside a `durable_append` callback). It now raises `EvidenceError` instead, matching the TypeScript SDK's existing reentrancy protection. `snapshot` remains safely callable reentrantly.

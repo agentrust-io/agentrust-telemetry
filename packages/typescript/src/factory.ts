@@ -26,7 +26,7 @@ export class EventFactory {
     if (collisions.length) throw new Error(`payload cannot override envelope fields: ${collisions.join(", ")}`);
     const normalizedPayload = Object.fromEntries(Object.entries(payload).map(([key, value]) => [key, key.endsWith("_at_unix_nano") ? unixNano(value) : value]));
     const event = {
-      spec_version: "0.1.0-alpha.2" as const,
+      spec_version: "0.1.0-alpha.3" as const,
       event_id: fields.eventId ?? this.eventIdFactory(), event_type: eventType,
       time_unix_nano: unixNano(fields.timeUnixNano ?? this.clockNs()),
       run_id: fields.runId, producer: structuredClone(this.#producer), ...normalizedPayload,

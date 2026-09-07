@@ -4,7 +4,7 @@
   "type": "object",
   "required": ["spec_version", "event_id", "event_type", "time_unix_nano", "run_id", "producer"],
   "properties": {
-    "spec_version": {"const": "0.1.0-alpha.2"},
+    "spec_version": {"const": "0.1.0-alpha.3"},
     "event_id": {"$ref": "common.schema.json#/$defs/event_id"},
     "event_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$", "maxLength": 128},
     "time_unix_nano": {"$ref": "common.schema.json#/$defs/time_unix_nano"},

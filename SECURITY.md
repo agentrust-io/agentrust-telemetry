@@ -26,7 +26,7 @@ Include the affected contract/SDK version, an executable reproducer where safe, 
 
 ## Supported versions
 
-No stable release exists. Only the latest `0.1.0-alpha.2` revision will receive fixes until the first published release.
+No stable release exists. Only the latest `0.1.0-alpha.3` revision will receive fixes until the first published release.
 
 ## Runtime boundary
 
