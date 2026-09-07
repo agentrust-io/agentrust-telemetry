@@ -27,8 +27,6 @@ from unittest import mock
 from dataclasses import replace
 from pathlib import Path
 
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -191,6 +189,14 @@ class TraceAdapterRefusalTests(unittest.TestCase):
         still fails when actually used, which is the case this covers: a real
         key whose hardware backing is unavailable at the moment of signing.
         """
+        # Imported here rather than at module scope: this class is skipped
+        # below Python 3.11, where the trace extra and therefore cryptography
+        # are not installed at all, and a module-level import would break
+        # collection before the skip can apply.
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+            Ed25519PrivateKey,
+        )
+
         FailsWhenUsed = mock.MagicMock(spec=Ed25519PrivateKey)
         FailsWhenUsed.sign.side_effect = RuntimeError("hardware signer unavailable")
         FailsWhenUsed.public_key.return_value = self.key.public_key()
