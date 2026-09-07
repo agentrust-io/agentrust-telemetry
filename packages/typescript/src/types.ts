@@ -1,6 +1,6 @@
 export type Scalar = string | number | boolean;
 export type NormalizedEvent = Record<string, unknown> & {
-  spec_version: "0.1.0-alpha.2";
+  spec_version: "0.1.0-alpha.3";
   event_id: string;
   event_type: string;
   time_unix_nano: string;
