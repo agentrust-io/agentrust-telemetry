@@ -41,8 +41,7 @@ jobs:
         run: echo "tag=$(python tools/npm_dist_tag.py)" >> "$GITHUB_OUTPUT"
       - name: Build and test Python distributions
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install build
+          python -m pip install --require-hashes -r requirements/release.txt
           python -m build
           test "$(find dist -maxdepth 1 -type f | wc -l)" -eq 2
           python tools/smoke_wheel.py dist/*.whl

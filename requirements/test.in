@@ -1,0 +1,16 @@
+# Runtime + test dependencies, mirroring [project.dependencies] and the test
+# extra. The python_version markers are kept: this matrix spans 3.10 to 3.13
+# and agentrust-trace is 3.11+, so the lock has to carry the condition rather
+# than resolve it away. Installed with --require-hashes before the local
+# package goes in with --no-deps, because pip cannot hash-pin an editable
+# install in the same invocation. Compile with:
+#   uv pip compile requirements/test.in --generate-hashes --universal \
+#     --python-version 3.10 -o requirements/test.txt
+jsonschema[format]>=4.23,<5
+referencing>=0.35,<1
+rfc8785>=0.1.4,<1
+opentelemetry-sdk>=1.30,<2
+opentelemetry-api>=1.30,<2
+agentrust-trace>=0.9,<1; python_version >= '3.11'
+tomli>=2,<3; python_version < '3.11'
+build
