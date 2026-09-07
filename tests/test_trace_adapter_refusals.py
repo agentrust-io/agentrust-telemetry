@@ -23,8 +23,11 @@ import copy
 import json
 import sys
 import unittest
+from unittest import mock
 from dataclasses import replace
 from pathlib import Path
+
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -176,25 +179,27 @@ class TraceAdapterRefusalTests(unittest.TestCase):
             builtins.__import__ = original
 
     def test_a_failure_inside_official_signing_is_reported_as_one(self):
-        """A key that satisfies the shape check and then fails when used.
+        """A key that satisfies the type check and then fails when used.
 
-        `object()` would not reach here: it is refused earlier for having no
-        `sign`, so a case built that way passes on the wrong refusal.
+        `object()` would not reach here, and neither does a duck type: since
+        agentrust-trace 0.10.0 the signing path requires a real
+        Ed25519PrivateKey rather than anything carrying a `sign` method, so a
+        hand-rolled stand-in is refused for the wrong reason and this test
+        would pass on a refusal it is not about.
+
+        A mock specced to Ed25519PrivateKey satisfies that isinstance check and
+        still fails when actually used, which is the case this covers: a real
+        key whose hardware backing is unavailable at the moment of signing.
         """
-        key = self.key
-
-        class FailsWhenUsed:
-            def sign(self, *args, **kwargs):
-                raise RuntimeError("hardware signer unavailable")
-
-            def public_key(self):
-                return key.public_key()
+        FailsWhenUsed = mock.MagicMock(spec=Ed25519PrivateKey)
+        FailsWhenUsed.sign.side_effect = RuntimeError("hardware signer unavailable")
+        FailsWhenUsed.public_key.return_value = self.key.public_key()
 
         snapshot = self.snapshot(
             [fixture("policy-decision.json"), fixture("data-flow.json")]
         )
         with self.assertRaises(TraceFinalizationError) as caught:
-            finalize_trace(snapshot, self.config, signing_key=FailsWhenUsed())
+            finalize_trace(snapshot, self.config, signing_key=FailsWhenUsed)
         message = str(caught.exception)
         self.assertIn("official TRACE signing or validation failed", message)
         self.assertIn("hardware signer unavailable", message)
