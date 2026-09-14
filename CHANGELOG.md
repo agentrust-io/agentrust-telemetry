@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.4 - 2026-09-14
+
+### Fixed
+
+- `release.yml` passed the built tarball to `npm publish` as `npm-dist/*.tgz`, and npm
+  parses any `a/b` argument as a GitHub shorthand rather than a path. It resolved the
+  tarball's own filename as a repository and failed on `git ls-remote`, so the npm half
+  of a release could never publish. The step now passes `./npm-dist/*.tgz`.
+
+### Changed
+
+- No SDK behaviour changes. The Python and TypeScript packages are identical to
+  0.1.0-alpha.3 apart from the version string, which is inside the hashed envelope and
+  therefore moves every evidence digest. `compatibility/golden/evidence-chain.json` and
+  the cross-language `tool_transcript` assertions are regenerated for it.
+
 ## 0.1.0-alpha.3 - 2026-09-07
 
 ### Fixed

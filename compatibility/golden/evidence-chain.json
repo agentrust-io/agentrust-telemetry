@@ -6,13 +6,13 @@
       "fixture": "policy-decision.json",
       "sequence": 0,
       "previous_digest": null,
-      "digest": "9d93daf8fcfb51b24a68dc108afb474fc4c89a9c3f3716bd13172e2799f099a2"
+      "digest": "19b8a3bbf6f31ab89a242f3f1fb756ba7d0c6d01d75fc113b2186cb789411625"
     },
     {
       "fixture": "usage.json",
       "sequence": 1,
-      "previous_digest": "9d93daf8fcfb51b24a68dc108afb474fc4c89a9c3f3716bd13172e2799f099a2",
-      "digest": "62bdbda86c79281c0cae240abf2fa901b70d9bb407da9021e713e80358d6c7b5"
+      "previous_digest": "19b8a3bbf6f31ab89a242f3f1fb756ba7d0c6d01d75fc113b2186cb789411625",
+      "digest": "7146bc82bcaa817689386fb45ed2d1586f67102af468b95e01fff183b8eed6bb"
     }
   ]
 }
