@@ -1,6 +1,6 @@
 # OpenTelemetry GenAI compatibility
 
-Status: pinned compatibility assessment for AgentTrust contract `0.1.0-alpha.3`.
+Status: pinned compatibility assessment for AgentTrust contract `0.1.0-alpha.4`.
 
 The machine-readable matrix is [`compatibility/otel-genai.json`](../compatibility/otel-genai.json).
 It is pinned to OpenTelemetry's dedicated GenAI semantic-conventions repository
