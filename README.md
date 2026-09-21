@@ -1,5 +1,7 @@
 # AgentTrust Telemetry
 
+Community updates and contributor highlights: [AgenTrust on LinkedIn](https://www.linkedin.com/company/agentrust-io/).
+
 Portable governance telemetry and verifiable evidence for AI-agent runtimes.
 
 This repository defines a backend-neutral contract for policy decisions, approval lifecycles, usage, classified data flows, and evidence lifecycle events. It composes with OpenTelemetry; it is not a tracing backend, policy engine, agent framework, or dashboard.
