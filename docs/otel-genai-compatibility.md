@@ -30,8 +30,13 @@ instance. W3C trace and span context is also native rather than an AgentTrust ex
 
 The `agentrust.usage.tokens` Counter is deliberately **not** represented as
 `gen_ai.client.token.usage`. The pinned OTel convention defines a per-operation
-Histogram with `input` and `output` token types. AgentTrust records additive,
-attribution-scoped facts and also distinguishes cache and reasoning categories.
+Histogram whose well-known token types are `input` and `output` (custom values
+are permitted). The same pinned revision already defines span attributes for
+`gen_ai.usage.cache_read.input_tokens`, `gen_ai.usage.cache_creation.input_tokens`
+and `gen_ai.usage.reasoning.output_tokens`; see the model-span reference above.
+AgentTrust records additive facts attributed to `model_call`, `agent_step`,
+`task`, `agent_run` or `workflow_run`. Its distinction is attribution scope and
+instrument semantics, not the existence of cache or reasoning token categories.
 Applications should retain their existing GenAI instrumentation and use AgentTrust
 events for governance attribution.
 

@@ -33,7 +33,7 @@
     {"agentrust": "agentrust.action.executions", "instrument": "counter", "otel": null, "relation": "extension"},
     {"agentrust": "agentrust.action.duration", "instrument": "histogram", "otel": "gen_ai.execute_tool.duration", "relation": "non_equivalent", "note": "AgentTrust includes non-tool and denied actions and does not claim the GenAI tool metric."},
     {"agentrust": "agentrust.data_flow.events", "instrument": "counter", "otel": null, "relation": "extension"},
-    {"agentrust": "agentrust.usage.tokens", "instrument": "counter", "otel": "gen_ai.client.token.usage", "relation": "non_equivalent", "note": "OTel specifies a histogram per client operation with input/output token type; AgentTrust records additive reported facts across attribution scopes and additional token categories."},
+    {"agentrust": "agentrust.usage.tokens", "instrument": "counter", "otel": "gen_ai.client.token.usage", "relation": "non_equivalent", "note": "OTel specifies a per-client-operation histogram with input/output well-known token types (custom values permitted), and already defines separate cache-read, cache-creation and reasoning span usage attributes. AgentTrust records additive reported facts across attribution scopes; token-category existence is not the distinction."},
     {"agentrust": "agentrust.usage.cost", "instrument": "counter", "otel": null, "relation": "extension", "note": "Includes explicit currency and provenance; the pinned OTel GenAI model has no general cost metric."}
   ],
   "event_families": [
