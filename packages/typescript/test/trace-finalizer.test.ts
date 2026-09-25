@@ -53,3 +53,13 @@ test("codec validation or self-verification failure is fail-closed", () => {
   assert.throws(() => finalizeTrace(snapshot(), config, {signingKey: "private", codec}), TraceFinalizationError);
   assert.deepEqual(codec.calls, ["sign", "validate", "publicKey", "verify"]);
 });
+test("finalizer refuses a snapshot whose entries no longer hash to its chain digest", () => {
+  // The measurement is chainDigest and the appraisal comes from entries; a
+  // deny rewritten to allow after sealing must not be signed as affirming.
+  const edited = snapshot(); (edited.entries[0]!.event as Record<string, unknown>).decision = "allow";
+  assert.throws(() => finalizeTrace(edited, config, {signingKey: "private", codec: new RecordingCodec()}), /evidence chain does not verify/);
+  const dropped = snapshot(); const trimmed = {...dropped, entries: dropped.entries.slice(1)};
+  assert.throws(() => finalizeTrace(trimmed, config, {signingKey: "private", codec: new RecordingCodec()}), /evidence chain does not verify/);
+  const forged = {...snapshot(), chainDigest: "c".repeat(64)};
+  assert.throws(() => finalizeTrace(forged, config, {signingKey: "private", codec: new RecordingCodec()}), /evidence chain does not verify/);
+});

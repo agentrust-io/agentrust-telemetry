@@ -116,6 +116,44 @@ class SdkTests(unittest.TestCase):
         )
         validator.validate(event)
 
+    def test_deeply_nested_input_is_a_validation_error(self):
+        event = fixture("usage.json")
+        nested = {}
+        cursor = nested
+        for _ in range(5000):
+            cursor["x"] = {}
+            cursor = cursor["x"]
+        event["extra"] = nested
+        with self.assertRaisesRegex(EventValidationError, "nesting depth"):
+            self.validator.validate(event)
+
+    def test_self_referencing_input_is_a_validation_error(self):
+        event = fixture("usage.json")
+        event["extra"] = event
+        with self.assertRaisesRegex(EventValidationError, "nesting depth"):
+            self.validator.validate(event)
+
+    def test_non_string_keys_are_a_validation_error(self):
+        for place in ("root", "nested"):
+            with self.subTest(place=place):
+                event = fixture("usage.json")
+                target = event if place == "root" else event["producer"]
+                target[1] = "value"
+                with self.assertRaisesRegex(EventValidationError, "non-string key"):
+                    self.validator.validate(event)
+
+    def test_non_finite_numbers_are_a_validation_error(self):
+        validator = SchemaValidator(
+            ROOT / "spec" / "schema",
+            allowed_attribute_keys=frozenset({"vendor.ratio"}),
+        )
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.subTest(value=value):
+                event = fixture("usage.json")
+                event["attributes"] = {"vendor.ratio": value}
+                with self.assertRaisesRegex(EventValidationError, "finite"):
+                    validator.validate(event)
+
     def test_projection_failures_are_reported_independently(self):
         result = TelemetryClient(
             self.validator,

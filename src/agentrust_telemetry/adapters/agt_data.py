@@ -26,7 +26,7 @@ def agt_data_classification(source: Any) -> ClassificationResult:
     """Map only AGT's ordered sensitivity tier; omit auxiliary label content."""
     classification = _field(source, "classification")
     raw = classification.value if isinstance(classification, Enum) else classification
-    if isinstance(raw, bool) or raw not in _LEVELS:
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)) or raw not in _LEVELS:
         raise ValueError(f"unsupported AGT data classification: {raw!r}")
     return ClassificationResult(
         taxonomy="agt.data_classification.v1",

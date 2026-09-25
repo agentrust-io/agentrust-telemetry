@@ -97,6 +97,28 @@ class AgtAuditAdapterTests(unittest.TestCase):
         )
         self.assertEqual(event["outcome"], "denied")
 
+    def test_structured_decision_or_outcome_is_a_value_error(self):
+        for bad in ([], {}, ["allow"]):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    agt_audit_policy_decision(
+                        self.factory,
+                        audit_entry(policy_decision=bad),
+                        run_id="run-1",
+                        policy_engine_version="1.0.0",
+                        bundle_digest=BUNDLE,
+                        resource_type="tool",
+                    )
+                with self.assertRaises(ValueError):
+                    agt_audit_action(
+                        self.factory,
+                        audit_entry(event_type="tool_invocation", outcome=bad),
+                        run_id="run-1",
+                        action_digest=DIGEST,
+                        action_kind="mcp",
+                        operation="invoke",
+                    )
+
     def test_action_rejects_missing_or_reversed_timing(self):
         with self.assertRaisesRegex(ValueError, "requires duration_ns"):
             agt_audit_action(

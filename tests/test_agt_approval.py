@@ -198,6 +198,27 @@ class AgtApprovalAdapterTests(unittest.TestCase):
             )
             self.assertEqual(event["event_type"], expected)
 
+    def test_structured_outcome_or_verdict_is_a_value_error(self):
+        for bad in ([], {}, ["allow"]):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    agt_approval_resolution(
+                        self.factory,
+                        replace(self.resolution, outcome=bad),
+                        self.request,
+                        run_id="run-1",
+                    )
+                with self.assertRaises(ValueError):
+                    agt_policy_decision_record(
+                        self.factory,
+                        replace(self.policy, verdict=bad),
+                        run_id="run-1",
+                        agent_id="agent-1",
+                        action_type="tool.invoke",
+                        resource_type="tool",
+                        policy_engine_version="1.0.0",
+                        bundle_digest={"algorithm": "sha256", "value": "b" * 64},
+                    )
 
 if __name__ == "__main__":
     unittest.main()

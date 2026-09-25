@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from agentrust_telemetry import (  # noqa: E402
     ContextMismatchError,
+    EventValidationError,
     EvidenceAccumulator,
     EvidenceError,
     EvidencePersistenceError,
@@ -138,7 +139,9 @@ class EvidenceTests(unittest.TestCase):
         accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
         event = fixture("usage.json")
         event["cost"]["amount"] = float("nan")
-        with self.assertRaisesRegex(EvidenceError, "cannot be canonicalized"):
+        # NaN has no JSON form. The validator refuses it before the chain is
+        # reached, as it does every other non-JSON value.
+        with self.assertRaisesRegex(EventValidationError, "not a finite number"):
             accumulator.append(event)
         self.assertEqual(accumulator.snapshot().entries, ())
 

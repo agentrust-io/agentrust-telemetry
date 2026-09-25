@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from importlib.resources import as_file, files
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,32 @@ def _schema_name(event_type: str) -> str:
     if event_type.startswith("evidence."):
         return "evidence.schema.json"
     raise EventValidationError(f"unsupported event_type: {event_type!r}")
+
+
+# Normative events are at most a few levels deep. The bound keeps hostile or
+# self-referencing input from exhausting the stack inside jsonschema or the
+# privacy walk, where it would surface as RecursionError, not a validation error.
+_MAX_DEPTH = 32
+
+
+def _json_shape_error(value: Any) -> str | None:
+    """Return why ``value`` is not a JSON value this validator can walk, if so."""
+    stack: list[tuple[Any, str, int]] = [(value, "$", 0)]
+    while stack:
+        item, path, depth = stack.pop()
+        if depth > _MAX_DEPTH:
+            return f"{path} exceeds the maximum nesting depth of {_MAX_DEPTH}"
+        if isinstance(item, dict):
+            for key, child in item.items():
+                if not isinstance(key, str):
+                    return f"{path} has a non-string key of type {type(key).__name__}"
+                stack.append((child, f"{path}.{key}", depth + 1))
+        elif isinstance(item, list):
+            for index, child in enumerate(item):
+                stack.append((child, f"{path}[{index}]", depth + 1))
+        elif isinstance(item, float) and not math.isfinite(item):
+            return f"{path} is not a finite number"
+    return None
 
 
 def _prohibited_paths(value: Any, prefix: str = "$") -> list[str]:
@@ -81,6 +108,9 @@ class SchemaValidator:
     def validate(self, event: dict[str, Any]) -> None:
         if not isinstance(event, dict):
             raise EventValidationError("event must be an object")
+        shape_error = _json_shape_error(event)
+        if shape_error is not None:
+            raise EventValidationError(shape_error)
         name = _schema_name(str(event.get("event_type", "")))
         schema = self._schemas.get(name)
         if schema is None:

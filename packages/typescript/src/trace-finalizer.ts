@@ -1,6 +1,7 @@
 import {createHash} from "node:crypto";
 import canonicalize from "canonicalize";
-import type {EvidenceSnapshot} from "./evidence.js";
+import {CANONICALIZATION_PROFILE, type EvidenceSnapshot} from "./evidence.js";
+import {entryDigest} from "./evidence-digest.js";
 import type {NormalizedEvent} from "./types.js";
 
 export type TraceOriginKind = "self" | "third-party-control-plane" | "log-import";
@@ -16,21 +17,42 @@ export class TraceFinalizationError extends Error {}
 
 export function finalizeTrace<Signed extends Record<string, unknown>>(snapshot: EvidenceSnapshot, config: TraceConfiguration, options: {signingKey: unknown; codec: TraceCodec<Signed>}): Signed {
   requireFinalizable(snapshot, config, options);
+  verifyChain(snapshot);
   const events = snapshot.entries.map((entry) => entry.event);
-  const issuedAt = latestSeconds(events);
-  const [bundleHash, enforcementMode] = policyBinding(events);
-  const transcript = toolTranscript(snapshot);
+  let issuedAt: number, bundleHash: string, enforcementMode: string, dataClass: string, status: string, transcript: Record<string, unknown> | undefined;
+  try {
+    issuedAt = latestSeconds(events); [bundleHash, enforcementMode] = policyBinding(events); dataClass = highestDataClass(events, config); status = appraisal(events); transcript = toolTranscript(snapshot);
+  } catch (error) {
+    if (error instanceof TraceFinalizationError) throw error;
+    throw new TraceFinalizationError(`evidence contains a malformed event: ${error instanceof Error ? `${error.name}: ${error.message}` : String(error)}`, {cause: error});
+  }
   const record: Record<string, unknown> = {
     eat_profile: options.codec.profileV02, iat: issuedAt, subject: config.subject,
     model: {provider: config.modelProvider, model_id: config.modelId, ...(config.modelVersion ? {version: config.modelVersion} : {})},
     runtime: {platform: "software-only", measurement: `sha256:${snapshot.chainDigest}`},
-    policy: {bundle_hash: bundleHash, enforcement_mode: enforcementMode}, data_class: highestDataClass(events, config), ...(transcript ? {tool_transcript: transcript} : {}),
+    policy: {bundle_hash: bundleHash, enforcement_mode: enforcementMode}, data_class: dataClass, ...(transcript ? {tool_transcript: transcript} : {}),
     origin: {kind: config.originKind, producer: config.originProducer},
     build_provenance: {slsa_level: config.buildSlsaLevel ?? 0, digest: config.buildDigest, ...(config.buildBuilder ? {builder: config.buildBuilder} : {}), ...(config.buildProvenanceUri ? {provenance_uri: config.buildProvenanceUri} : {})},
-    appraisal: {status: appraisal(events), verifier: config.appraisalVerifier, timestamp: issuedAt}, ...(config.transparency ? {transparency: config.transparency} : {}),
+    appraisal: {status, verifier: config.appraisalVerifier, timestamp: issuedAt}, ...(config.transparency ? {transparency: config.transparency} : {}),
   };
   try { const signed = options.codec.signRecord(record, options.signingKey); options.codec.validateRecord(signed); const verificationKey = options.codec.publicKey(options.signingKey); options.codec.verifyRecord(signed, verificationKey, {maxAgeSeconds: null}); return signed; }
   catch (error) { throw new TraceFinalizationError(`official TRACE signing or validation failed: ${error instanceof Error ? `${error.name}: ${error.message}` : String(error)}`, {cause: error}); }
+}
+
+// The record's measurement is chainDigest while its appraisal is derived from
+// entries. Unless the entries still hash to that digest, the signed record could
+// appraise events the measurement does not cover (edited, dropped, reordered).
+function verifyChain(snapshot: EvidenceSnapshot): void {
+  if (snapshot.canonicalizationProfile !== CANONICALIZATION_PROFILE) throw new TraceFinalizationError(`unsupported canonicalization profile: ${String(snapshot.canonicalizationProfile)}`);
+  let previous: string | undefined;
+  snapshot.entries.forEach((entry, position) => {
+    let recomputed: string;
+    try { recomputed = entryDigest(position, previous, entry.event); }
+    catch (error) { throw new TraceFinalizationError(`evidence chain does not verify at sequence ${position}`, {cause: error}); }
+    if (entry.sequence !== position || entry.previousDigest !== previous || entry.digest !== recomputed || entry.eventId !== entry.event.event_id || entry.event.run_id !== snapshot.runId) throw new TraceFinalizationError(`evidence chain does not verify at sequence ${position}`);
+    previous = recomputed;
+  });
+  if (snapshot.chainDigest !== previous) throw new TraceFinalizationError("evidence chain does not verify: chainDigest mismatch");
 }
 
 function requireFinalizable(snapshot: EvidenceSnapshot, config: TraceConfiguration, options: {signingKey: unknown; codec: TraceCodec}): void {

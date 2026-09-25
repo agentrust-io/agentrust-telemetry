@@ -111,7 +111,7 @@ def _policy_decision(value: Any) -> str:
         "not_applicable": "not_applicable",
         "error": "error",
     }
-    if value not in mapping:
+    if not isinstance(value, str) or value not in mapping:
         raise ValueError(f"unsupported AGT audit policy decision: {value!r}")
     return mapping[value]
 
@@ -125,7 +125,7 @@ def _action_outcome(value: Any) -> str:
         "cancelled": "cancelled",
         "timeout": "timeout",
     }
-    if value not in mapping:
+    if not isinstance(value, str) or value not in mapping:
         raise ValueError(f"unsupported AGT audit action outcome: {value!r}")
     return mapping[value]
 

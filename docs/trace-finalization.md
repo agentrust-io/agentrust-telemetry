@@ -15,6 +15,10 @@ class, appraisal, issuance time, and software evidence-chain measurement.
 
 Finalization fails when evidence is open, incomplete, empty, inconsistently bound
 to policy, missing classified data flows, or contains an unranked classification.
+It also recomputes the evidence chain and fails when the snapshot's entries no
+longer hash to its chain digest (an entry edited, dropped, or reordered after
+sealing), since the measurement would then not cover the events appraised. The
+recheck proves consistency, not provenance: the chain carries no key.
 It emits `runtime.platform: software-only`; it cannot manufacture attestation.
 
 When `action.executed` events are present, `tool_transcript.hash` covers their

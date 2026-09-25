@@ -210,6 +210,73 @@ class TraceAdapterRefusalTests(unittest.TestCase):
         self.assertIn("official TRACE signing or validation failed", message)
         self.assertIn("hardware signer unavailable", message)
 
+    # -- the snapshot has to still be the chain it claims to be ---------------
+    #
+    # `runtime.measurement` is the snapshot's chain digest, and the appraisal
+    # is derived from the snapshot's events. Both come from the same object,
+    # so the record is only truthful if those events still hash to that
+    # digest. EvidenceSnapshot is a public dataclass holding mutable dicts.
+
+    def governed_snapshot(self):
+        return self.snapshot([fixture("policy-decision.json"), fixture("data-flow.json")])
+
+    def test_an_event_edited_after_sealing_is_refused(self):
+        snapshot = self.governed_snapshot()
+        # The sealed run holds a deny. Rewriting it to allow would otherwise
+        # sign an affirming appraisal under a measurement that commits to deny.
+        snapshot.entries[0].event["decision"] = "allow"
+        with self.assertRaises(TraceFinalizationError) as caught:
+            finalize_trace(snapshot, self.config, signing_key=self.key)
+        self.assertIn("evidence chain does not verify", str(caught.exception))
+
+    def test_a_dropped_entry_is_refused(self):
+        snapshot = self.governed_snapshot()
+        trimmed = replace(snapshot, entries=snapshot.entries[1:])
+        with self.assertRaises(TraceFinalizationError) as caught:
+            finalize_trace(trimmed, self.config, signing_key=self.key)
+        self.assertIn("evidence chain does not verify", str(caught.exception))
+
+    def test_a_substituted_chain_digest_is_refused(self):
+        snapshot = self.governed_snapshot()
+        forged = replace(snapshot, chain_digest="c" * 64)
+        with self.assertRaises(TraceFinalizationError) as caught:
+            finalize_trace(forged, self.config, signing_key=self.key)
+        self.assertIn("evidence chain does not verify", str(caught.exception))
+
+    def test_a_consistent_chain_over_a_malformed_event_is_refused(self):
+        """Digests recomputed over an event the schema never accepted.
+
+        The chain check proves consistency, not provenance, so a hand-built
+        snapshot can carry a policy decision with no `policy` object. That
+        must surface as a refusal, not a KeyError from the derivation code.
+        """
+        from agentrust_telemetry.evidence import (
+            CANONICALIZATION_PROFILE,
+            EvidenceEntry,
+            EvidenceSnapshot,
+            _entry_digest,
+        )
+
+        decision = fixture("policy-decision.json")
+        del decision["policy"]
+        entries = []
+        previous = None
+        for sequence, event in enumerate([decision, fixture("data-flow.json")]):
+            digest = _entry_digest(sequence, previous, event)
+            entries.append(EvidenceEntry(sequence, event["event_id"], previous, digest, event))
+            previous = digest
+        snapshot = EvidenceSnapshot(
+            run_id="run-governed-sdlc-001",
+            entries=tuple(entries),
+            chain_digest=previous,
+            canonicalization_profile=CANONICALIZATION_PROFILE,
+            completeness="complete",
+            sealed=True,
+        )
+        with self.assertRaises(TraceFinalizationError) as caught:
+            finalize_trace(snapshot, self.config, signing_key=self.key)
+        self.assertIn("malformed", str(caught.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
