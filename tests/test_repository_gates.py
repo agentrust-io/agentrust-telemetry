@@ -165,5 +165,20 @@ class RepositoryGateTests(unittest.TestCase):
         # untagged npm publish would do.
         self.assertEqual(tag == "latest", "-" not in npm_version)
 
+    def test_fuzz_seeds_match_the_conformance_fixtures(self):
+        # The fuzz targets are bundled without the repository, so their seeds
+        # are a copy. A fixture change that is not copied leaves the fuzzer
+        # starting from events the schema has since stopped accepting.
+        spec = importlib.util.spec_from_file_location(
+            "_fuzz_seeds", ROOT / ".clusterfuzzlite" / "_fuzz_seeds.py"
+        )
+        assert spec and spec.loader
+        seeds = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(seeds)
+        for name, seed in seeds.SEEDS.items():
+            with self.subTest(fixture=name):
+                fixture = ROOT / "conformance" / "fixtures" / "valid" / f"{name}.json"
+                self.assertEqual(seed, json.loads(fixture.read_text(encoding="utf-8")))
+
 if __name__ == "__main__":
     unittest.main()

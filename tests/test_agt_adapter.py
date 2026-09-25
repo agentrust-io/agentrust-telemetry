@@ -108,6 +108,21 @@ class AgtAdapterTests(unittest.TestCase):
                 )
             )
 
+    def test_structured_kind_or_decision_is_a_value_error(self):
+        # A JSON-decoded AGT event can carry an object or array where a string
+        # belongs. The membership test must refuse it as ValueError, the error
+        # this adapter documents, rather than leak TypeError: unhashable type.
+        for bad in ([], {}, ["allow"], {"value": "allow"}):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    self.map(FakeAgtEvent(kind=bad))
+                with self.assertRaises(ValueError):
+                    self.map(FakeAgtEvent(decision=bad))
+
+    def test_latency_that_overflows_nanoseconds_is_a_value_error(self):
+        with self.assertRaisesRegex(ValueError, "latency_ms"):
+            self.map(FakeAgtEvent(latency_ms=1e303))
+
     def test_sink_prevalidates_whole_batch_before_emission(self):
         client = RecordingClient()
         sink = AgtGovernanceEventSink(

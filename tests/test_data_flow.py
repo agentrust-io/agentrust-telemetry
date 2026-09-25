@@ -141,6 +141,13 @@ class DataFlowTests(unittest.TestCase):
         for prohibited in ("PII", "customer@example", "alice@example", "123-45-6789", "geography"):
             self.assertNotIn(prohibited, serialized)
 
+    def test_structured_agt_classification_is_a_value_error(self):
+        from agentrust_telemetry import agt_data_classification
+
+        for bad in ([], {}, [2]):
+            with self.subTest(bad=bad):
+                with self.assertRaisesRegex(ValueError, "unsupported AGT data classification"):
+                    agt_data_classification(SimpleNamespace(classification=bad))
 
 if __name__ == "__main__":
     unittest.main()

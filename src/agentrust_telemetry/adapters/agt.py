@@ -97,7 +97,7 @@ def agt_policy_decision(
 ) -> dict[str, Any]:
     """Normalize one AGT policy event without copying free-form source content."""
     kind = _enum_value(_field(source, "kind"))
-    if kind not in {"policy_check", "policy_violation"}:
+    if not isinstance(kind, str) or kind not in {"policy_check", "policy_violation"}:
         raise ValueError(f"AGT event kind is not a policy decision: {kind!r}")
     decision = _decision(_field(source, "decision"))
     agent_id = _required_string(_field(source, "agent_id"), "agent_id")
@@ -115,6 +115,7 @@ def agt_policy_decision(
         or isinstance(latency_ms, bool)
         or not math.isfinite(latency_ms)
         or latency_ms < 0
+        or not math.isfinite(latency_ms * 1_000_000)
     ):
         raise ValueError("AGT latency_ms must be a finite non-negative number")
     policy: dict[str, Any] = {
@@ -166,7 +167,7 @@ def _decision(value: Any) -> str:
         "requires_approval": "challenge",
         "review": "challenge",
     }
-    if normalized not in mapping:
+    if not isinstance(normalized, str) or normalized not in mapping:
         raise ValueError(f"unsupported AGT policy decision: {normalized!r}")
     return mapping[normalized]
 

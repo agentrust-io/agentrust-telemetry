@@ -109,7 +109,7 @@ def agt_approval_resolution(
         "allow": "approval.approved",
         "deny": "approval.rejected",
         "expired": "approval.expired",
-    }.get(outcome)
+    }.get(outcome) if isinstance(outcome, str) else None
     if event_type is None:
         raise ValueError(f"unsupported AGT approval outcome: {outcome!r}")
     approval_id = _required_string(

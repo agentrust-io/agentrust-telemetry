@@ -9,7 +9,7 @@ from typing import Any, Literal
 import rfc8785
 
 from .errors import TraceFinalizationError
-from .evidence import EvidenceSnapshot
+from .evidence import CANONICALIZATION_PROFILE, EvidenceSnapshot, _entry_digest
 
 
 OriginKind = Literal["self", "third-party-control-plane", "log-import"]
@@ -42,14 +42,24 @@ def finalize_trace(
     """Build, sign, structurally validate, and self-verify a TRACE record."""
     trace = _trace_package()
     _require_finalizable(snapshot, config, signing_key)
+    _verify_chain(snapshot)
     events = [entry.event for entry in snapshot.entries]
 
-    bundle_hash, enforcement_mode = _policy_binding(events)
-    data_class = _highest_data_class(events, config)
-    tool_transcript = _tool_transcript(snapshot)
+    try:
+        bundle_hash, enforcement_mode = _policy_binding(events)
+        data_class = _highest_data_class(events, config)
+        tool_transcript = _tool_transcript(snapshot)
+        appraisal_status = _appraisal(events)
+        issued_at = max(int(event["time_unix_nano"]) for event in events) // 1_000_000_000
+    except TraceFinalizationError:
+        raise
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:
+        raise TraceFinalizationError(
+            f"evidence contains a malformed event: {type(exc).__name__}: {exc}"
+        ) from exc
     record: dict[str, Any] = {
         "eat_profile": trace.TRACE_PROFILE_V0_2,
-        "iat": max(int(event["time_unix_nano"]) for event in events) // 1_000_000_000,
+        "iat": issued_at,
         "subject": config.subject,
         "model": {
             "provider": config.model_provider,
@@ -81,10 +91,9 @@ def finalize_trace(
             ),
         },
         "appraisal": {
-            "status": _appraisal(events),
+            "status": appraisal_status,
             "verifier": config.appraisal_verifier,
-            "timestamp": max(int(event["time_unix_nano"]) for event in events)
-            // 1_000_000_000,
+            "timestamp": issued_at,
         },
         **({"transparency": config.transparency} if config.transparency else {}),
     }
@@ -127,6 +136,44 @@ def _require_finalizable(
         raise TraceFinalizationError(f"trusted TRACE configuration is missing: {missing}")
     if len(set(config.classification_order)) != len(config.classification_order):
         raise TraceFinalizationError("classification_order contains duplicates")
+
+
+def _verify_chain(snapshot: EvidenceSnapshot) -> None:
+    """Recompute the evidence chain the measurement will commit to.
+
+    The record's measurement is ``snapshot.chain_digest`` while its appraisal is
+    derived from ``snapshot.entries``. Unless the entries still hash to that
+    digest, the signed record could appraise events the measurement does not
+    cover (an entry edited, dropped, or reordered after sealing).
+    """
+    if snapshot.canonicalization_profile != CANONICALIZATION_PROFILE:
+        raise TraceFinalizationError(
+            f"unsupported canonicalization profile: {snapshot.canonicalization_profile!r}"
+        )
+    previous: str | None = None
+    for position, entry in enumerate(snapshot.entries):
+        try:
+            recomputed = _entry_digest(position, previous, entry.event)
+            event_id = entry.event.get("event_id")
+            run_id = entry.event.get("run_id")
+        except (TypeError, ValueError, AttributeError, rfc8785.CanonicalizationError) as exc:
+            raise TraceFinalizationError(
+                f"evidence chain does not verify at sequence {position}: "
+                f"{type(exc).__name__}"
+            ) from exc
+        if (
+            entry.sequence != position
+            or entry.previous_digest != previous
+            or entry.digest != recomputed
+            or entry.event_id != event_id
+            or run_id != snapshot.run_id
+        ):
+            raise TraceFinalizationError(
+                f"evidence chain does not verify at sequence {position}"
+            )
+        previous = recomputed
+    if snapshot.chain_digest != previous:
+        raise TraceFinalizationError("evidence chain does not verify: chain_digest mismatch")
 
 
 def _policy_binding(events: list[dict[str, Any]]) -> tuple[str, str]:
