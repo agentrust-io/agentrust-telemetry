@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.5 - 2026-09-26
+
+### Fixed
+
+- TRACE finalization in both SDKs (`finalize_trace` in `trace_adapter.py`, and
+  `trace-finalizer.ts`) now recomputes the evidence chain from the snapshot entries
+  (sequence, previous digest, entry digest, `event_id`, `run_id`, `chain_digest`) and
+  refuses to sign on any mismatch. Before, an `EvidenceSnapshot` edited after sealing
+  could produce a signed record whose appraisal disagreed with the measurement it
+  carried. A malformed event inside a consistent chain now raises
+  `TraceFinalizationError` instead of `KeyError`. (#65)
+- Python event validation rejects nesting deeper than 32 levels, non-string keys, and
+  NaN or Infinity with `EventValidationError`. These previously raised `RecursionError`
+  or `AttributeError`, or were accepted. NaN now fails at validation rather than at the
+  chain, as it already did in the TypeScript SDK. (#65)
+- The AGT adapters (`agt.py`, `agt_audit.py`, `agt_approval.py`, `agt_data.py`) raise
+  `ValueError` for a list or object where a decision, kind, outcome or classification
+  belongs, and for an out-of-range `latency_ms`. These previously surfaced as
+  `TypeError` or `OverflowError`. (#65)
+
+### Changed
+
+- Add ClusterFuzzLite with three fuzz targets: event validation and projection, the
+  OPA and AGT policy adapters, and sealed evidence to signed TRACE. (#65)
+- The OTel GenAI compatibility notes now say that the pinned upstream revision already
+  defines cache-read, cache-creation and reasoning token attributes. (#63)
+- The version string is inside the hashed envelope, so this release moves every
+  evidence digest. `compatibility/golden/evidence-chain.json` and the cross-language
+  `tool_transcript` assertions are regenerated for it.
+- CI and governance only: CODEOWNERS maintainer alignment (#64), CodeQL and CycloneDX
+  action bumps (#57, #59, #60, #61), `build` 1.6.1 in the release lock (#56).
+
 ## 0.1.0-alpha.4 - 2026-09-14
 
 ### Fixed
