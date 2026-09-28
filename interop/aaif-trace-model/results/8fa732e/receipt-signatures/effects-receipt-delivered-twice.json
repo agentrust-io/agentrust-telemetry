@@ -1,0 +1,27 @@
+{
+  "diagnostics": [],
+  "input": {
+    "path": "inputs/kit/cases/effects-receipt-delivered-twice/records.otlp.json",
+    "sha256": "2d70c9c518a1f08df77ad4aa3d8fc3556f9a14fcda77d86edca1591898d5b5a7",
+    "spans": 5
+  },
+  "processing": "complete",
+  "reader": {
+    "name": "aaif-trace-reader-rs",
+    "version": "0.1.0"
+  },
+  "receipts": [
+    {
+      "at": "resourceSpans[1].scopeSpans[0].spans[0]",
+      "receipt": "R-1",
+      "signature": "verifies",
+      "signing_input_bytes": 126
+    },
+    {
+      "at": "resourceSpans[1].scopeSpans[0].spans[1]",
+      "receipt": "R-1",
+      "signature": "verifies",
+      "signing_input_bytes": 126
+    }
+  ]
+}
