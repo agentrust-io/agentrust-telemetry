@@ -1,0 +1,41 @@
+{
+  "case_basis": "Agent to MCP Server boundary deep dive (pull request #32)",
+  "fields": [
+    {
+      "actual": "P1",
+      "expected": "P1",
+      "field": "action",
+      "from": "trace-reader interpret",
+      "match": true
+    },
+    {
+      "actual": "unconfirmed",
+      "expected": "confirmed",
+      "field": "effect",
+      "from": "trace-reader interpret",
+      "match": false
+    },
+    {
+      "actual": null,
+      "expected": [
+        "T-1042"
+      ],
+      "field": "confirmed_tickets",
+      "from": "trace-reader interpret",
+      "match": false
+    },
+    {
+      "actual": false,
+      "contract_reader_answer": "not answered: v0.7-draft section 6 treats a receipt as correlation evidence",
+      "expected": true,
+      "field": "externally_verified",
+      "from": "trace-reader verify-receipts (no v0.7-draft rule)",
+      "match": false
+    }
+  ],
+  "in_scope_for_v0_7_reader": false,
+  "method_defaults": {
+    "declared_by": null,
+    "values": {}
+  }
+}

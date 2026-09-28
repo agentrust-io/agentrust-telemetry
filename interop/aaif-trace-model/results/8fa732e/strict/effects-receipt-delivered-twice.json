@@ -1,0 +1,151 @@
+{
+  "answers": [
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[2]"
+      ],
+      "gaps": [
+        "no_decision_recorded",
+        "r5_not_established"
+      ],
+      "observed": {
+        "decisions_recorded": [],
+        "enforcement": "unknown",
+        "execution": true,
+        "proposal": null
+      },
+      "query": "approval-for-execution",
+      "state": "unknown",
+      "subject": {
+        "id": null,
+        "kind": "tool_execution",
+        "references": {
+          "proposal": "P1"
+        },
+        "scope": "support-agent"
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [],
+      "gaps": [
+        "no_model_call_observed"
+      ],
+      "observed": {
+        "model_calls": [],
+        "usage": null
+      },
+      "query": "calls",
+      "state": "unknown",
+      "subject": {
+        "id": "T1",
+        "kind": "turn"
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[0]"
+      ],
+      "gaps": [
+        "r1_not_established"
+      ],
+      "observed": {
+        "conversation": null,
+        "method": null
+      },
+      "query": "continuity",
+      "state": "unknown",
+      "subject": {
+        "id": "T1",
+        "kind": "turn"
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[2]"
+      ],
+      "gaps": [
+        "r6_not_established"
+      ],
+      "observed": {
+        "correlated_effects": [],
+        "execution": true,
+        "external_reports_seen": 2
+      },
+      "query": "effects-for-execution",
+      "state": "unknown",
+      "subject": {
+        "id": null,
+        "kind": "tool_execution",
+        "references": {
+          "proposal": "P1"
+        },
+        "scope": "support-agent"
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[1]"
+      ],
+      "gaps": [
+        "r3_not_exported"
+      ],
+      "observed": {
+        "turn": null
+      },
+      "query": "proposal-origin",
+      "state": "unknown",
+      "subject": {
+        "id": "P1",
+        "kind": "proposed_action"
+      }
+    }
+  ],
+  "contract": "AGENT-BEHAVIOR-TRACE-MODEL-CONTRACT.md v0.7-draft @ e82abf1e58b066c586c25767edfba862c4ebd027",
+  "diagnostics": [],
+  "input": {
+    "path": "inputs/kit/cases/effects-receipt-delivered-twice/records.otlp.json",
+    "sha256": "2d70c9c518a1f08df77ad4aa3d8fc3556f9a14fcda77d86edca1591898d5b5a7",
+    "spans": 5
+  },
+  "mapping_losses": [
+    {
+      "at": "resourceSpans[0].scopeSpans[0].spans[0]",
+      "code": "relationship_method_absent",
+      "relationship": "R1",
+      "why": "record carries no method and no mapping-file default is declared (contract §4 step 3)"
+    },
+    {
+      "at": "resourceSpans[0].scopeSpans[0].spans[2]",
+      "code": "relationship_method_absent",
+      "relationship": "R5",
+      "why": "record carries no method and no mapping-file default is declared (contract §4 step 3)"
+    },
+    {
+      "at": "resourceSpans[0].scopeSpans[0].spans[2]",
+      "code": "relationship_method_absent",
+      "relationship": "R6",
+      "why": "record carries no method and no mapping-file default is declared (contract §4 step 3)"
+    }
+  ],
+  "method_defaults": {
+    "declared_by": null,
+    "values": {}
+  },
+  "not_used": [
+    {
+      "at": "resourceSpans[0].scopeSpans[0].spans[2]",
+      "attribute": "evidence.externally_verified",
+      "why": "producer claim about external verification; not re-derived by this reader"
+    }
+  ],
+  "processing": "complete",
+  "reader": {
+    "name": "aaif-trace-reader-rs",
+    "version": "0.1.0"
+  }
+}

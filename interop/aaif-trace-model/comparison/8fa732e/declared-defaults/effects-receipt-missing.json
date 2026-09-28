@@ -1,0 +1,43 @@
+{
+  "case_basis": "Trace model: build shared tests and a contribution template (issue #42)",
+  "fields": [
+    {
+      "actual": "P1",
+      "expected": "P1",
+      "field": "action",
+      "from": "trace-reader interpret",
+      "match": true
+    },
+    {
+      "actual": "unconfirmed",
+      "expected": "unconfirmed",
+      "field": "effect",
+      "from": "trace-reader interpret",
+      "match": true
+    },
+    {
+      "actual": null,
+      "expected": null,
+      "field": "confirmed_tickets",
+      "from": "trace-reader interpret",
+      "match": true
+    },
+    {
+      "actual": false,
+      "contract_reader_answer": "not answered: v0.7-draft section 6 treats a receipt as correlation evidence",
+      "expected": false,
+      "field": "externally_verified",
+      "from": "trace-reader verify-receipts (no v0.7-draft rule)",
+      "match": true
+    }
+  ],
+  "in_scope_for_v0_7_reader": true,
+  "method_defaults": {
+    "declared_by": "reader operator, standing in for the example mapping file the kit does not ship",
+    "values": {
+      "R1": "attribute-reference",
+      "R5": "attribute-reference",
+      "R6": "external-correlation-key"
+    }
+  }
+}

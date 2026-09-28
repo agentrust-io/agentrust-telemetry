@@ -1,0 +1,21 @@
+{
+  "diagnostics": [],
+  "input": {
+    "path": "inputs/kit/cases/evidence-grade-pair-verifies/records.otlp.json",
+    "sha256": "5408247a36ed3f3edaf509b9c082f5f47c40f729ab4eddb29272cd3693aa7c4d",
+    "spans": 4
+  },
+  "processing": "complete",
+  "reader": {
+    "name": "aaif-trace-reader-rs",
+    "version": "0.1.0"
+  },
+  "receipts": [
+    {
+      "at": "resourceSpans[1].scopeSpans[0].spans[0]",
+      "receipt": "R-7",
+      "signature": "verifies",
+      "signing_input_bytes": 126
+    }
+  ]
+}

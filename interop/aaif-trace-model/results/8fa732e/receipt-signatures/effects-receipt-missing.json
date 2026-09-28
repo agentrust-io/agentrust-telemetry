@@ -1,0 +1,14 @@
+{
+  "diagnostics": [],
+  "input": {
+    "path": "inputs/kit/cases/effects-receipt-missing/records.otlp.json",
+    "sha256": "ae4f61fe06dd1b1a0e0b2c797f8f9fff814ced080e7fb15b0e3a634207412442",
+    "spans": 3
+  },
+  "processing": "complete",
+  "reader": {
+    "name": "aaif-trace-reader-rs",
+    "version": "0.1.0"
+  },
+  "receipts": []
+}
