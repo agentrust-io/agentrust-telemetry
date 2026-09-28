@@ -13,7 +13,7 @@ Rust, offline, batch. The design it implements was posted on #45 on
   Python reader at `Rul1an/aaif-trace-reader`. His comments on #45 and #57 were read, since they are
   public discussion.
 
-Written with an AI coding assistant (Claude Opus 5.5), directed and reviewed by Imran Siddique.
+Written with an AI coding assistant (Claude Opus 5.5), directed by Imran Siddique.
 Dependencies: `serde`, `serde_json`, `sha2`, `base64`, `ed25519-dalek`.
 
 ## Build and run
