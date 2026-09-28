@@ -56,3 +56,19 @@ On Windows on ARM without the ARM64 MSVC libraries, build with `cargo +stable-x8
 This reader interprets telemetry. It does not show that an export is complete or authentic, and
 four cases exercise the effects question only. Continuity, calls and approvals await cases and the
 #43/#44 exports.
+
+## Comparison against the kit's expected answers
+
+Run after `cf1fad8` froze the reader and its results. `trace-compare` is a separate program; it
+reads `expected/` (copied from the kit at `8fa732e`) and scores each field on its own.
+
+| Case | v0.7 scope | strict | declared defaults |
+| --- | --- | --- | --- |
+| effects-receipt-delivered-twice | yes | effect, tickets, externally_verified miss | all four match |
+| effects-receipt-missing | yes | all four match | all four match |
+| evidence-grade-pair-verifies | no (#32 §3.3) | effect, tickets, externally_verified miss | all four match |
+| evidence-grade-pair-fails | no (#32 §3.3) | all four match | effect and tickets miss; externally_verified matches |
+
+A strict match on a negative case is not evidence: a reader that answers unknown everywhere gets
+the same result there. `externally_verified` comes from `verify-receipts` in every row, because
+v0.7-draft has no rule for it, including in the two cases whose basis is the #42 example.
