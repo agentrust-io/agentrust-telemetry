@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -164,6 +165,34 @@ class RepositoryGateTests(unittest.TestCase):
         # A prerelease must never publish under latest, which is what an
         # untagged npm publish would do.
         self.assertEqual(tag == "latest", "-" not in npm_version)
+
+    def test_every_lock_keeps_every_input(self):
+        # Dependabot's pip updater regenerates these locks for one interpreter
+        # and drops agentrust-trace, which is 3.11+ only. It did on #52, #56 and
+        # #68, and the failure then surfaced as ModuleNotFoundError in tests.
+        name = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)")
+
+        def names(text, pinned):
+            found = set()
+            for line in text.splitlines():
+                line = line.split("#", 1)[0].strip()
+                if not line or line.startswith("-") or (pinned and "==" not in line):
+                    continue
+                match = name.match(line)
+                if match:
+                    found.add(re.sub(r"[-_.]+", "-", match.group(1)).lower())
+            return found
+
+        for source in sorted((ROOT / "requirements").glob("*.in")):
+            lock = source.with_suffix(".txt")
+            missing = names(source.read_text(encoding="utf-8"), False) - names(
+                lock.read_text(encoding="utf-8"), True
+            )
+            self.assertEqual(
+                missing,
+                set(),
+                f"{lock.name} lost {sorted(missing)}; recompile with the uv command in {source.name}",
+            )
 
     def test_fuzz_seeds_match_the_conformance_fixtures(self):
         # The fuzz targets are bundled without the repository, so their seeds
