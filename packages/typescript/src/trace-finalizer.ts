@@ -71,15 +71,52 @@ function appraisal(events: readonly NormalizedEvent[]): string {
   const decisions = new Map(events.filter((event) => event.event_type === "policy.decision").map((event) => [event.event_id, String(event.decision)]));
   const approvals = events.filter((event) => event.event_type.startsWith("approval."));
   const types = new Set(approvals.map((event) => event.event_type));
-  if ([...decisions.values()].some((value) => value === "deny" || value === "error") || ["approval.rejected", "approval.expired", "approval.execution_failed"].some((value) => types.has(value))) return "contraindicated";
-  const approved = boundApprovedPolicyEvents(approvals);
-  if ([...decisions].some(([id, value]) => value === "challenge" && !approved.has(id)) || types.has("approval.cancelled")) return "warning";
+  const bound = boundApprovals(approvals);
+  const actionBinding = actionApprovalBinding(events, decisions, approvals, bound);
+  if ([...decisions.values()].some((value) => value === "deny" || value === "error") || ["approval.rejected", "approval.expired", "approval.execution_failed"].some((value) => types.has(value)) || actionBinding === "contradicted") return "contraindicated";
+  const approved = new Set([...bound].map((event) => String(event.policy_event_id)));
+  if ([...decisions].some(([id, value]) => value === "challenge" && !approved.has(id)) || types.has("approval.cancelled") || actionBinding === "unresolved") return "warning";
   return decisions.size || approvals.length ? "affirming" : "none";
 }
-function boundApprovedPolicyEvents(approvals: readonly NormalizedEvent[]): Set<string> {
+// An action is approval-gated when it names approval_id, or names a
+// policy_event_id whose decision was challenge; a denied outcome did not run.
+// A gated action is bound only by an approval.approved for the same approval
+// (or policy event) with the same action_digest and policy_event_id, resolved
+// inside its request window and not after the action completed. An approval
+// that disagrees, or postdates the action, contradicts it; no usable approval
+// leaves it unresolved.
+function actionApprovalBinding(events: readonly NormalizedEvent[], decisions: ReadonlyMap<string, string>, approvals: readonly NormalizedEvent[], bound: ReadonlySet<NormalizedEvent>): "bound" | "unresolved" | "contradicted" {
+  const approved = approvals.filter((event) => event.event_type === "approval.approved");
+  let result: "bound" | "unresolved" = "bound";
+  for (const action of events) {
+    if (action.event_type !== "action.executed" || action.outcome === "denied") continue;
+    const approvalId = action.approval_id; const policyEventId = action.policy_event_id;
+    if (approvalId === undefined && decisions.get(String(policyEventId)) !== "challenge") continue;
+    const candidates = approved.filter((event) => approvalId !== undefined ? event.approval_id === approvalId : event.policy_event_id === policyEventId);
+    const completedAt = BigInt(action.time_unix_nano);
+    let contradicted = false, satisfied = false;
+    for (const approval of candidates) {
+      const approvalPolicy = approval.policy_event_id;
+      if (!sameDigest(approval.action_digest, action.action_digest) || (policyEventId !== undefined && approvalPolicy !== undefined && approvalPolicy !== policyEventId) || BigInt(approval.time_unix_nano) > completedAt) contradicted = true;
+      // Binding to a request requires policy_event_id, so a bound approval
+      // that reached here names the action's policy event.
+      else if (bound.has(approval)) satisfied = true;
+    }
+    if (satisfied) continue;
+    if (contradicted) return "contradicted";
+    result = "unresolved";
+  }
+  return result;
+}
+function sameDigest(left: unknown, right: unknown): boolean {
+  if (typeof left !== "object" || left === null || typeof right !== "object" || right === null) return false;
+  const a = left as Record<string, unknown>, b = right as Record<string, unknown>;
+  return a.algorithm === b.algorithm && a.value === b.value;
+}
+function boundApprovals(approvals: readonly NormalizedEvent[]): Set<NormalizedEvent> {
   const requests = approvals.filter((event) => event.event_type === "approval.requested");
   const bindingFields = ["approval_id", "policy_event_id", "action_digest", "chain_id", "chain_version", "requested_at_unix_nano", "expires_at_unix_nano"] as const;
-  const resolved = new Set<string>();
+  const resolved = new Set<NormalizedEvent>();
   for (const approval of approvals.filter((event) => event.event_type === "approval.approved")) {
     for (const request of requests) {
       if (bindingFields.some((field) => approval[field] === undefined || request[field] === undefined || JSON.stringify(approval[field]) !== JSON.stringify(request[field]))) continue;
@@ -88,7 +125,7 @@ function boundApprovedPolicyEvents(approvals: readonly NormalizedEvent[]): Set<s
         const approvedAt = BigInt(approval.time_unix_nano);
         const expiresAt = BigInt(request.expires_at_unix_nano as string);
         if (requestedAt <= approvedAt && approvedAt <= expiresAt) {
-          resolved.add(String(approval.policy_event_id));
+          resolved.add(approval);
           break;
         }
       } catch {

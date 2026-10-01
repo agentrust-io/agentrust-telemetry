@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {readdirSync, readFileSync} from "node:fs";
 import test from "node:test";
 import {fileURLToPath} from "node:url";
 import {EvidenceAccumulator, finalizeTrace, SchemaValidator, TraceFinalizationError} from "../src/index.js";
@@ -38,6 +38,26 @@ test("linked approval resolves a challenge while an unrelated approval does not"
   assert.equal((make(request, approval).appraisal as Record<string, unknown>).status, "warning");
   approval.action_digest = request.action_digest; approval.time_unix_nano = "1787080100000000001";
   assert.equal((make(request, approval).appraisal as Record<string, unknown>).status, "warning");
+});
+const finalizeEvents = (events: NormalizedEvent[]) => { const accumulator = new EvidenceAccumulator("run-governed-sdlc-001", validator); events.forEach((event) => accumulator.append(event)); return (finalizeTrace(accumulator.seal("complete"), config, {signingKey: "private", codec: new RecordingCodec()}).appraisal as Record<string, unknown>).status; };
+type AppraisalCase = {description: string; expected_appraisal: string; events: NormalizedEvent[]};
+const appraisalCase = (name: string): AppraisalCase => JSON.parse(readFileSync(`${root}/conformance/appraisal/${name}`, "utf8")) as AppraisalCase;
+test("an executed action must match the digest its approval approved", () => {
+  const events = appraisalCase("approved-action-matches.json").events;
+  assert.equal(finalizeEvents(events), "affirming");
+  // The approval binds digest b*64; the action that ran carries c*64. Before
+  // this check the run still appraised affirming.
+  const swapped = events.map((event) => ({...event})); swapped.at(-1)!.action_digest = {algorithm: "sha256", value: "c".repeat(64)};
+  assert.equal(finalizeEvents(swapped), "contraindicated");
+  const unnamed = swapped.map((event) => ({...event})); delete unnamed.at(-1)!.approval_id;
+  assert.equal(finalizeEvents(unnamed), "contraindicated");
+  const denied = swapped.map((event) => ({...event})); denied.at(-1)!.outcome = "denied";
+  assert.equal(finalizeEvents(denied), "affirming");
+});
+test("shared appraisal conformance cases", () => {
+  const names = readdirSync(`${root}/conformance/appraisal`).filter((name) => name.endsWith(".json")).sort();
+  assert.ok(names.length >= 2);
+  for (const name of names) { const item = appraisalCase(name); assert.equal(finalizeEvents(item.events), item.expected_appraisal, name); }
 });
 test("finalization refuses incomplete evidence, conflicts, unranked data, and missing trust inputs", () => {
   const open = new EvidenceAccumulator("run-governed-sdlc-001", validator); open.append(fixture("policy-decision.json"));
