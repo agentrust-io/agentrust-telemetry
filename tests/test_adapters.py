@@ -157,6 +157,99 @@ class AdapterTests(unittest.TestCase):
                 **arguments,
             )
 
+    def opa_event(self, source, **overrides):
+        arguments = {
+            "run_id": "run-1", "agent_id": "agent-1", "action_type": "agent.invoke",
+            "resource_type": "agent", "bundle_digest": DIGEST, "opa_version": "1.8.0",
+        }
+        arguments.update(overrides)
+        return opa_decision_log(self.factory, source, **arguments)
+
+    def test_opa_requires_non_empty_string_decision_id(self):
+        for source in ({"result": True}, {"decision_id": "", "result": True},
+                       {"decision_id": 123, "result": True}):
+            with self.subTest(source=source):
+                with self.assertRaises(ValueError) as caught:
+                    self.opa_event(source)
+                self.assertEqual(str(caught.exception),
+                                 "OPA decision log requires a non-empty decision_id")
+
+    def test_opa_rejects_unsupported_mapper_decision(self):
+        with self.assertRaises(ValueError) as caught:
+            self.opa_event({"decision_id": "d-1", "result": {}},
+                           result_mapper=lambda value: "permit")
+        self.assertEqual(str(caught.exception),
+                         "OPA result mapper returned unsupported decision: 'permit'")
+
+    def test_opa_requires_object_labels(self):
+        for labels in ([], None, "version=1.8.0"):
+            with self.subTest(labels=labels):
+                with self.assertRaises(ValueError) as caught:
+                    self.opa_event({"decision_id": "d-1", "result": True,
+                                    "labels": labels})
+                self.assertEqual(str(caught.exception), "OPA labels must be an object")
+
+    def test_opa_requires_version_when_not_supplied_explicitly(self):
+        for labels in ({}, {"version": ""}, {"version": 123}):
+            with self.subTest(labels=labels):
+                with self.assertRaises(ValueError) as caught:
+                    self.opa_event({"decision_id": "d-1", "result": True,
+                                    "labels": labels}, opa_version=None)
+                self.assertEqual(str(caught.exception),
+                                 "OPA version is required explicitly or in labels.version")
+
+    def test_opa_rejects_invalid_evaluation_duration(self):
+        for duration in (-1, True, False, 1.5, "4200"):
+            with self.subTest(duration=duration):
+                with self.assertRaises(ValueError) as caught:
+                    self.opa_event({"decision_id": "d-1", "result": True,
+                                    "metrics": {"timer_rego_query_eval_ns": duration}})
+                self.assertEqual(str(caught.exception),
+                                 "OPA timer_rego_query_eval_ns must be a non-negative integer")
+
+    def test_opa_accepts_zero_duration(self):
+        event = self.opa_event({"decision_id": "d-1", "result": True,
+                               "metrics": {"timer_rego_query_eval_ns": 0}})
+        self.assertEqual(event["evaluation_duration_ns"], 0)
+
+    def test_opa_enforces_reason_code_limit(self):
+        source = {"decision_id": "d-1", "result": True,
+                  "ids": [f"rule-{index}" for index in range(32)]}
+        event = self.opa_event(source)
+        self.assertEqual(event["reason_codes"],
+                         [f"opa.rule:rule-{index}" for index in range(32)])
+        source["ids"].append("rule-32")
+        with self.assertRaises(ValueError) as caught:
+            self.opa_event(source)
+        self.assertEqual(str(caught.exception), "OPA ids exceed the 32-code contract limit")
+
+    def test_opa_false_and_null_map_to_distinct_decisions(self):
+        for result, expected in ((False, "deny"), (None, "not_applicable")):
+            with self.subTest(result=result):
+                event = self.opa_event({"decision_id": "d-1", "result": result})
+                self.assertEqual(event["decision"], expected)
+                self.assertNotIn("result", event)
+
+    def test_opa_rejects_non_string_timestamp(self):
+        with self.assertRaises(ValueError) as caught:
+            self.opa_event({"decision_id": "d-1", "result": True,
+                            "timestamp": 1787056496})
+        self.assertEqual(str(caught.exception), "OPA timestamp must be an RFC 3339 UTC string")
+
+    def test_opa_requires_utc_z_timestamp(self):
+        for timestamp in ("2026-08-18T12:34:56", "2026-08-18T12:34:56+00:00"):
+            with self.subTest(timestamp=timestamp):
+                with self.assertRaises(ValueError) as caught:
+                    self.opa_event({"decision_id": "d-1", "result": True,
+                                    "timestamp": timestamp})
+                self.assertEqual(str(caught.exception),
+                                 "OPA timestamp must use RFC 3339 UTC form ending in Z")
+
+    def test_opa_accepts_whole_second_utc_timestamp(self):
+        event = self.opa_event({"decision_id": "d-1", "result": True,
+                               "timestamp": "2026-08-18T12:34:56Z"})
+        self.assertEqual(event["time_unix_nano"], "1787056496000000000")
+
     def test_cedar_preserves_final_decision_and_reports_skipped_errors(self):
         event = cedar_policy_decision(
             self.factory,
