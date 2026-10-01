@@ -17,6 +17,9 @@ from agentrust_telemetry import (  # noqa: E402
 )
 
 
+APPRAISAL_DIR = ROOT / "conformance" / "appraisal"
+
+
 def fixture(name):
     return json.loads((ROOT / "conformance" / "fixtures" / "valid" / name).read_text())
 
@@ -74,7 +77,7 @@ class TraceAdapterTests(unittest.TestCase):
         self.assertRegex(record["tool_transcript"]["hash"], r"^sha256:[0-9a-f]{64}$")
         self.assertEqual(
             record["tool_transcript"]["hash"],
-            "sha256:69ff36176ca16383fc3c7dc99b488342691a44572c7361673a5fa9fed6b46789",
+            "sha256:c6a971b931d1b54e98a88184c50cba44084463279186b4cab7401d91354c128e",
         )
 
         changed = fixture("action.json")
@@ -183,6 +186,50 @@ class TraceAdapterTests(unittest.TestCase):
             signing_key=self.key,
         )
         self.assertEqual(record["appraisal"]["status"], "warning")
+
+    def finalize_events(self, events):
+        accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)
+        for event in events:
+            accumulator.append(event)
+        return finalize_trace(
+            accumulator.seal(completeness="complete"), self.config, signing_key=self.key
+        )
+
+    def test_executed_action_must_match_the_digest_its_approval_approved(self):
+        case = json.loads(
+            (APPRAISAL_DIR / "approved-action-matches.json").read_text(encoding="utf-8")
+        )
+        events = case["events"]
+        self.assertEqual(self.finalize_events(events)["appraisal"]["status"], "affirming")
+
+        # The approval binds digest b*64; the action that ran carries c*64.
+        # Before this check the run still appraised affirming.
+        swapped = [dict(event) for event in events]
+        swapped[-1]["action_digest"] = {"algorithm": "sha256", "value": "c" * 64}
+        self.assertEqual(
+            self.finalize_events(swapped)["appraisal"]["status"], "contraindicated"
+        )
+
+        # Without approval_id the challenged policy_event_id still gates it.
+        unnamed = [dict(event) for event in swapped]
+        del unnamed[-1]["approval_id"]
+        self.assertEqual(
+            self.finalize_events(unnamed)["appraisal"]["status"], "contraindicated"
+        )
+
+        # A denied attempt did not run, so its digest is not held to the approval.
+        denied = [dict(event) for event in swapped]
+        denied[-1]["outcome"] = "denied"
+        self.assertEqual(self.finalize_events(denied)["appraisal"]["status"], "affirming")
+
+    def test_shared_appraisal_conformance_cases(self):
+        cases = sorted(APPRAISAL_DIR.glob("*.json"))
+        self.assertGreaterEqual(len(cases), 2)
+        for path in cases:
+            case = json.loads(path.read_text(encoding="utf-8"))
+            with self.subTest(case=path.name):
+                record = self.finalize_events(case["events"])
+                self.assertEqual(record["appraisal"]["status"], case["expected_appraisal"])
 
     def test_refuses_unsealed_or_incomplete_evidence(self):
         accumulator = EvidenceAccumulator("run-governed-sdlc-001", self.validator)

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {readdirSync, readFileSync} from "node:fs";
 import test from "node:test";
 import {fileURLToPath} from "node:url";
 import {EvidenceAccumulator, finalizeTrace, SchemaValidator, TraceFinalizationError} from "../src/index.js";
@@ -21,7 +21,7 @@ test("finalizer derives claims then signs, validates, and self-verifies", () => 
 });
 test("tool transcript uses the shared RFC 8785 sequence/event digest", () => {
   const record = finalizeTrace(snapshot([fixture("action.json")]), config, {signingKey: "private", codec: new RecordingCodec()});
-  assert.deepEqual(record.tool_transcript, {hash: "sha256:69ff36176ca16383fc3c7dc99b488342691a44572c7361673a5fa9fed6b46789", call_count: 1});
+  assert.deepEqual(record.tool_transcript, {hash: "sha256:c6a971b931d1b54e98a88184c50cba44084463279186b4cab7401d91354c128e", call_count: 1});
   const changed = fixture("action.json"); changed.outcome = "error"; changed.error_type = "remote_error";
   assert.notEqual((finalizeTrace(snapshot([changed]), config, {signingKey: "private", codec: new RecordingCodec()}).tool_transcript as Record<string, unknown>).hash, (record.tool_transcript as Record<string, unknown>).hash);
 });
@@ -38,6 +38,26 @@ test("linked approval resolves a challenge while an unrelated approval does not"
   assert.equal((make(request, approval).appraisal as Record<string, unknown>).status, "warning");
   approval.action_digest = request.action_digest; approval.time_unix_nano = "1787080100000000001";
   assert.equal((make(request, approval).appraisal as Record<string, unknown>).status, "warning");
+});
+const finalizeEvents = (events: NormalizedEvent[]) => { const accumulator = new EvidenceAccumulator("run-governed-sdlc-001", validator); events.forEach((event) => accumulator.append(event)); return (finalizeTrace(accumulator.seal("complete"), config, {signingKey: "private", codec: new RecordingCodec()}).appraisal as Record<string, unknown>).status; };
+type AppraisalCase = {description: string; expected_appraisal: string; events: NormalizedEvent[]};
+const appraisalCase = (name: string): AppraisalCase => JSON.parse(readFileSync(`${root}/conformance/appraisal/${name}`, "utf8")) as AppraisalCase;
+test("an executed action must match the digest its approval approved", () => {
+  const events = appraisalCase("approved-action-matches.json").events;
+  assert.equal(finalizeEvents(events), "affirming");
+  // The approval binds digest b*64; the action that ran carries c*64. Before
+  // this check the run still appraised affirming.
+  const swapped = events.map((event) => ({...event})); swapped.at(-1)!.action_digest = {algorithm: "sha256", value: "c".repeat(64)};
+  assert.equal(finalizeEvents(swapped), "contraindicated");
+  const unnamed = swapped.map((event) => ({...event})); delete unnamed.at(-1)!.approval_id;
+  assert.equal(finalizeEvents(unnamed), "contraindicated");
+  const denied = swapped.map((event) => ({...event})); denied.at(-1)!.outcome = "denied";
+  assert.equal(finalizeEvents(denied), "affirming");
+});
+test("shared appraisal conformance cases", () => {
+  const names = readdirSync(`${root}/conformance/appraisal`).filter((name) => name.endsWith(".json")).sort();
+  assert.ok(names.length >= 2);
+  for (const name of names) { const item = appraisalCase(name); assert.equal(finalizeEvents(item.events), item.expected_appraisal, name); }
 });
 test("finalization refuses incomplete evidence, conflicts, unranked data, and missing trust inputs", () => {
   const open = new EvidenceAccumulator("run-governed-sdlc-001", validator); open.append(fixture("policy-decision.json"));

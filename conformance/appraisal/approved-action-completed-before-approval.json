@@ -1,0 +1,156 @@
+{
+  "description": "The executed action completed before its approval was resolved.",
+  "expected_appraisal": "contraindicated",
+  "events": [
+    {
+      "action_type": "repository.write",
+      "agent_id": "spiffe://example.test/agent/coder",
+      "decision": "challenge",
+      "enforcement_mode": "enforce",
+      "evaluation_duration_ns": 182000,
+      "event_id": "018f0f7d-7a13-7cc2-8000-000000000001",
+      "event_type": "policy.decision",
+      "policy": {
+        "bundle_digest": {
+          "algorithm": "sha256",
+          "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "engine": "cedar",
+        "engine_version": "4.3.0",
+        "policy_id": "repo-write"
+      },
+      "producer": {
+        "name": "example-policy-adapter",
+        "version": "0.1.0"
+      },
+      "reason_codes": [
+        "BRANCH_PROTECTED"
+      ],
+      "resource_type": "git.repository",
+      "run_id": "run-governed-sdlc-001",
+      "span_id": "00f067aa0ba902b7",
+      "spec_version": "0.1.0-alpha.6",
+      "time_unix_nano": "1787079600000000000",
+      "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "workflow_id": "workflow-build-feature"
+    },
+    {
+      "action_digest": {
+        "algorithm": "sha256",
+        "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "actor_type": "human",
+      "agent_id": "spiffe://example.test/agent/coder",
+      "approval_id": "approval-001",
+      "event_id": "018f0f7d-7a13-7cc2-8000-000000000010",
+      "event_type": "approval.requested",
+      "producer": {
+        "name": "example-approval-adapter",
+        "version": "0.1.0"
+      },
+      "requested_at_unix_nano": "1787079500000000000",
+      "run_id": "run-governed-sdlc-001",
+      "span_id": "00f067aa0ba902b7",
+      "spec_version": "0.1.0-alpha.6",
+      "time_unix_nano": "1787079500000000000",
+      "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "policy_event_id": "018f0f7d-7a13-7cc2-8000-000000000001",
+      "chain_id": "operators",
+      "chain_version": "3",
+      "expires_at_unix_nano": "1787080100000000000"
+    },
+    {
+      "action_digest": {
+        "algorithm": "sha256",
+        "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "actor_id": "reviewer-7d91",
+      "actor_type": "human",
+      "agent_id": "spiffe://example.test/agent/coder",
+      "approval_id": "approval-001",
+      "event_id": "018f0f7d-7a13-7cc2-8000-000000000002",
+      "event_type": "approval.approved",
+      "producer": {
+        "name": "example-approval-adapter",
+        "version": "0.1.0"
+      },
+      "requested_at_unix_nano": "1787079500000000000",
+      "run_id": "run-governed-sdlc-001",
+      "span_id": "00f067aa0ba902b7",
+      "spec_version": "0.1.0-alpha.6",
+      "time_unix_nano": "1787079580000000000",
+      "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "policy_event_id": "018f0f7d-7a13-7cc2-8000-000000000001",
+      "chain_id": "operators",
+      "chain_version": "3",
+      "expires_at_unix_nano": "1787080100000000000"
+    },
+    {
+      "agent_id": "spiffe://example.test/agent/architect",
+      "classification": {
+        "producer": "example-dlp",
+        "taxonomy": "example.enterprise.v1",
+        "value": "confidential"
+      },
+      "content_digest": {
+        "algorithm": "sha256",
+        "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "destination": {
+        "id": "architecture-agent",
+        "kind": "agent"
+      },
+      "direction": "read",
+      "event_id": "018f0f7d-7a13-7cc2-8000-000000000004",
+      "event_type": "data_flow.observed",
+      "policy_decision": "allow",
+      "producer": {
+        "name": "example-dataflow-adapter",
+        "version": "0.1.0"
+      },
+      "purpose": "generate_architecture",
+      "run_id": "run-governed-sdlc-001",
+      "size_bytes": 18342,
+      "source": {
+        "id": "requirements-graph",
+        "kind": "knowledge_graph"
+      },
+      "spec_version": "0.1.0-alpha.6",
+      "time_unix_nano": "1787079400000000000",
+      "transformation": "metadata_only"
+    },
+    {
+      "spec_version": "0.1.0-alpha.6",
+      "event_id": "018f0f7d-7a13-7cc2-8000-000000000006",
+      "event_type": "action.executed",
+      "time_unix_nano": "1787079570000000000",
+      "run_id": "run-governed-sdlc-001",
+      "workflow_id": "workflow-build-feature",
+      "agent_id": "spiffe://example.test/agent/coder",
+      "producer": {
+        "name": "example-action-adapter",
+        "version": "0.1.0"
+      },
+      "action_id": "tool-call-001",
+      "action_kind": "mcp",
+      "action_name": "github.create_pull_request",
+      "operation": "create",
+      "outcome": "success",
+      "duration_ns": 42000000,
+      "action_digest": {
+        "algorithm": "sha256",
+        "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "result_digest": {
+        "algorithm": "sha256",
+        "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      },
+      "target": {
+        "kind": "git.repository",
+        "id": "example/repository"
+      },
+      "policy_event_id": "018f0f7d-7a13-7cc2-8000-000000000001",
+      "approval_id": "approval-001"
+    }
+  ]
+}
