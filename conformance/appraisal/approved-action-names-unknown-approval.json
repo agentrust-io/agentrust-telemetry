@@ -29,7 +29,7 @@
       "resource_type": "git.repository",
       "run_id": "run-governed-sdlc-001",
       "span_id": "00f067aa0ba902b7",
-      "spec_version": "0.1.0-alpha.5",
+      "spec_version": "0.1.0-alpha.6",
       "time_unix_nano": "1787079600000000000",
       "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
       "workflow_id": "workflow-build-feature"
@@ -51,7 +51,7 @@
       "requested_at_unix_nano": "1787079500000000000",
       "run_id": "run-governed-sdlc-001",
       "span_id": "00f067aa0ba902b7",
-      "spec_version": "0.1.0-alpha.5",
+      "spec_version": "0.1.0-alpha.6",
       "time_unix_nano": "1787079500000000000",
       "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
       "policy_event_id": "018f0f7d-7a13-7cc2-8000-000000000001",
@@ -77,7 +77,7 @@
       "requested_at_unix_nano": "1787079500000000000",
       "run_id": "run-governed-sdlc-001",
       "span_id": "00f067aa0ba902b7",
-      "spec_version": "0.1.0-alpha.5",
+      "spec_version": "0.1.0-alpha.6",
       "time_unix_nano": "1787079580000000000",
       "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
       "policy_event_id": "018f0f7d-7a13-7cc2-8000-000000000001",
@@ -115,12 +115,12 @@
         "id": "requirements-graph",
         "kind": "knowledge_graph"
       },
-      "spec_version": "0.1.0-alpha.5",
+      "spec_version": "0.1.0-alpha.6",
       "time_unix_nano": "1787079400000000000",
       "transformation": "metadata_only"
     },
     {
-      "spec_version": "0.1.0-alpha.5",
+      "spec_version": "0.1.0-alpha.6",
       "event_id": "018f0f7d-7a13-7cc2-8000-000000000006",
       "event_type": "action.executed",
       "time_unix_nano": "1787079650000000000",

@@ -6,7 +6,7 @@ Portable governance telemetry and verifiable evidence for AI-agent runtimes.
 
 This repository defines a backend-neutral contract for policy decisions, approval lifecycles, usage, classified data flows, and evidence lifecycle events. It composes with OpenTelemetry; it is not a tracing backend, policy engine, agent framework, or dashboard.
 
-> **Status:** alpha contract `0.1.0-alpha.5`. No stable SDK API or compatibility guarantee exists yet.
+> **Status:** alpha contract `0.1.0-alpha.6`. No stable SDK API or compatibility guarantee exists yet.
 
 ## Why
 

@@ -6,9 +6,9 @@ The telemetry contract uses semantic versioning independently from SDK versions,
 - Minor: backward-compatible optional field, event, or enum addition with defined older-consumer behavior.
 - Major: removal, changed meaning, new required field, or incompatible canonicalization.
 
-The current contract version is `0.1.0-alpha.5`. Python publishes the equivalent
-PEP 440 version `0.1.0a5`; npm and the Git tag use `0.1.0-alpha.5` and
-`v0.1.0-alpha.5`. Pre-1.0 changes may be incompatible and must be called out
+The current contract version is `0.1.0-alpha.6`. Python publishes the equivalent
+PEP 440 version `0.1.0a6`; npm and the Git tag use `0.1.0-alpha.6` and
+`v0.1.0-alpha.6`. Pre-1.0 changes may be incompatible and must be called out
 explicitly.
 
 Published GitHub releases are the sole release trigger. The release tag must

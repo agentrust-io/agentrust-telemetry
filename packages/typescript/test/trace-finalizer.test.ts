@@ -21,7 +21,7 @@ test("finalizer derives claims then signs, validates, and self-verifies", () => 
 });
 test("tool transcript uses the shared RFC 8785 sequence/event digest", () => {
   const record = finalizeTrace(snapshot([fixture("action.json")]), config, {signingKey: "private", codec: new RecordingCodec()});
-  assert.deepEqual(record.tool_transcript, {hash: "sha256:69ff36176ca16383fc3c7dc99b488342691a44572c7361673a5fa9fed6b46789", call_count: 1});
+  assert.deepEqual(record.tool_transcript, {hash: "sha256:c6a971b931d1b54e98a88184c50cba44084463279186b4cab7401d91354c128e", call_count: 1});
   const changed = fixture("action.json"); changed.outcome = "error"; changed.error_type = "remote_error";
   assert.notEqual((finalizeTrace(snapshot([changed]), config, {signingKey: "private", codec: new RecordingCodec()}).tool_transcript as Record<string, unknown>).hash, (record.tool_transcript as Record<string, unknown>).hash);
 });

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.6 - 2026-10-01
+
 ### Fixed
 
 - TRACE finalization in both SDKs now checks each executed, approval-gated action
