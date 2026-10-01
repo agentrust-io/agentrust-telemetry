@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.6 - 2026-10-01
+
+### Fixed
+
+- TRACE finalization in both SDKs now checks each executed, approval-gated action
+  against the approval it ran under. Before, a run whose `approval.approved` event
+  bound one `action_digest` appraised `affirming` even when the `action.executed`
+  event that followed carried a different digest. An action whose approval
+  carries a different `action_digest` or `policy_event_id`, or was resolved after
+  the action completed, now appraises `contraindicated`; a gated action with no
+  bound approval appraises `warning`. Five run-level cases in
+  `conformance/appraisal/` are shared by both SDK suites, and the conformance
+  runner schema-checks their events.
+
 ## 0.1.0-alpha.5 - 2026-09-26
 
 ### Fixed

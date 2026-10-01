@@ -15,6 +15,8 @@ from referencing import Registry, Resource
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_DIR = ROOT / "spec" / "schema"
 FIXTURE_DIR = ROOT / "conformance" / "fixtures"
+APPRAISAL_DIR = ROOT / "conformance" / "appraisal"
+APPRAISAL_STATUSES = {"affirming", "warning", "contraindicated", "none"}
 
 EVENT_SCHEMAS = {
     "action.executed": "action.schema.json",
@@ -118,6 +120,42 @@ def run_suite(fixtures: Path = FIXTURE_DIR) -> int:
                 failures += 1
                 for error in errors or ["invalid fixture unexpectedly passed"]:
                     print(f"  {error}")
+    failures += run_appraisal_cases()
+    return failures
+
+
+def validate_appraisal_case(path: Path) -> list[str]:
+    """Each run-level case must be well formed and every event schema-valid.
+
+    The expected appraisal itself is asserted by each SDK's test suite, which
+    finalizes the case; this runner checks only what it can without an SDK.
+    """
+    try:
+        case = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return [f"invalid JSON: {exc}"]
+    if not isinstance(case, dict) or not isinstance(case.get("events"), list):
+        return ["case must be an object with an events array"]
+    errors: list[str] = []
+    if case.get("expected_appraisal") not in APPRAISAL_STATUSES:
+        errors.append(f"expected_appraisal must be one of {sorted(APPRAISAL_STATUSES)}")
+    for index, event in enumerate(case["events"]):
+        if not isinstance(event, dict):
+            errors.append(f"events[{index}]: must be an object")
+            continue
+        errors.extend(f"events[{index}]{error[1:]}" for error in validate_record(event))
+    return errors
+
+
+def run_appraisal_cases(directory: Path = APPRAISAL_DIR) -> int:
+    failures = 0
+    for path in sorted(directory.glob("*.json")):
+        errors = validate_appraisal_case(path)
+        print(f"{'PASS' if not errors else 'FAIL'} {path.relative_to(ROOT)}")
+        if errors:
+            failures += 1
+            for error in errors:
+                print(f"  {error}")
     return failures
 
 

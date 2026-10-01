@@ -230,29 +230,117 @@ def _appraisal(events: list[dict[str, Any]]) -> str:
     }
     approvals = [event for event in events if event["event_type"].startswith("approval.")]
     approval_types = {event["event_type"] for event in approvals}
-    if set(decisions.values()).intersection({"deny", "error"}) or approval_types.intersection(
-        {"approval.rejected", "approval.expired", "approval.execution_failed"}
+    bound_approvals = _bound_approvals(approvals)
+    action_binding = _action_approval_binding(events, decisions, approvals, bound_approvals)
+    if (
+        set(decisions.values()).intersection({"deny", "error"})
+        or approval_types.intersection(
+            {"approval.rejected", "approval.expired", "approval.execution_failed"}
+        )
+        or action_binding == "contradicted"
     ):
         return "contraindicated"
-    approved_policy_events = _bound_approved_policy_events(approvals)
+    approved_policy_events = {str(event["policy_event_id"]) for event in bound_approvals}
     unresolved_challenges = {
         event_id
         for event_id, decision in decisions.items()
         if decision == "challenge" and event_id not in approved_policy_events
     }
-    if unresolved_challenges or "approval.cancelled" in approval_types:
+    if (
+        unresolved_challenges
+        or "approval.cancelled" in approval_types
+        or action_binding == "unresolved"
+    ):
         return "warning"
     if decisions or approval_types:
         return "affirming"
     return "none"
 
 
-def _bound_approved_policy_events(approvals: list[dict[str, Any]]) -> set[str]:
-    """Return challenges resolved by a complete, unexpired request/resolution pair."""
+ActionBinding = Literal["bound", "unresolved", "contradicted"]
+
+
+def _action_approval_binding(
+    events: list[dict[str, Any]],
+    decisions: dict[str, Any],
+    approvals: list[dict[str, Any]],
+    bound_approvals: list[dict[str, Any]],
+) -> ActionBinding:
+    """Check every executed, approval-gated action against the approval it ran under.
+
+    An action is approval-gated when it names an ``approval_id``, or names a
+    ``policy_event_id`` whose decision was ``challenge``. An action whose
+    outcome is ``denied`` did not run and is exempt. A gated action is bound
+    when an ``approval.approved`` event for the same approval (or, without an
+    ``approval_id``, the same policy event) carries the same ``action_digest``,
+    names the same ``policy_event_id``, was resolved inside its request window,
+    and was not resolved after the action completed.
+
+    A recorded approval that disagrees on digest or policy event, or that was
+    resolved after the action completed, contradicts the action. A gated action
+    with no approval at all, or only one that is not bound to its request, is
+    unresolved.
+    """
+    approved = [event for event in approvals if event["event_type"] == "approval.approved"]
+    bound_ids = {id(event) for event in bound_approvals}
+    result: ActionBinding = "bound"
+    for action in events:
+        if action["event_type"] != "action.executed" or action["outcome"] == "denied":
+            continue
+        approval_id = action.get("approval_id")
+        policy_event_id = action.get("policy_event_id")
+        if approval_id is None and decisions.get(policy_event_id) != "challenge":
+            continue
+        candidates = [
+            event
+            for event in approved
+            if (
+                event["approval_id"] == approval_id
+                if approval_id is not None
+                else event.get("policy_event_id") == policy_event_id
+            )
+        ]
+        completed_at = int(action["time_unix_nano"])
+        contradicted = satisfied = False
+        for approval in candidates:
+            approval_policy = approval.get("policy_event_id")
+            if (
+                not _same_digest(approval["action_digest"], action["action_digest"])
+                or (
+                    policy_event_id is not None
+                    and approval_policy is not None
+                    and approval_policy != policy_event_id
+                )
+                or int(approval["time_unix_nano"]) > completed_at
+            ):
+                contradicted = True
+            elif id(approval) in bound_ids:
+                # Binding to a request requires policy_event_id, so a bound
+                # approval that reached here names the action's policy event.
+                satisfied = True
+        if satisfied:
+            continue
+        if contradicted:
+            return "contradicted"
+        result = "unresolved"
+    return result
+
+
+def _same_digest(left: Any, right: Any) -> bool:
+    return (
+        isinstance(left, dict)
+        and isinstance(right, dict)
+        and left.get("algorithm") == right.get("algorithm")
+        and left.get("value") == right.get("value")
+    )
+
+
+def _bound_approvals(approvals: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return approvals resolved by a complete, unexpired request/resolution pair."""
     requests = [
         event for event in approvals if event["event_type"] == "approval.requested"
     ]
-    resolved: set[str] = set()
+    resolved: list[dict[str, Any]] = []
     binding_fields = (
         "approval_id",
         "policy_event_id",
@@ -280,7 +368,7 @@ def _bound_approved_policy_events(approvals: list[dict[str, Any]]) -> set[str]:
             except (TypeError, ValueError):
                 continue
             if requested_at <= approved_at <= expires_at:
-                resolved.add(str(approval["policy_event_id"]))
+                resolved.append(approval)
                 break
     return resolved
 

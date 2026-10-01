@@ -34,3 +34,28 @@ structural validation, public-key derivation, and signature verification. The
 finalizer invokes all four steps and fails closed. It does not substitute a local
 shape check for official TRACE validation. Tool transcript bytes use RFC 8785 JCS
 in both SDKs.
+
+## Appraisal
+
+The adapter derives `appraisal.status` from the sealed evidence, worst first:
+
+- `contraindicated` when any policy decision is `deny` or `error`; when the run
+  carries `approval.rejected`, `approval.expired`, or
+  `approval.execution_failed`; or when an approval-gated action contradicts its
+  approval: the approval for it carries a different `action_digest` or
+  `policy_event_id`, or was resolved after the action completed. The evidence
+  then shows that something other than the approved action ran, so the
+  appraisal failed.
+- `warning` when a `challenge` decision has no bound approval, when the run
+  carries `approval.cancelled`, or when an approval-gated action has no bound
+  approval at all.
+- `affirming` when policy or approval evidence is present and none of the
+  above applies.
+- `none` when there is no policy or approval evidence.
+
+An approval resolves a challenge only when an `approval.approved` event matches
+an `approval.requested` event on `approval_id`, `policy_event_id`,
+`action_digest`, `chain_id`, `chain_version`, `requested_at_unix_nano` and
+`expires_at_unix_nano`, and its `time_unix_nano` falls inside the request's
+window. The approval-gated action rules are in
+[Action execution events](action-events.md#approval-binding).
