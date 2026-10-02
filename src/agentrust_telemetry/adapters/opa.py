@@ -35,7 +35,13 @@ def opa_decision_log(
         raise ValueError("OPA decision log requires a non-empty decision_id")
     mapper = result_mapper or _boolean_decision
     decision = mapper(decision_log.get("result"))
-    if decision not in {"allow", "deny", "challenge", "not_applicable", "error"}:
+    if not isinstance(decision, str) or decision not in {
+        "allow",
+        "deny",
+        "challenge",
+        "not_applicable",
+        "error",
+    }:
         raise ValueError(f"OPA result mapper returned unsupported decision: {decision!r}")
     labels = decision_log.get("labels", {})
     if not isinstance(labels, dict):
