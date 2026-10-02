@@ -175,11 +175,17 @@ class AdapterTests(unittest.TestCase):
                                  "OPA decision log requires a non-empty decision_id")
 
     def test_opa_rejects_unsupported_mapper_decision(self):
-        with self.assertRaises(ValueError) as caught:
-            self.opa_event({"decision_id": "d-1", "result": {}},
-                           result_mapper=lambda value: "permit")
-        self.assertEqual(str(caught.exception),
-                         "OPA result mapper returned unsupported decision: 'permit'")
+        for decision in ("permit", {}, []):
+            with self.subTest(decision=decision):
+                with self.assertRaises(ValueError) as caught:
+                    self.opa_event(
+                        {"decision_id": "d-1", "result": {}},
+                        result_mapper=lambda value, decision=decision: decision,
+                    )
+                self.assertEqual(
+                    str(caught.exception),
+                    f"OPA result mapper returned unsupported decision: {decision!r}",
+                )
 
     def test_opa_requires_object_labels(self):
         for labels in ([], None, "version=1.8.0"):
