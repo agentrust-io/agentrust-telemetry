@@ -1,0 +1,34 @@
+{
+  "revision": "b6587950986eb4ec501e080cc9730fd21dcb69fa",
+  "case": "effects-action-id-reused-in-another-scope",
+  "query": {
+    "action": "P1",
+    "service": "test-ticket-service",
+    "tenant": "tenant-a"
+  },
+  "candidate_answers": 2,
+  "selected_answers": 0,
+  "fields": [
+    {
+      "field": "action",
+      "actual": null,
+      "expected": "P1",
+      "match": false
+    },
+    {
+      "field": "effect",
+      "actual": "query_scope_unresolved",
+      "expected": "confirmed",
+      "match": false
+    },
+    {
+      "field": "confirmed_tickets",
+      "actual": null,
+      "expected": [
+        "T-1042"
+      ],
+      "match": false
+    }
+  ],
+  "pass": false
+}

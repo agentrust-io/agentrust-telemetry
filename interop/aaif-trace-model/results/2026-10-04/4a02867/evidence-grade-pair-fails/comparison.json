@@ -1,0 +1,42 @@
+{
+  "revision": "4a028675ef9b5727e614762df305f5f037b04b98",
+  "case": "evidence-grade-pair-fails",
+  "query": {
+    "action": "P1",
+    "service": "test-ticket-service",
+    "tenant": null
+  },
+  "candidate_answers": 1,
+  "selected_answers": 1,
+  "fields": [
+    {
+      "field": "action",
+      "actual": "P1",
+      "expected": "P1",
+      "match": true
+    },
+    {
+      "field": "effect",
+      "actual": "confirmed",
+      "expected": "confirmed",
+      "match": true
+    },
+    {
+      "field": "confirmed_tickets",
+      "actual": [
+        "T-1042"
+      ],
+      "expected": [
+        "T-1042"
+      ],
+      "match": true
+    },
+    {
+      "field": "receipt_signature_verified",
+      "actual": false,
+      "expected": false,
+      "match": true
+    }
+  ],
+  "pass": true
+}

@@ -1,0 +1,32 @@
+{
+  "revision": "4a028675ef9b5727e614762df305f5f037b04b98",
+  "case": "effects-receipt-missing",
+  "query": {
+    "action": "P1",
+    "service": "test-ticket-service",
+    "tenant": null
+  },
+  "candidate_answers": 1,
+  "selected_answers": 1,
+  "fields": [
+    {
+      "field": "action",
+      "actual": "P1",
+      "expected": "P1",
+      "match": true
+    },
+    {
+      "field": "effect",
+      "actual": "unconfirmed",
+      "expected": "unconfirmed",
+      "match": true
+    },
+    {
+      "field": "confirmed_tickets",
+      "actual": null,
+      "expected": null,
+      "match": true
+    }
+  ],
+  "pass": true
+}

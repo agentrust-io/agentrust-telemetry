@@ -1,0 +1,36 @@
+{
+  "revision": "b6587950986eb4ec501e080cc9730fd21dcb69fa",
+  "case": "effects-receipt-delivered-twice",
+  "query": {
+    "action": "P1",
+    "service": "test-ticket-service",
+    "tenant": null
+  },
+  "candidate_answers": 1,
+  "selected_answers": 1,
+  "fields": [
+    {
+      "field": "action",
+      "actual": "P1",
+      "expected": "P1",
+      "match": true
+    },
+    {
+      "field": "effect",
+      "actual": "confirmed",
+      "expected": "confirmed",
+      "match": true
+    },
+    {
+      "field": "confirmed_tickets",
+      "actual": [
+        "T-1042"
+      ],
+      "expected": [
+        "T-1042"
+      ],
+      "match": true
+    }
+  ],
+  "pass": true
+}
