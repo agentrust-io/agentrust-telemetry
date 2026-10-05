@@ -1,0 +1,33 @@
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 8 tests
+test readme_signing_input_is_126_bytes ... ok
+test duplicate_json_member_is_an_input_error ... ok
+test no_method_means_not_established ... ok
+test conflicting_deliveries_survive_deduplication ... ok
+test same_ticket_in_two_services_is_two_effects ... ok
+test missing_receipt_is_unknown_not_zero ... ok
+test unrecognized_default_is_a_loss_not_a_fallback ... ok
+test every_permutation_gives_the_same_answers ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

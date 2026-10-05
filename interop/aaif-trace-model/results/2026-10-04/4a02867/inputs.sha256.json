@@ -1,0 +1,14 @@
+{
+  "test-kit/README.md": "580db177b9fc10900b35dfdb259985826598d2c01a0086be1a41ade5137e319d",
+  "test-kit/TEMPLATE/mapping.md": "3d36345b7195a1d43370e7df1f6bf9c8fdceb2666a05b708a53eda5ecd3b5f28",
+  "test-kit/cases/effects-receipt-delivered-twice/basis.json": "61bc3ea102074cddeb4fece9752f08e070e131af95da0829519d974028f0b4ae",
+  "test-kit/cases/effects-receipt-delivered-twice/records.otlp.json": "2d70c9c518a1f08df77ad4aa3d8fc3556f9a14fcda77d86edca1591898d5b5a7",
+  "test-kit/cases/effects-receipt-missing/basis.json": "61bc3ea102074cddeb4fece9752f08e070e131af95da0829519d974028f0b4ae",
+  "test-kit/cases/effects-receipt-missing/records.otlp.json": "ae4f61fe06dd1b1a0e0b2c797f8f9fff814ced080e7fb15b0e3a634207412442",
+  "test-kit/cases/evidence-grade-pair-fails/basis.json": "51d06ccea6ccc815196b08bef7af9f572719f6d0c5e114718078b6cbd1ff4b83",
+  "test-kit/cases/evidence-grade-pair-fails/records.otlp.json": "1363389e03ae5a3656e092d6f92c51e04ef20500ddfde10a4cca2de7a3e7c9d0",
+  "test-kit/cases/evidence-grade-pair-verifies/basis.json": "51d06ccea6ccc815196b08bef7af9f572719f6d0c5e114718078b6cbd1ff4b83",
+  "test-kit/cases/evidence-grade-pair-verifies/records.otlp.json": "5408247a36ed3f3edaf509b9c082f5f47c40f729ab4eddb29272cd3693aa7c4d",
+  "test-kit/mapping.md": "7b4036c9c99debf64abf1c221f6292a685db477c44795b20f42eeec6e8763a57",
+  "test-kit/trust/test-ticket-service.pub.pem": "7e2cca85e60abde07c9ca696630a8792f4429fa71a1a7a6b977a6f38e8619da0"
+}

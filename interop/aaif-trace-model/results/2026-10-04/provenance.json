@@ -1,0 +1,10 @@
+{
+  "reader_sha": "590d6182f6b8ae0938a0546439ed854b92745d64",
+  "kit_revisions": [
+    "4a028675ef9b5727e614762df305f5f037b04b98",
+    "b6587950986eb4ec501e080cc9730fd21dcb69fa"
+  ],
+  "expected_files_opened": false,
+  "kit_implementation_read": false,
+  "command": "python .aaif-work/rerun.py"
+}

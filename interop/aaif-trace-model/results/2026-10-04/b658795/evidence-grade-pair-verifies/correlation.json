@@ -1,0 +1,143 @@
+{
+  "answers": [
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[2]"
+      ],
+      "gaps": [
+        "no_decision_recorded"
+      ],
+      "observed": {
+        "decisions_recorded": [],
+        "enforcement": "unknown",
+        "execution": true,
+        "proposal": "P1"
+      },
+      "query": "approval-for-execution",
+      "state": "unknown",
+      "subject": {
+        "id": null,
+        "kind": "tool_execution",
+        "references": {
+          "proposal": "P1"
+        },
+        "scope": "support-agent"
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [],
+      "gaps": [
+        "no_model_call_observed"
+      ],
+      "observed": {
+        "model_calls": [],
+        "usage": null
+      },
+      "query": "calls",
+      "state": "unknown",
+      "subject": {
+        "id": "T1",
+        "kind": "turn"
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[0]"
+      ],
+      "gaps": [],
+      "observed": {
+        "conversation": "C1",
+        "method": "attribute-reference"
+      },
+      "query": "continuity",
+      "state": "established",
+      "subject": {
+        "id": "T1",
+        "kind": "turn"
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[2]",
+        "resourceSpans[1].scopeSpans[0].spans[0]"
+      ],
+      "gaps": [],
+      "observed": {
+        "correlated_effects": [
+          {
+            "receipts": [
+              {
+                "deliveries": 1,
+                "receipt": "R-7"
+              }
+            ],
+            "scope": "test-ticket-service",
+            "ticket_id": "T-1042"
+          }
+        ],
+        "correlation_method": "external-correlation-key",
+        "execution": true
+      },
+      "query": "effects-for-execution",
+      "state": "established",
+      "subject": {
+        "id": null,
+        "kind": "tool_execution",
+        "references": {
+          "proposal": "P1"
+        },
+        "scope": "support-agent"
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[1]"
+      ],
+      "gaps": [
+        "r3_not_exported"
+      ],
+      "observed": {
+        "turn": null
+      },
+      "query": "proposal-origin",
+      "state": "unknown",
+      "subject": {
+        "id": "P1",
+        "kind": "proposed_action"
+      }
+    }
+  ],
+  "contract": "AGENT-BEHAVIOR-TRACE-MODEL-CONTRACT.md v0.7-draft @ e82abf1e58b066c586c25767edfba862c4ebd027",
+  "diagnostics": [],
+  "input": {
+    "path": "C:/Users/imran/OneDrive/.aaif-work/telemetry/interop/aaif-trace-model/results/2026-10-04/b658795/inputs/test-kit/cases/evidence-grade-pair-verifies/records.otlp.json",
+    "sha256": "5408247a36ed3f3edaf509b9c082f5f47c40f729ab4eddb29272cd3693aa7c4d",
+    "spans": 4
+  },
+  "mapping_losses": [],
+  "method_defaults": {
+    "declared_by": "kit mapping.md @ b6587950986eb4ec501e080cc9730fd21dcb69fa",
+    "values": {
+      "R1": "attribute-reference",
+      "R5": "attribute-reference",
+      "R6": "external-correlation-key"
+    }
+  },
+  "not_used": [
+    {
+      "at": "resourceSpans[0].scopeSpans[0].spans[2]",
+      "attribute": "evidence.externally_verified",
+      "why": "producer claim about external verification; not re-derived by this reader"
+    }
+  ],
+  "processing": "complete",
+  "reader": {
+    "name": "aaif-trace-reader-rs",
+    "version": "0.1.0"
+  }
+}
