@@ -1,0 +1,86 @@
+[
+  {
+    "file": "cigar-context-evidence.json",
+    "sha256": "1e70acf6d1824a5e5d858c4fcf8d581d5577f3d4e2122c119839f49d6b9e130f",
+    "mode": "interpret",
+    "exit_code": 1,
+    "report": {
+      "error": "unsupported OTLP input: expected resourceSpans (or an empty object)",
+      "input": {
+        "path": "C:\\Users\\imran\\OneDrive\\.aaif-work\\cigar-review\\cigar-context-evidence.json",
+        "sha256": "1e70acf6d1824a5e5d858c4fcf8d581d5577f3d4e2122c119839f49d6b9e130f"
+      },
+      "processing": "input_error"
+    }
+  },
+  {
+    "file": "cigar-context-evidence.json",
+    "sha256": "1e70acf6d1824a5e5d858c4fcf8d581d5577f3d4e2122c119839f49d6b9e130f",
+    "mode": "verify-receipts",
+    "exit_code": 1,
+    "report": {
+      "error": "unsupported OTLP input: expected resourceSpans (or an empty object)",
+      "input": {
+        "path": "C:\\Users\\imran\\OneDrive\\.aaif-work\\cigar-review\\cigar-context-evidence.json",
+        "sha256": "1e70acf6d1824a5e5d858c4fcf8d581d5577f3d4e2122c119839f49d6b9e130f"
+      },
+      "processing": "input_error"
+    }
+  },
+  {
+    "file": "cigar-context-full-portable-evidence.json",
+    "sha256": "36aa42c447dcb18905211e349cbd05a361f04c853e06701fb598b8f98128d575",
+    "mode": "interpret",
+    "exit_code": 1,
+    "report": {
+      "error": "unsupported OTLP input: expected resourceSpans (or an empty object)",
+      "input": {
+        "path": "C:\\Users\\imran\\OneDrive\\.aaif-work\\cigar-review\\cigar-context-full-portable-evidence.json",
+        "sha256": "36aa42c447dcb18905211e349cbd05a361f04c853e06701fb598b8f98128d575"
+      },
+      "processing": "input_error"
+    }
+  },
+  {
+    "file": "cigar-context-full-portable-evidence.json",
+    "sha256": "36aa42c447dcb18905211e349cbd05a361f04c853e06701fb598b8f98128d575",
+    "mode": "verify-receipts",
+    "exit_code": 1,
+    "report": {
+      "error": "unsupported OTLP input: expected resourceSpans (or an empty object)",
+      "input": {
+        "path": "C:\\Users\\imran\\OneDrive\\.aaif-work\\cigar-review\\cigar-context-full-portable-evidence.json",
+        "sha256": "36aa42c447dcb18905211e349cbd05a361f04c853e06701fb598b8f98128d575"
+      },
+      "processing": "input_error"
+    }
+  },
+  {
+    "file": "cigar-full-reported-evidence-execution.json",
+    "sha256": "efd6b8fb7f364588770bdb2ab7b1696774510408be24154b3a5a26a2dbc8df0c",
+    "mode": "interpret",
+    "exit_code": 1,
+    "report": {
+      "error": "unsupported OTLP input: expected a JSON object",
+      "input": {
+        "path": "C:\\Users\\imran\\OneDrive\\.aaif-work\\cigar-review\\cigar-full-reported-evidence-execution.json",
+        "sha256": "efd6b8fb7f364588770bdb2ab7b1696774510408be24154b3a5a26a2dbc8df0c"
+      },
+      "processing": "input_error"
+    }
+  },
+  {
+    "file": "cigar-full-reported-evidence-execution.json",
+    "sha256": "efd6b8fb7f364588770bdb2ab7b1696774510408be24154b3a5a26a2dbc8df0c",
+    "mode": "verify-receipts",
+    "exit_code": 1,
+    "report": {
+      "error": "unsupported OTLP input: expected a JSON object",
+      "input": {
+        "path": "C:\\Users\\imran\\OneDrive\\.aaif-work\\cigar-review\\cigar-full-reported-evidence-execution.json",
+        "sha256": "efd6b8fb7f364588770bdb2ab7b1696774510408be24154b3a5a26a2dbc8df0c"
+      },
+      "processing": "input_error"
+    }
+  }
+]

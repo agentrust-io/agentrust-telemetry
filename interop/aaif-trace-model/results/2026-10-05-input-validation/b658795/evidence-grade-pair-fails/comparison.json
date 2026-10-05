@@ -1,0 +1,59 @@
+{
+  "revision": "b6587950986eb4ec501e080cc9730fd21dcb69fa",
+  "case": "evidence-grade-pair-fails",
+  "query": {
+    "action": "P1",
+    "service": "test-ticket-service",
+    "tenant": null
+  },
+  "command": [
+    "interpret",
+    "--input",
+    "results\\2026-10-04\\b658795\\inputs\\test-kit\\cases\\evidence-grade-pair-fails\\records.otlp.json",
+    "--query-action",
+    "P1",
+    "--query-service",
+    "test-ticket-service",
+    "--defaults-declared-by",
+    "kit mapping.md @ b6587950986eb4ec501e080cc9730fd21dcb69fa",
+    "--method-default",
+    "R1=attribute-reference",
+    "--method-default",
+    "R5=attribute-reference",
+    "--method-default",
+    "R6=external-correlation-key"
+  ],
+  "exit_code": 0,
+  "selected_answers": 1,
+  "fields": [
+    {
+      "field": "action",
+      "actual": "P1",
+      "expected": "P1",
+      "match": true
+    },
+    {
+      "field": "effect",
+      "actual": "confirmed",
+      "expected": "confirmed",
+      "match": true
+    },
+    {
+      "field": "confirmed_tickets",
+      "actual": [
+        "T-1042"
+      ],
+      "expected": [
+        "T-1042"
+      ],
+      "match": true
+    },
+    {
+      "field": "receipt_signature_verified",
+      "actual": false,
+      "expected": false,
+      "match": true
+    }
+  ],
+  "pass": true
+}

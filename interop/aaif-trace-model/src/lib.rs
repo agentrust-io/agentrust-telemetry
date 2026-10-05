@@ -68,6 +68,36 @@ pub fn parse_strict(bytes: &[u8]) -> Result<Value, String> {
     Ok(v)
 }
 
+/// Select this reader's OTLP trace envelope and validate the collections it traverses.
+/// This is not a full OTLP schema validator. Empty objects and unset repeated fields
+/// are valid; a nonempty document without resourceSpans is an unsupported format.
+pub fn parse_otlp(bytes: &[u8]) -> Result<Value, String> {
+    let doc = parse_strict(bytes)?;
+    let root = doc.as_object().ok_or("unsupported OTLP input: expected a JSON object")?;
+    if !root.is_empty() && !root.contains_key("resourceSpans") {
+        return Err("unsupported OTLP input: expected resourceSpans (or an empty object)".into());
+    }
+    validate_span_collections(&doc, &["resourceSpans", "scopeSpans", "spans"], "")?;
+    Ok(doc)
+}
+
+fn validate_span_collections(doc: &Value, fields: &[&str], path: &str) -> Result<(), String> {
+    let Some((field, rest)) = fields.split_first() else { return Ok(()) };
+    let at = if path.is_empty() { field.to_string() } else { format!("{path}.{field}") };
+    let Some(value) = doc.get(*field) else { return Ok(()) };
+    // ProtoJSON permits null for a repeated field, but not as an array element.
+    if value.is_null() { return Ok(()) }
+    let entries = value.as_array().ok_or_else(|| format!("invalid OTLP input at {at}: expected an array or null"))?;
+    for (i, entry) in entries.iter().enumerate() {
+        let item = format!("{at}[{i}]");
+        if !entry.is_object() {
+            return Err(format!("invalid OTLP input at {item}: expected an object"));
+        }
+        validate_span_collections(entry, rest, &item)?;
+    }
+    Ok(())
+}
+
 // ---------------------------------------------------------------------------------------------
 // OTLP/JSON spans, flattened. The locator is diagnostic only and never becomes an identity.
 

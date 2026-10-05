@@ -1,0 +1,68 @@
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 4 tests
+test duplicate_keys_and_trailing_json_still_fail ... ok
+test empty_exports_and_unset_repeated_fields_remain_valid ... ok
+test unsupported_json_is_an_input_error_in_both_modes ... ok
+test malformed_collections_and_entries_are_not_silently_dropped ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.29s
+
+
+running 8 tests
+test duplicate_json_member_is_an_input_error ... ok
+test readme_signing_input_is_126_bytes ... ok
+test no_method_means_not_established ... ok
+test missing_receipt_is_unknown_not_zero ... ok
+test conflicting_deliveries_survive_deduplication ... ok
+test unrecognized_default_is_a_loss_not_a_fallback ... ok
+test same_ticket_in_two_services_is_two_effects ... ok
+test every_permutation_gives_the_same_answers ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+
+
+running 12 tests
+test query_cannot_hide_ambiguous_agent_scope ... ok
+test tenant_query_does_not_supply_a_missing_relationship_method ... ok
+test missing_or_other_tenant_receipt_cannot_confirm_selected_tenant ... ok
+test absent_tenant_query_is_not_a_wildcard ... ok
+test proposal_and_orphan_receipt_do_not_join_across_tenants ... ok
+test same_ticket_id_in_two_tenants_remains_two_scoped_effects ... ok
+test query_service_must_match_both_receipt_service_fields ... ok
+test duplicate_and_conflicting_deliveries_are_local_to_tenant ... ok
+test reused_action_and_receipt_ids_stay_in_their_tenant ... ok
+test malformed_or_duplicate_resource_scope_never_falls_back_to_absent ... ok
+test cli_uses_query_context_without_expected_answers ... ok
+test resource_order_and_span_order_do_not_change_scoped_results ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.24s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling aaif-trace-reader v0.1.0 (C:\Users\imran\OneDrive\.aaif-work\telemetry\interop\aaif-trace-model)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.39s
+     Running unittests src\lib.rs (target\debug\deps\aaif_trace_reader-f1476c24ff9e3864.exe)
+     Running unittests src\bin\trace-compare.rs (target\debug\deps\trace_compare-04b81b74d1ec62f8.exe)
+     Running unittests src\bin\trace-reader.rs (target\debug\deps\trace_reader-bc5fdd1252251b56.exe)
+     Running tests\input_validation.rs (target\debug\deps\input_validation-5d772f7be6fa5941.exe)
+     Running tests\set_semantics.rs (target\debug\deps\set_semantics-102a8742e1c6854e.exe)
+     Running tests\tenant_scope.rs (target\debug\deps\tenant_scope-dc81f4f5a93d3948.exe)
+   Doc-tests aaif_trace_reader

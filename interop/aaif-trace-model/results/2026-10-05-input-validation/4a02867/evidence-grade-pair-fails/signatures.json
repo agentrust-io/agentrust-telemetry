@@ -1,0 +1,21 @@
+{
+  "diagnostics": [],
+  "input": {
+    "path": "results/2026-10-04/4a02867/inputs/test-kit/cases/evidence-grade-pair-fails/records.otlp.json",
+    "sha256": "1363389e03ae5a3656e092d6f92c51e04ef20500ddfde10a4cca2de7a3e7c9d0",
+    "spans": 4
+  },
+  "processing": "complete",
+  "reader": {
+    "name": "aaif-trace-reader-rs",
+    "version": "0.1.0"
+  },
+  "receipts": [
+    {
+      "at": "resourceSpans[1].scopeSpans[0].spans[0]",
+      "receipt": "R-7",
+      "signature": "does_not_verify",
+      "signing_input_bytes": 126
+    }
+  ]
+}

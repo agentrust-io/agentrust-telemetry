@@ -1,0 +1,49 @@
+{
+  "revision": "4a028675ef9b5727e614762df305f5f037b04b98",
+  "case": "effects-receipt-missing",
+  "query": {
+    "action": "P1",
+    "service": "test-ticket-service",
+    "tenant": null
+  },
+  "command": [
+    "interpret",
+    "--input",
+    "results\\2026-10-04\\4a02867\\inputs\\test-kit\\cases\\effects-receipt-missing\\records.otlp.json",
+    "--query-action",
+    "P1",
+    "--query-service",
+    "test-ticket-service",
+    "--defaults-declared-by",
+    "kit mapping.md @ 4a028675ef9b5727e614762df305f5f037b04b98",
+    "--method-default",
+    "R1=attribute-reference",
+    "--method-default",
+    "R5=attribute-reference",
+    "--method-default",
+    "R6=external-correlation-key"
+  ],
+  "exit_code": 0,
+  "selected_answers": 1,
+  "fields": [
+    {
+      "field": "action",
+      "actual": "P1",
+      "expected": "P1",
+      "match": true
+    },
+    {
+      "field": "effect",
+      "actual": "unconfirmed",
+      "expected": "unconfirmed",
+      "match": true
+    },
+    {
+      "field": "confirmed_tickets",
+      "actual": null,
+      "expected": null,
+      "match": true
+    }
+  ],
+  "pass": true
+}

@@ -49,7 +49,7 @@ fn main() {
     let bytes = std::fs::read(&path).expect("read input");
     let digest = sha256_hex(&bytes);
 
-    let doc = match parse_strict(&bytes) {
+    let doc = match parse_otlp(&bytes) {
         Ok(d) => d,
         Err(e) => {
             let r = json!({"processing": "input_error", "input": {"path": path, "sha256": digest}, "error": e});

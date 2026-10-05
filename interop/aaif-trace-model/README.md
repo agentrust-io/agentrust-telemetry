@@ -30,6 +30,18 @@ which document a case follows is the comparator's business, not an input to inte
 
 On Windows on ARM without the ARM64 MSVC libraries, build with `cargo +stable-x86_64-pc-windows-msvc`.
 
+Both reader commands reject unsupported JSON and malformed `resourceSpans`, `scopeSpans`
+or `spans` collections with exit 1 and `processing: input_error`, before computing answers.
+Errors identify the malformed collection or entry. `parse_otlp` exposes the same check to
+library callers; `flatten` is a low-level traversal for already validated input.
+The empty object `{}` and empty or unset collections remain valid empty exports.
+Null collections count as unset under [ProtoJSON](https://protobuf.dev/programming-guides/json/#null-values);
+null array elements are invalid. Unknown fields accompanying `resourceSpans` are ignored.
+A nonempty object without `resourceSpans` is rejected by this offline reader's format
+selection policy, even though an OTLP receiver may ignore unknown fields. This prevents
+unrelated native evidence bundles from appearing to have been successfully interpreted.
+This check covers the envelope and span collections, not every OTLP field or schema rule.
+
 ## Interpretation choices
 
 1. **No method, no relationship.** Contract §4 (revision 3) requires a link method on each

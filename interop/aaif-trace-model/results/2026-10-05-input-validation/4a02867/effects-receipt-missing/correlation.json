@@ -1,0 +1,146 @@
+{
+  "answers": [
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[2]"
+      ],
+      "gaps": [
+        "no_decision_recorded"
+      ],
+      "observed": {
+        "decisions_recorded": [],
+        "enforcement": "unknown",
+        "execution": true,
+        "proposal": "P1"
+      },
+      "query": "approval-for-execution",
+      "state": "unknown",
+      "subject": {
+        "id": null,
+        "kind": "tool_execution",
+        "references": {
+          "proposal": "P1"
+        },
+        "scope": "support-agent",
+        "tenant": null
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [],
+      "gaps": [
+        "no_model_call_observed"
+      ],
+      "observed": {
+        "model_calls": [],
+        "usage": null
+      },
+      "query": "calls",
+      "state": "unknown",
+      "subject": {
+        "id": "T1",
+        "kind": "turn",
+        "scope": "support-agent",
+        "tenant": null
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[0]"
+      ],
+      "gaps": [],
+      "observed": {
+        "conversation": "C1",
+        "method": "attribute-reference"
+      },
+      "query": "continuity",
+      "state": "established",
+      "subject": {
+        "id": "T1",
+        "kind": "turn",
+        "scope": "support-agent",
+        "tenant": null
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[2]"
+      ],
+      "gaps": [
+        "external_effect_observation_missing"
+      ],
+      "observed": {
+        "correlated_effects": [],
+        "correlation_method": "external-correlation-key",
+        "execution": true
+      },
+      "query": "effects-for-execution",
+      "state": "unknown",
+      "subject": {
+        "id": null,
+        "kind": "tool_execution",
+        "references": {
+          "proposal": "P1"
+        },
+        "scope": "support-agent",
+        "tenant": null
+      }
+    },
+    {
+      "conflicts": [],
+      "evidence": [
+        "resourceSpans[0].scopeSpans[0].spans[1]"
+      ],
+      "gaps": [
+        "r3_not_exported"
+      ],
+      "observed": {
+        "turn": null
+      },
+      "query": "proposal-origin",
+      "state": "unknown",
+      "subject": {
+        "id": "P1",
+        "kind": "proposed_action",
+        "scope": "support-agent",
+        "tenant": null
+      }
+    }
+  ],
+  "contract": "AGENT-BEHAVIOR-TRACE-MODEL-CONTRACT.md v0.7-draft @ e82abf1e58b066c586c25767edfba862c4ebd027",
+  "diagnostics": [],
+  "evaluation_context": {
+    "action": "P1",
+    "service": "test-ticket-service",
+    "tenant": null
+  },
+  "input": {
+    "path": "results/2026-10-04/4a02867/inputs/test-kit/cases/effects-receipt-missing/records.otlp.json",
+    "sha256": "ae4f61fe06dd1b1a0e0b2c797f8f9fff814ced080e7fb15b0e3a634207412442",
+    "spans": 3
+  },
+  "mapping_losses": [],
+  "method_defaults": {
+    "declared_by": "kit mapping.md @ 4a028675ef9b5727e614762df305f5f037b04b98",
+    "values": {
+      "R1": "attribute-reference",
+      "R5": "attribute-reference",
+      "R6": "external-correlation-key"
+    }
+  },
+  "not_used": [
+    {
+      "at": "resourceSpans[0].scopeSpans[0].spans[2]",
+      "attribute": "evidence.externally_verified",
+      "why": "producer claim about external verification; not re-derived by this reader"
+    }
+  ],
+  "processing": "complete",
+  "reader": {
+    "name": "aaif-trace-reader-rs",
+    "version": "0.1.0"
+  }
+}

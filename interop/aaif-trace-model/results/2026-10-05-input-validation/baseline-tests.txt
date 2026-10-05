@@ -1,0 +1,35 @@
+
+running 4 tests
+test unsupported_json_is_an_input_error_in_both_modes ... FAILED
+test malformed_collections_and_entries_are_not_silently_dropped ... FAILED
+test duplicate_keys_and_trailing_json_still_fail ... ok
+test empty_exports_and_unset_repeated_fields_remain_valid ... ok
+
+failures:
+
+---- unsupported_json_is_an_input_error_in_both_modes stdout ----
+
+thread 'unsupported_json_is_an_input_error_in_both_modes' (80100) panicked at tests\input_validation.rs:35:13:
+assertion `left == right` failed: interpret: []: {"answers":[],"contract":"AGENT-BEHAVIOR-TRACE-MODEL-CONTRACT.md v0.7-draft @ e82abf1e58b066c586c25767edfba862c4ebd027","diagnostics":[],"evaluation_context":null,"input":{"path":"C:/Users/imran/AppData/Local/Temp/trace-input-85456-1.json","sha256":"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945","spans":0},"mapping_losses":[],"method_defaults":{"declared_by":null,"values":{}},"not_used":[],"processing":"complete","reader":{"name":"aaif-trace-reader-rs","version":"0.1.0"}}
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- malformed_collections_and_entries_are_not_silently_dropped stdout ----
+
+thread 'malformed_collections_and_entries_are_not_silently_dropped' (93360) panicked at tests\input_validation.rs:52:13:
+assertion `left == right` failed: {"resourceSpans":{}}: {"answers":[],"contract":"AGENT-BEHAVIOR-TRACE-MODEL-CONTRACT.md v0.7-draft @ e82abf1e58b066c586c25767edfba862c4ebd027","diagnostics":[],"evaluation_context":null,"input":{"path":"C:/Users/imran/AppData/Local/Temp/trace-input-85456-3.json","sha256":"6f24b2d26c998eb98ecd76e0025cf0c5fb4b675ffba64265b1629e003733be54","spans":0},"mapping_losses":[],"method_defaults":{"declared_by":null,"values":{}},"not_used":[],"processing":"complete","reader":{"name":"aaif-trace-reader-rs","version":"0.1.0"}}
+  left: 0
+ right: 1
+
+
+failures:
+    malformed_collections_and_entries_are_not_silently_dropped
+    unsupported_json_is_an_input_error_in_both_modes
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.17s
+
+   Compiling aaif-trace-reader v0.1.0 (C:\Users\imran\OneDrive\.aaif-work\telemetry\interop\aaif-trace-model)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.32s
+     Running tests\input_validation.rs (target\debug\deps\input_validation-5d772f7be6fa5941.exe)
+error: test failed, to rerun pass `--test input_validation`
