@@ -14,6 +14,7 @@ Rust, offline, batch. The design it implements was posted on #45 on
   public discussion.
 
 Written with an AI coding assistant (Claude Opus 5.5), directed by Imran Siddique.
+October 5 tenant-scope update: implemented and tested with Codex, directed by Imran Siddique.
 Dependencies: `serde`, `serde_json`, `sha2`, `base64`, `ed25519-dalek`.
 
 ## Build and run
@@ -38,8 +39,9 @@ On Windows on ARM without the ARM64 MSVC libraries, build with `cargo +stable-x8
 2. **Declared defaults are recorded as declared.** `--method-default` stands in for the example's
    mapping file. It requires `--defaults-declared-by`, and the report carries who declared it.
    An unrecognized method is a loss, with no fallback (§4 boundary case 1).
-3. **Scope before join.** Receipts deduplicate on (`receipt.service`, `receipt.id`); effects are
-   (`receipt.service`, `receipt.ticket_id`). Deliveries that disagree are a conflict, not a merge.
+3. **Scope before join.** Receipts deduplicate on (`receipt.service`, resource `tenant.id`, `receipt.id`);
+   effects are (`receipt.service`, resource `tenant.id`, `receipt.ticket_id`). Absent tenant is
+   not a wildcard. Deliveries that disagree within a scoped identity are a conflict, not a merge.
 4. **Producer claims are not evidence.** `evidence.externally_verified` is listed under `not_used`.
 5. **Signatures are separate.** v0.7-draft treats a receipt as correlation evidence, so the contract
    reader never looks at `receipt.signature`. `verify-receipts` implements the README's signing input.
@@ -47,6 +49,14 @@ On Windows on ARM without the ARM64 MSVC libraries, build with `cargo +stable-x8
    and approvals answer `unknown` with a named gap.
 
 ## Results
+
+The [October 5 tenant-scope follow-up](results/2026-10-05/README.md) fixes the tenant-reuse failure
+in the [October 4 report](results/2026-10-04/README.md). The pinned newer kit supplies a mapping
+file and evaluation context, unlike the original kit described in interpretation choice 1.
+Use `--query-action P1 --query-service test-ticket-service --query-tenant tenant-a` with the
+declared R1/R5/R6 defaults to select that context. `python check_pinned_kit.py` runs an offline
+comparison against both pinned revisions after building the reader. The old `trace-compare`
+binary below remains a historical comparator for the original kit; it is not used for this run.
 
 `results/8fa732e/` holds three runs per case: `strict` (no defaults), `declared-defaults`
 (R1 and R5 `attribute-reference`, R6 `external-correlation-key`), and `receipt-signatures`.

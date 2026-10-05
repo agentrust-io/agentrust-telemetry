@@ -75,6 +75,8 @@ pub fn parse_strict(bytes: &[u8]) -> Result<Value, String> {
 pub struct Span {
     pub locator: String,
     pub resource_service: Option<String>,
+    pub resource_tenant: Option<String>,
+    pub resource_scope_valid: bool,
     pub name: String,
     pub attrs: BTreeMap<String, Value>,
 }
@@ -89,9 +91,24 @@ pub fn flatten(doc: &Value, diags: &mut Vec<Value>) -> Vec<Span> {
     let mut out = Vec::new();
     let empty = vec![];
     for (i, rs) in doc["resourceSpans"].as_array().unwrap_or(&empty).iter().enumerate() {
-        let svc = rs["resource"]["attributes"].as_array().and_then(|a| {
-            a.iter().find(|kv| kv["key"] == "service.name").and_then(|kv| kv["value"]["stringValue"].as_str())
-        });
+        let mut scope_valid = true;
+        let mut resource_value = |key: &str| {
+            let entries: Vec<&Value> = rs["resource"]["attributes"].as_array()
+                .unwrap_or(&empty).iter().filter(|kv| kv["key"] == key).collect();
+            if entries.is_empty() { return None; }
+            let value = entries[0]["value"].as_object().filter(|v| v.len() == 1)
+                .and_then(|v| v.get("stringValue")).and_then(Value::as_str)
+                .filter(|s| !s.is_empty());
+            if entries.len() != 1 || value.is_none() {
+                scope_valid = false;
+                diags.push(json!({"code": "invalid_resource_scope", "key": key,
+                    "at": format!("resourceSpans[{i}]")}));
+                return None;
+            }
+            value.map(str::to_owned)
+        };
+        let svc = resource_value("service.name");
+        let tenant = resource_value("tenant.id");
         for (j, ss) in rs["scopeSpans"].as_array().unwrap_or(&empty).iter().enumerate() {
             for (k, sp) in ss["spans"].as_array().unwrap_or(&empty).iter().enumerate() {
                 let locator = format!("resourceSpans[{i}].scopeSpans[{j}].spans[{k}]");
@@ -104,7 +121,9 @@ pub fn flatten(doc: &Value, diags: &mut Vec<Value>) -> Vec<Span> {
                 }
                 out.push(Span {
                     locator,
-                    resource_service: svc.map(str::to_owned),
+                    resource_service: svc.clone(),
+                    resource_tenant: tenant.clone(),
+                    resource_scope_valid: scope_valid,
                     name: sp["name"].as_str().unwrap_or("").to_owned(),
                     attrs,
                 });
@@ -144,6 +163,16 @@ const RECEIPT_FIELDS: [&str; 6] = ["receipt.id", "receipt.action_id", "receipt.t
 pub struct Options {
     pub method_defaults: BTreeMap<String, String>,
     pub defaults_declared_by: Option<String>,
+    pub query: Option<EffectQuery>,
+}
+
+/// Evaluation context, supplied independently of expected answers. None is the absent tenant,
+/// never a wildcard. Service names the receipt issuer, not the executing agent.
+#[derive(Clone, Debug, serde::Serialize)]
+pub struct EffectQuery {
+    pub action: String,
+    pub service: String,
+    pub tenant: Option<String>,
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -199,36 +228,41 @@ pub fn interpret(spans: &[Span], opts: &Options) -> Value {
                 None => ("unknown", vec!["r1_not_established"], None),
             },
         };
-        answers.push(json!({"query": "continuity", "subject": {"kind": "turn", "id": turn},
+        answers.push(json!({"query": "continuity", "subject": {"kind": "turn", "id": turn, "scope": t.resource_service, "tenant": t.resource_tenant},
             "state": state, "observed": {"conversation": if state == "established" { json!(conv) } else { Value::Null },
             "method": via}, "gaps": gaps, "conflicts": [], "evidence": [t.locator]}));
     }
 
     // Calls and retries, R2. No model-call records are mapped in this input.
     for t in get(Kind::Turn) {
-        answers.push(json!({"query": "calls", "subject": {"kind": "turn", "id": t.s("turn.id")},
+        answers.push(json!({"query": "calls", "subject": {"kind": "turn", "id": t.s("turn.id"), "scope": t.resource_service, "tenant": t.resource_tenant},
             "state": "unknown", "observed": {"model_calls": [], "usage": Value::Null},
             "gaps": ["no_model_call_observed"], "conflicts": [], "evidence": []}));
     }
 
     // Proposal origin, R3: no proposal carries a turn reference; span ancestry is not used.
     for p in get(Kind::Proposal) {
-        answers.push(json!({"query": "proposal-origin", "subject": {"kind": "proposed_action", "id": p.s("action.id")},
+        answers.push(json!({"query": "proposal-origin", "subject": {"kind": "proposed_action", "id": p.s("action.id"), "scope": p.resource_service, "tenant": p.resource_tenant},
             "state": "unknown", "observed": {"turn": Value::Null},
             "gaps": ["r3_not_exported"], "conflicts": [], "evidence": [p.locator]}));
     }
 
-    let proposals: BTreeSet<&str> = get(Kind::Proposal).iter().filter_map(|p| p.s("action.id")).collect();
-    let agent_scopes: BTreeSet<&str> = get(Kind::Execution).iter().filter_map(|e| e.resource_service.as_deref()).collect();
+    let proposals = get(Kind::Proposal);
+    let executions = get(Kind::Execution);
 
     for e in get(Kind::Execution) {
         let action = e.s("action.id");
+        if let Some(q) = &opts.query {
+            if action != Some(q.action.as_str()) || e.resource_tenant != q.tenant { continue; }
+        }
         let subject = json!({"kind": "tool_execution", "id": Value::Null, "scope": e.resource_service,
-            "references": {"proposal": action}});
+            "tenant": e.resource_tenant, "references": {"proposal": action}});
 
         // Approvals, R4/R5. No decision records are mapped in this input.
         let r5 = action.and_then(|_| method_for("R5", &mut losses, &e.locator));
-        let proposal_resolved = action.map(|a| proposals.contains(a)).unwrap_or(false);
+        let proposal_resolved = e.resource_scope_valid && e.resource_service.is_some() && action.is_some()
+            && proposals.iter().any(|p| p.resource_scope_valid && p.s("action.id") == action
+                && p.resource_service == e.resource_service && p.resource_tenant == e.resource_tenant);
         let mut agaps = vec!["no_decision_recorded"];
         if r5.is_none() { agaps.push("r5_not_established"); }
         else if !proposal_resolved { agaps.push("r5_target_unresolved"); }
@@ -239,15 +273,16 @@ pub fn interpret(spans: &[Span], opts: &Options) -> Value {
 
         // Effects, R6.
         let r6 = method_for("R6", &mut losses, &e.locator);
-        answers.push(effects_for(e, action, &get(Kind::Receipt), &agent_scopes, &r6));
+        answers.push(effects_for(e, action, &get(Kind::Receipt), &executions, &r6, opts.query.as_ref()));
     }
 
     // Receipts that no execution correlates with stay visible as external reports.
-    let exec_actions: BTreeSet<&str> = get(Kind::Execution).iter().filter_map(|e| e.s("action.id")).collect();
     for r in get(Kind::Receipt) {
-        if !r.s("receipt.action_id").map(|a| exec_actions.contains(a)).unwrap_or(false) {
+        if !r.resource_scope_valid || !executions.iter().any(|e| e.resource_scope_valid
+            && e.resource_tenant == r.resource_tenant && r.s("receipt.action_id").is_some()
+            && e.s("action.id") == r.s("receipt.action_id")) {
             answers.push(json!({"query": "uncorrelated-external-report", "subject": {"kind": "receipt",
-                "id": r.s("receipt.id"), "scope": r.s("receipt.service")}, "state": "unknown",
+                "id": r.s("receipt.id"), "scope": r.s("receipt.service"), "tenant": r.resource_tenant}, "state": "unknown",
                 "observed": {"execution": Value::Null}, "gaps": ["r6_execution_unresolved"], "conflicts": [],
                 "evidence": [r.locator]}));
         }
@@ -260,6 +295,7 @@ pub fn interpret(spans: &[Span], opts: &Options) -> Value {
 
     json!({
         "contract": CONTRACT,
+        "evaluation_context": opts.query,
         "method_defaults": {"values": opts.method_defaults, "declared_by": opts.defaults_declared_by},
         "answers": answers,
         "mapping_losses": losses,
@@ -267,10 +303,14 @@ pub fn interpret(spans: &[Span], opts: &Options) -> Value {
     })
 }
 
-fn effects_for(e: &Span, action: Option<&str>, receipts: &[&Span], agent_scopes: &BTreeSet<&str>, r6: &Option<String>) -> Value {
+fn effects_for(e: &Span, action: Option<&str>, receipts: &[&Span], executions: &[&Span], r6: &Option<String>, query: Option<&EffectQuery>) -> Value {
     let subject = json!({"kind": "tool_execution", "id": Value::Null, "scope": e.resource_service,
-        "references": {"proposal": action}});
-    let candidates: Vec<&&Span> = receipts.iter().filter(|r| action.is_some() && r.s("receipt.action_id") == action).collect();
+        "tenant": e.resource_tenant, "references": {"proposal": action}});
+    let candidates: Vec<&&Span> = receipts.iter().filter(|r| action.is_some()
+        && r.s("receipt.action_id") == action && r.resource_scope_valid
+        && r.resource_tenant == e.resource_tenant
+        && query.map(|q| r.s("receipt.service") == Some(q.service.as_str())
+            && r.resource_service.as_deref() == Some(q.service.as_str())).unwrap_or(true)).collect();
     let mut gaps: Vec<String> = Vec::new();
     let mut conflicts: Vec<Value> = Vec::new();
     let mut evidence: Vec<String> = vec![e.locator.clone()];
@@ -282,8 +322,13 @@ fn effects_for(e: &Span, action: Option<&str>, receipts: &[&Span], agent_scopes:
             "gaps": gaps, "conflicts": [], "evidence": evidence});
     }
     // receipt.action_id does not state which scope issued the action id. It can be joined only
-    // when the input holds one agent scope; otherwise the join is refused.
-    if agent_scopes.len() != 1 {
+    // when this tenant/action has one known agent scope; otherwise the join is refused.
+    // Inspect all executions, before query filtering, so a query cannot hide ambiguity.
+    let peers: Vec<&&Span> = executions.iter().filter(|p| p.s("action.id") == action
+        && p.resource_tenant == e.resource_tenant).collect();
+    let agent_scopes: BTreeSet<&str> = peers.iter().filter_map(|p| p.resource_service.as_deref()).collect();
+    if !e.resource_scope_valid || e.resource_service.is_none() || agent_scopes.len() != 1
+        || peers.iter().any(|p| !p.resource_scope_valid || p.resource_service.is_none()) {
         gaps.push("identity_scope_unresolved".into());
         return json!({"query": "effects-for-execution", "subject": subject, "state": "unknown",
             "observed": {"execution": true, "correlated_effects": []}, "gaps": gaps, "conflicts": [], "evidence": evidence});
@@ -321,7 +366,7 @@ fn effects_for(e: &Span, action: Option<&str>, receipts: &[&Span], agent_scopes:
         }
     }
     let correlated: Vec<Value> = effects.iter().map(|((scope, ticket), rs)| {
-        json!({"scope": scope, "ticket_id": ticket, "receipts": rs})
+        json!({"scope": scope, "tenant": e.resource_tenant, "ticket_id": ticket, "receipts": rs})
     }).collect();
 
     let state = if !conflicts.is_empty() { "conflict" }

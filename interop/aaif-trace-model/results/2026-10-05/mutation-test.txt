@@ -1,0 +1,27 @@
+Mutation: remove tenant equality from receipt candidate filter.
+Command: cargo +stable-x86_64-pc-windows-msvc test --locked --test tenant_scope reused_action_and_receipt_ids_stay_in_their_tenant -- --exact
+Exit: 101
+
+running 1 test
+test reused_action_and_receipt_ids_stay_in_their_tenant ... FAILED
+
+failures:
+
+---- reused_action_and_receipt_ids_stay_in_their_tenant stdout ----
+
+thread 'reused_action_and_receipt_ids_stay_in_their_tenant' (95280) panicked at tests\tenant_scope.rs:31:5:
+assertion `left == right` failed
+  left: String("conflict")
+ right: "established"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    reused_action_and_receipt_ids_stay_in_their_tenant
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.02s
+
+   Compiling aaif-trace-reader v0.1.0 (C:\Users\imran\OneDrive\.aaif-work\telemetry\interop\aaif-trace-model)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.87s
+     Running tests\tenant_scope.rs (target\debug\deps\tenant_scope-dc81f4f5a93d3948.exe)
+error: test failed, to rerun pass `--test tenant_scope`

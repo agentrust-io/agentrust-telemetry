@@ -14,9 +14,16 @@ fn main() {
     let mut key = None;
     let mut defaults = BTreeMap::new();
     let mut declared_by = None;
+    let mut query_action = None;
+    let mut query_service = None;
+    let mut query_tenant = None;
     let mut i = 2;
     while i < args.len() {
         let v = args.get(i + 1).cloned().unwrap_or_default();
+        if v.is_empty() || v.starts_with("--") {
+            eprintln!("{} needs a nonempty value", args[i]);
+            std::process::exit(2);
+        }
         match args[i].as_str() {
             "--input" => input = Some(v),
             "--key" => key = Some(v),
@@ -25,10 +32,19 @@ fn main() {
                 defaults.insert(rel.to_owned(), m.to_owned());
             }
             "--defaults-declared-by" => declared_by = Some(v),
+            "--query-action" => query_action = Some(v),
+            "--query-service" => query_service = Some(v),
+            "--query-tenant" => query_tenant = Some(v),
             other => { eprintln!("unknown argument {other}"); std::process::exit(2) }
         }
         i += 2;
     }
+    let query = match (query_action, query_service, query_tenant) {
+        (None, None, None) => None,
+        (Some(action), Some(service), tenant) if cmd == "interpret" =>
+            Some(EffectQuery { action, service, tenant }),
+        _ => { eprintln!("interpret query requires --query-action and --query-service; --query-tenant is optional"); std::process::exit(2) }
+    };
     let path = input.expect("--input is required");
     let bytes = std::fs::read(&path).expect("read input");
     let digest = sha256_hex(&bytes);
@@ -50,7 +66,7 @@ fn main() {
                 eprintln!("--method-default needs --defaults-declared-by, so the report says who declared it");
                 std::process::exit(2);
             }
-            interpret(&spans, &Options { method_defaults: defaults, defaults_declared_by: declared_by })
+            interpret(&spans, &Options { method_defaults: defaults, defaults_declared_by: declared_by, query })
         }
         "verify-receipts" => {
             let pem = std::fs::read_to_string(key.expect("--key is required")).expect("read key");

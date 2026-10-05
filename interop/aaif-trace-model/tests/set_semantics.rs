@@ -19,7 +19,7 @@ fn assumed() -> Options {
     for (r, v) in [("R1", "attribute-reference"), ("R5", "attribute-reference"), ("R6", "external-correlation-key")] {
         m.insert(r.to_owned(), v.to_owned());
     }
-    Options { method_defaults: m, defaults_declared_by: Some("test".into()) }
+    Options { method_defaults: m, defaults_declared_by: Some("test".into()), ..Options::default() }
 }
 
 fn permutations(n: usize) -> Vec<Vec<usize>> {
@@ -63,13 +63,15 @@ fn receipt(id: &str, service: &str, ticket: &str, created: &str) -> Span {
         attrs.insert(k.to_owned(), json!({"stringValue": v}));
     }
     Span { locator: format!("{service}/{id}/{created}"), resource_service: Some(service.into()),
+        resource_tenant: None, resource_scope_valid: true,
         name: "ticket.create.receipt".into(), attrs }
 }
 
 fn execution() -> Span {
     let mut attrs = std::collections::BTreeMap::new();
     attrs.insert("action.id".into(), json!({"stringValue": "P1"}));
-    Span { locator: "exec".into(), resource_service: Some("support-agent".into()), name: "execute_tool t".into(), attrs }
+    Span { locator: "exec".into(), resource_service: Some("support-agent".into()),
+        resource_tenant: None, resource_scope_valid: true, name: "execute_tool t".into(), attrs }
 }
 
 #[test]
