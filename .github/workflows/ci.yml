@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   push:
     branches: [main]
   pull_request:
@@ -24,6 +25,11 @@ jobs:
           cache-dependency-path: packages/typescript/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm run check
+      - name: Install and test packed npm artifact
+        run: |
+          mkdir -p ../../npm-dist
+          npm pack --pack-destination ../../npm-dist
+          node ../../tools/smoke_npm.mjs ../../npm-dist/*.tgz
 
   test:
     runs-on: ubuntu-latest
