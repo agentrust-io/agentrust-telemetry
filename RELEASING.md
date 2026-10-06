@@ -43,6 +43,14 @@ subsequent release. Never store an npm publish token in GitHub.
    announcing the release.
 
 The workflow fails closed if the tag differs from the contract version. It
+requires the reusable CI workflow, including its Python matrix and TypeScript
+checks, to succeed before building. Failed, cancelled or skipped validation
+blocks both publishers. The final npm tarball is installed into a fresh consumer
+directory and exercised through its public imports, bundled valid/invalid
+conformance controls and golden event construction before artifact upload.
+The smoke check also verifies installed identity, import origin and declarations.
+
+The release workflow
 builds each distribution once, sends the same artifacts to the registries, and
 attaches them to the GitHub release.
 
