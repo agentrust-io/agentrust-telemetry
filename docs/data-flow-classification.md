@@ -1,5 +1,11 @@
 # Data-flow classification
 
+When an agent moves data, for example reading a customer record and passing it to
+a tool, this event records what kind of data it was and where it went, without
+copying the data. This page is for developers who plug in their own classifier
+(the code that decides how sensitive a piece of data is). It explains what the
+helper guards against and what it cannot guarantee.
+
 `classified_data_flow` is a closed metadata boundary around an adopter-owned
 classifier. Raw content is passed to `classifier.classify` and is never inserted
 into the event. The classifier must return `ClassificationResult`; dictionaries

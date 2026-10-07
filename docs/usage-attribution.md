@@ -1,6 +1,10 @@
 # Usage and cost attribution
 
-`usage.recorded` reports measurements observed by an adapter. AgentTrust
+This page covers how token counts and costs are recorded and added up per run or
+per workflow. The project records only numbers that a provider or your own code
+supplies, and it never guesses a missing cost.
+
+`usage.recorded` reports measurements observed by an adapter. AgenTrust
 Telemetry does not count tokens, resolve model prices, or infer a missing cost.
 
 Use `usage_record()` for call-level facts and supply `CostObservation` only when

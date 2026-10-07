@@ -1,8 +1,14 @@
 # Architecture
 
+This page shows where AgenTrust Telemetry sits: between the places governance
+facts come from (policy checks, approvals, usage and data hooks) and the places
+you send them (your own OpenTelemetry backend, and an evidence record that can
+become a TRACE receipt). Read it to understand the parts, how events are linked
+to each other, and what the project depends on.
+
 ## Boundary
 
-AgentTrust Telemetry is a schema-first instrumentation layer between governance sources and adopter-owned telemetry/evidence destinations.
+AgenTrust Telemetry is a schema-first instrumentation layer between governance sources and adopter-owned telemetry/evidence destinations.
 
 ```text
 policy / approval / usage / data hooks
@@ -43,7 +49,7 @@ A caller-owned structured-log emitter may receive a defensive deep copy of the v
 
 The Node reference package in `packages/typescript` shares the normative schemas,
 metadata-only privacy gate, normalized event factory, OTel span/log projection,
-and W3C plus AgentTrust context propagation semantics. Its schema copies are
+and W3C plus AgenTrust context propagation semantics. Its schema copies are
 byte-compared to `spec/schema` in CI. It requires a caller-owned OTel provider,
 exporters, and global propagator.
 

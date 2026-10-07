@@ -1,5 +1,11 @@
 # Evidence chain profile
 
+The evidence chain links every accepted event to the one before it with a hash,
+so that editing, dropping or reordering an event afterwards can be detected. The
+chain is not signed: it shows the events are consistent with each other, and it
+does not prove who wrote them. This page gives the exact recipe for developers
+who need to recompute or check the chain.
+
 Status: experimental `rfc8785-jcs-v1` for contract `0.1.0-alpha.6`.
 
 Each accepted event is validated and privacy-checked before entering the chain.
