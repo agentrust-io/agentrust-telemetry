@@ -8,7 +8,7 @@ carry it: span attributes are scalar and drawn only from the documented
 mapping, the log body is an exact copy, the metric projector does not raise,
 and the evidence accumulator either chains it or refuses with EvidenceError.
 
-The second half fuzzes the inbound W3C and AgentTrust propagation headers,
+The second half fuzzes the inbound W3C and AgenTrust propagation headers,
 which arrive from whoever called this agent. extract_context must either
 return or raise PropagationError, and whatever it returns must satisfy the same
 length and line-break rules inject_context enforces on the way out.

@@ -1,4 +1,4 @@
-"""Validate AgentTrust telemetry fixtures against the normative contract."""
+"""Validate AgenTrust telemetry fixtures against the normative contract."""
 
 from __future__ import annotations
 

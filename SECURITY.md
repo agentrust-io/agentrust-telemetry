@@ -12,7 +12,7 @@ Do not report vulnerabilities in public issues. Once the repository exists, use 
 
 `https://github.com/agentrust-io/agentrust-telemetry/security/advisories/new`
 
-Before repository creation, report privately to the AgentTrust maintainers.
+Before repository creation, report privately to the AgenTrust maintainers.
 
 Include the affected contract/SDK version, an executable reproducer where safe, the violated invariant, and expected impact.
 

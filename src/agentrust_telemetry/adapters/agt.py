@@ -1,4 +1,4 @@
-"""Optional bridge from AGT governance events to AgentTrust telemetry."""
+"""Optional bridge from AGT governance events to AgenTrust telemetry."""
 
 from __future__ import annotations
 

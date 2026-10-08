@@ -1,6 +1,6 @@
 # Sponsors
 
-AgentTrust Telemetry is an open-source AgenTrust project. Sponsors provide
+AgenTrust Telemetry is an open-source AgenTrust project. Sponsors provide
 funding, engineering time, infrastructure, or other in-kind support.
 Sponsorship does not confer project ownership, governance authority, or control
 over technical decisions.

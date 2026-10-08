@@ -11,7 +11,7 @@ class ProjectionError(RuntimeError):
 
 
 class PropagationError(ValueError):
-    """AgentTrust propagation metadata is missing or unsafe."""
+    """AgenTrust propagation metadata is missing or unsafe."""
 
 
 class EvidenceError(RuntimeError):
