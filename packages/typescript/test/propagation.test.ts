@@ -7,7 +7,7 @@ import {extractContext, injectContext, PropagationError} from "../src/index.js";
 propagation.setGlobalPropagator(new W3CTraceContextPropagator());
 const spanContext = {traceId: "4bf92f3577b34da6a3ce929d0e0e4736", spanId: "00f067aa0ba902b7", traceFlags: TraceFlags.SAMPLED, isRemote: false};
 
-test("W3C and durable AgentTrust context round-trip", () => {
+test("W3C and durable AgenTrust context round-trip", () => {
   const carrier: Record<string, string> = {};
   injectContext(carrier, {runId: "run-1", workflowId: "workflow-1", agentId: "agent-a", otelContext: trace.setSpanContext(context.active(), spanContext)});
   assert.match(carrier.traceparent!, /^00-4bf92f/);

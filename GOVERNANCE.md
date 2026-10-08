@@ -1,6 +1,6 @@
 # Governance
 
-AgentTrust Telemetry is governed under the AgentTrust organization. Maintainers approve releases, normative contract changes, security-sensitive changes, and compatibility claims.
+AgenTrust Telemetry is governed under the AgenTrust organization. Maintainers approve releases, normative contract changes, security-sensitive changes, and compatibility claims.
 
 ## Decision process
 

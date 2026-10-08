@@ -1,4 +1,4 @@
-"""Source adapters for normalized AgentTrust telemetry events."""
+"""Source adapters for normalized AgenTrust telemetry events."""
 
 from .base import EventFactory
 from .agt import AgtGovernanceEventSink, agt_policy_decision

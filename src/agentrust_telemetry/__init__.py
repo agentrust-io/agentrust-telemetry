@@ -1,4 +1,4 @@
-"""AgentTrust governance telemetry reference SDK."""
+"""AgenTrust governance telemetry reference SDK."""
 
 from .adapters import (
     AgtGovernanceEventSink,

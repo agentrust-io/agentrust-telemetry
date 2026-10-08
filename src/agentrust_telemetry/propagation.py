@@ -1,4 +1,4 @@
-"""W3C trace-context propagation with minimal AgentTrust correlation metadata."""
+"""W3C trace-context propagation with minimal AgenTrust correlation metadata."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ _MAX_VALUE_LENGTH = 512
 
 @dataclass(frozen=True)
 class ExtractedContext:
-    """Remote OTel context plus untrusted AgentTrust correlation metadata."""
+    """Remote OTel context plus untrusted AgenTrust correlation metadata."""
 
     otel_context: Any
     run_id: str | None
@@ -51,7 +51,7 @@ def inject_context(
     workflow_id: str | None = None,
     context: Any | None = None,
 ) -> None:
-    """Inject standard W3C context and minimal AgentTrust headers into ``carrier``."""
+    """Inject standard W3C context and minimal AgenTrust headers into ``carrier``."""
     propagate, _ = _otel()
     propagate.inject(carrier, context=context)
     carrier[RUN_ID_HEADER] = _safe_value("run_id", run_id, required=True)
@@ -61,7 +61,7 @@ def inject_context(
 
 
 def extract_context(carrier: MutableMapping[str, str]) -> ExtractedContext:
-    """Extract a remote parent and validate optional AgentTrust headers."""
+    """Extract a remote parent and validate optional AgenTrust headers."""
     propagate, _ = _otel()
     context = propagate.extract(carrier)
     return ExtractedContext(

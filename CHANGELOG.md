@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- The project name is spelled AgenTrust (one shared t) in docs, docstrings,
+  the compatibility matrix notes and the TypeScript package description, and the
+  LICENSE and NOTICE copyright holder reads "AgenTrust Contributors". Package
+  names, npm scopes, headers and wire identifiers are unchanged.
+
 ## 0.1.0-alpha.6 - 2026-10-01
 
 ### Fixed
