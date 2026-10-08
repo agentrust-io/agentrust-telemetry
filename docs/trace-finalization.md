@@ -1,8 +1,14 @@
 # TRACE finalization
 
+TRACE is the AgenTrust format for signed receipts of what an agent run did. This
+page explains how to turn a finished, complete set of telemetry events into one
+signed TRACE record, what you have to supply (including the signing key), and
+when the step refuses to produce a record. A record made this way is marked
+software-only, because it carries no hardware attestation.
+
 Status: experimental. Python requires 3.11+ and `agentrust-telemetry[trace]`.
 TypeScript requires a caller-supplied official TRACE codec because no official
-AgentTrust TRACE Node package is currently published.
+AgenTrust TRACE Node package is currently published.
 
 `finalize_trace` maps a sealed, explicitly complete evidence snapshot into the
 official TRACE v0.2 model, signs it with a caller-supplied key, validates it, and

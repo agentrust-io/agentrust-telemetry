@@ -1,5 +1,11 @@
 # Event factories and policy adapters
 
+Adapters turn records from policy and approval tools you may already run (OPA,
+Cedar and the Agent Governance Toolkit, AGT) into AgenTrust Telemetry events, so
+you do not have to write that mapping yourself. This page is for developers
+wiring one of those tools in. It says what each adapter copies, what it leaves
+out on purpose, and what it cannot prove.
+
 `EventFactory` owns normalized envelope construction: specification version,
 producer identity, event UUID, timestamp, correlation fields, schema validation,
 and privacy validation. Its generic `build` method supports every event family,

@@ -1,5 +1,10 @@
 # OpenTelemetry projection profile
 
+This page describes exactly how an AgenTrust event is copied into OpenTelemetry:
+as an event on the current span, as a structured log, and as metrics. It is for
+developers checking what will show up in their tracing or metrics backend, and
+what the SDK does when one of those outputs fails.
+
 Status: experimental for contract `0.1.0-alpha.6`.
 
 The normalized JSON event is the source contract. OpenTelemetry is a projection, not an alternative event model.

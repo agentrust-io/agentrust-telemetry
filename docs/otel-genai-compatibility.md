@@ -1,12 +1,18 @@
 # OpenTelemetry GenAI compatibility
 
-Status: pinned compatibility assessment for AgentTrust contract `0.1.0-alpha.6`.
+OpenTelemetry has its own draft conventions for AI traces and metrics, called the
+GenAI semantic conventions. This page says, field by field, where AgenTrust
+Telemetry uses the same thing, where it adds something new, and where the two
+only look alike. Read it if you already use OpenTelemetry GenAI instrumentation
+and want to know what to keep.
+
+Status: pinned compatibility assessment for AgenTrust contract `0.1.0-alpha.6`.
 
 The machine-readable matrix is [`compatibility/otel-genai.json`](../compatibility/otel-genai.json).
 It is pinned to OpenTelemetry's dedicated GenAI semantic-conventions repository
 at commit `a685613a207a580163353b8e48a7ad88967e7b42` (2026-08-15).
 Those conventions are in Development status. At the pinned revision the upstream
-schema URL is still unpublished, so AgentTrust does not advertise one.
+schema URL is still unpublished, so AgenTrust does not advertise one.
 
 Primary upstream references:
 
@@ -19,14 +25,14 @@ Primary upstream references:
 ## Compatibility meanings
 
 - `exact`: the same field has the same semantics, subject to its stated precondition.
-- `extension`: AgentTrust adds a governance or evidence concept OTel does not define.
+- `extension`: AgenTrust adds a governance or evidence concept OTel does not define.
 - `complementary`: both signals may describe the same operation from different layers.
 - `non_equivalent`: names or subject matter overlap, but substitution would be incorrect.
 - `deferred`: OTel owns the signal or it conflicts with the metadata-only profile.
 
-AgentTrust currently has one exact GenAI attribute mapping: a stable `agent_id` may
+AgenTrust currently has one exact GenAI attribute mapping: a stable `agent_id` may
 project to `gen_ai.agent.id`. It does not use that attribute for a transient process
-instance. W3C trace and span context is also native rather than an AgentTrust extension.
+instance. W3C trace and span context is also native rather than an AgenTrust extension.
 
 The `agentrust.usage.tokens` Counter is deliberately **not** represented as
 `gen_ai.client.token.usage`. The pinned OTel convention defines a per-operation
@@ -34,10 +40,10 @@ Histogram whose well-known token types are `input` and `output` (custom values
 are permitted). The same pinned revision already defines span attributes for
 `gen_ai.usage.cache_read.input_tokens`, `gen_ai.usage.cache_creation.input_tokens`
 and `gen_ai.usage.reasoning.output_tokens`; see the model-span reference above.
-AgentTrust records additive facts attributed to `model_call`, `agent_step`,
+AgenTrust records additive facts attributed to `model_call`, `agent_step`,
 `task`, `agent_run` or `workflow_run`. Its distinction is attribution scope and
 instrument semantics, not the existence of cache or reasoning token categories.
-Applications should retain their existing GenAI instrumentation and use AgentTrust
+Applications should retain their existing GenAI instrumentation and use AgenTrust
 events for governance attribution.
 
 Likewise, `action.executed` does not replace `gen_ai.execute_tool` spans: it includes

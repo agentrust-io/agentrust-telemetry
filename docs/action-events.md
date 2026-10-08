@@ -1,5 +1,12 @@
 # Action execution events
 
+This page explains the event that records each action an agent tried to take,
+such as calling a tool or sending an HTTP request, and how that action is matched
+to a human approval. Read it if you produce or check these events. In short,
+every action carries a digest (a fingerprint of exactly what was done), and an
+action that needed approval has to point to an approval for that same
+fingerprint, given before the action ran.
+
 `action.executed` records one resolved action attempt. It covers tools, MCP,
 A2A, file, HTTP, database, and explicitly identified other actions.
 
