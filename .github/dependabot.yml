@@ -4,13 +4,19 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # One PR per week for minor and patch updates. Majors still arrive
+    # one at a time so a breaking change is reviewed on its own.
     groups:
-      python-runtime:
-        patterns: ["jsonschema", "referencing", "opentelemetry-*"]
+      python:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    # One PR per week for minor and patch updates. Majors still arrive
+    # one at a time so a breaking change is reviewed on its own.
     groups:
-      codeql-action:
-        patterns: ["github/codeql-action*"]
+      actions:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
