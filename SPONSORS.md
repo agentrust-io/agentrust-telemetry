@@ -1,19 +1,8 @@
 # Sponsors
 
-AgenTrust Telemetry is an open-source AgenTrust project. Sponsors provide
-funding, engineering time, infrastructure, or other in-kind support.
-Sponsorship does not confer project ownership, governance authority, or control
-over technical decisions.
+AgenTrust is an independent open-source project. No company funds, owns or directs it; contributions are voluntary.
 
-## Current sponsors
+OPAQUE Systems sponsored early development until October 2026.
 
-### OPAQUE Systems
-
-Founding engineering and infrastructure sponsor, and contributor to the
-AgenTrust telemetry ecosystem.
-
-## Recognition policy
-
-Sponsor recognition is separate from maintainership and governance. Sponsors
-receive no authority over the telemetry contract, privacy profile, conformance
-fixtures, compatibility claims, or evidence semantics.
+Past sponsorship conferred no authority over the telemetry contract, privacy
+profile, conformance fixtures, compatibility claims, or evidence semantics.

@@ -1,5 +1,7 @@
 # Contributing
 
+AgenTrust is an independent open-source project. No company funds, owns or directs it; contributions are voluntary.
+
 Contract changes require:
 
 1. a documented semantic reason;
