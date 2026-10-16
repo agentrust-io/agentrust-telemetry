@@ -195,6 +195,29 @@ class AdapterTests(unittest.TestCase):
                                     "labels": labels})
                 self.assertEqual(str(caught.exception), "OPA labels must be an object")
 
+    def test_opa_rejects_invalid_ids_elements(self):
+        for ids in ([123], [""], ["valid", 123], ["valid", ""]):
+            with self.subTest(ids=ids):
+                with self.assertRaises(ValueError) as caught:
+                    self.opa_event({"decision_id": "d-1", "result": True, "ids": ids})
+                self.assertEqual(str(caught.exception),
+                                 "OPA ids must be an array of non-empty strings")
+
+    def test_opa_preserves_challenge_and_error_mapper_results(self):
+        for decision in ("challenge", "error"):
+            with self.subTest(decision=decision):
+                event = self.opa_event(
+                    {"decision_id": "d-1", "result": {}},
+                    result_mapper=lambda value, decision=decision: decision,
+                )
+                self.assertEqual(event["decision"], decision)
+                self.assertNotIn("result", event)
+
+    def test_opa_missing_result_maps_to_not_applicable(self):
+        event = self.opa_event({"decision_id": "d-1"})
+        self.assertEqual(event["decision"], "not_applicable")
+        self.assertNotIn("result", event)
+
     def test_opa_requires_version_when_not_supplied_explicitly(self):
         for labels in ({}, {"version": ""}, {"version": 123}):
             with self.subTest(labels=labels):
