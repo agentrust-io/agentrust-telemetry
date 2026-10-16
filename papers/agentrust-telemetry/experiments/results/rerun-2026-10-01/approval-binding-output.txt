@@ -1,0 +1,6 @@
+== pin
+executed action with same digest as approved: appraisal=affirming
+executed action with different digest: appraisal=affirming
+== main
+executed action with same digest as approved: appraisal=affirming
+executed action with different digest: appraisal=affirming

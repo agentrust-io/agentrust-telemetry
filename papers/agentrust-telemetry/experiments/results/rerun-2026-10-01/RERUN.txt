@@ -1,0 +1,65 @@
+AgenTrust Telemetry software rerun, 2026-10-01 (audit of technical report v1)
+Repository: https://github.com/agentrust-io/agentrust-telemetry
+Evaluated commit: 29c13cfa4047a0f5784a90df63b22a3568453158 (tag v0.1.0-alpha.2)
+Later revision:   c3515681261fd0ab6e6aa38e20eb2f071aee7a20 (release 0.1.0-alpha.5, 2026-09-26)
+Current main:     c86753cad6bbe9f00c5080489a12e0f94df34899 (2026-09-30; no src/ or
+                  packages/typescript/src change since c351568)
+Source obtained with: git archive <commit>; tar commit id checked (git get-tar-commit-id)
+Python 3.12.10, Node v24.18.1, npm 11.16.0, Windows 11. Fresh virtual environments.
+
+## Pinned commit, Python
+Install: pip install -e ".[test,otel]" (resolved 2026-10-01: agentrust-trace 0.11.0,
+  opentelemetry 1.45.0), then agentrust-trace==0.9.0 PyYAML==6.0.3 cbor2==5.9.0
+  (dependencies-pinned.txt)
+python -m unittest discover -s tests -v: Ran 111 tests, OK, 0 skipped  (python-unittest-pinned.txt)
+Same command before the TRACE pin and PyYAML (agentrust-trace 0.11.0):
+  Ran 111 tests, FAILED (failures=1, skipped=2)
+  FAIL test_trace_adapter_refusals.test_a_failure_inside_official_signing_is_reported_as_one
+python conformance/runner/validate.py: 13 PASS (6 valid accepted, 7 invalid rejected), exit 0
+python tools/check_otel_compatibility.py: PASS 16 span attributes, 8 metrics, 6 event families
+python tools/check_typescript_schemas.py: PASS TypeScript schemas match normative bytes
+python tools/check_schemas.py: PASS 8 bundled schemas match normative bytes
+python tools/check_versions.py: PASS contract=0.1.0-alpha.2 python=0.1.0a2 npm=0.1.0-alpha.2
+
+## Pinned commit, TypeScript (not rerun in the v1 report)
+packages/typescript: npm ci (lockfile), npm run check (tsc build, tsx --test, npm pack --dry-run)
+  tests 41, pass 41, fail 0, skipped 0; pack dry run produced
+  agentrust-io-telemetry-0.1.0-alpha.2.tgz  (typescript-check-pinned.txt)
+
+## Boundary probes P1 to P4 (telemetry_probes.py, reconstructed from Section 6)
+pin, later revision and current main give identical results (probes-output.txt):
+P1 refused ack: EvidencePersistenceError raised; log projection calls=0; entries=0
+P2 failing exporter: entries=1; projection_errors=['log projection failed: RuntimeError: exporter down']
+P3 empty seal: entries=0 completeness=complete
+P4 lost ack then retry: external writes=2; local entries=1
+
+## Section 7 findings, rechecked (validation_probes.py and regression tests)
+At the pin: 5000-deep nesting raises RecursionError; a non-string key raises
+  AttributeError; NaN and Infinity attributes pass validate() and are refused only
+  by the accumulator (EvidenceError); a durable callback that calls snapshot()
+  on the same thread deadlocks (no return in 5 s).
+At c351568 and current main: all four cases return EventValidationError or succeed.
+tests/test_trace_adapter_refusals.py from c351568 run against the pinned source:
+  Ran 14 tests, FAILED (failures=3, errors=1)  (regression-tests-at-pin-python.txt)
+The TypeScript regression test added by the same fix, appended to the pinned
+  test/trace-finalizer.test.ts: pass 5, fail 1, "Missing expected exception"
+  (regression-test-at-pin-typescript.txt). The TypeScript finalizer at the pin
+  also signs an edited, truncated or digest-substituted snapshot.
+
+## Current main (c86753c), dependencies resolved 2026-10-01 plus PyYAML
+python -m unittest discover -s tests: Ran 129 tests, OK (python-unittest-current-main.txt)
+  (128 at c351568; one repository-gate test added in #70)
+conformance runner: 13/13; OTel matrix: 16 / 8 / 6; check_versions: 0.1.0-alpha.5
+TypeScript npm run check: tests 42, pass 42  (typescript-check-current-main.txt)
+
+## Not run
+Collector or backend interoperability; performance; durable store; crash and restart.
+
+## Approval to executed-action binding (approval_binding_probe.py, added by this audit)
+Challenge decision, approval.requested and approval.approved bound to action digest b*64,
+then action.executed carrying the same approval_id with digest b*64 or c*64, sealed
+complete and finalized with agentrust-trace 0.11.0 (approval-binding-output.txt):
+  pin:  same digest -> affirming; different digest -> affirming
+  main: same digest -> affirming; different digest -> affirming
+The finalizer checks request-to-approval binding (including action_digest) but does not
+compare the approved digest with the executed action's digest.

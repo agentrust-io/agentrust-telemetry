@@ -1,0 +1,80 @@
+AgenTrust Telemetry software rerun, 2026-09-27
+Repository: https://github.com/agentrust-io/agentrust-telemetry
+Evaluated commit: 29c13cfa4047a0f5784a90df63b22a3568453158
+  (release 0.1.0-alpha.2, tag v0.1.0-alpha.2; main as of 2026-09-03; next main commit is dated 2026-09-05)
+Source obtained with: git archive <commit> (no working-tree state)
+Python: 3.12.10 on Windows 11
+Install: pip install -e ".[test,otel]" resolved on 2026-09-27, then the TRACE
+  dependency pinned to the release current on 2026-09-03 and PyYAML added so
+  the two YAML repository gates run instead of skipping:
+  agentrust-trace==0.9.0 jsonschema==4.26.0 referencing==0.37.0 rfc8785==0.1.4
+  opentelemetry-api==1.45.0 opentelemetry-sdk==1.45.0 PyYAML==6.0.3 cbor2==5.9.0
+
+## python -m unittest discover -s tests -v
+Ran 111 tests
+OK (111 passed, 0 skipped, 0 failed)
+Per module: adapters 10, agt_adapter 4, agt_approval 6, agt_audit 4,
+  conformance 6, data_flow 4, evidence 11, otel_projectors 6, propagation 5,
+  reference_scenario 1, repository_gates 16, sdk 10, trace_adapter 9,
+  trace_adapter_refusals 10, usage 9
+
+Same command with the dependency resolution of 2026-09-27 (agentrust-trace 0.11.0, no PyYAML):
+Ran 111 tests: 108 passed, 2 skipped (PyYAML not installed), 1 failed
+  FAIL test_trace_adapter_refusals.test_a_failure_inside_official_signing_is_reported_as_one
+  cause: agentrust-trace 0.10.0 (published 2026-09-06) rejects a non-Ed25519
+  stand-in key ("key must be an Ed25519PrivateKey, got FailsWhenUsed");
+  the repository replaced the stand-in in commit 5d963d3 (2026-09-06).
+
+## python conformance/runner/validate.py
+PASS valid/action.json
+PASS valid/approval.json
+PASS valid/data-flow.json
+PASS valid/evidence.json
+PASS valid/policy-decision.json
+PASS valid/usage.json
+PASS invalid/action-without-digest.json
+PASS invalid/aggregate-cost-without-rollup.json
+PASS invalid/model-call-with-rollup.json
+PASS invalid/numeric-timestamp.json
+PASS invalid/raw-content.json
+PASS invalid/usage-without-measurement.json
+PASS invalid/zero-trace-id.json
+13/13 expected verdicts (6 valid accepted, 7 invalid rejected); exit 0
+
+## Repository contract checks
+python tools/check_otel_compatibility.py
+  PASS OTel GenAI matrix covers 16 span attributes, 8 metrics, and 6 event families
+  (profile agentrust-otel-genai-compatibility-v1, captured 2026-08-18, upstream
+   open-telemetry/semantic-conventions-genai @ a685613a, status development)
+python tools/check_typescript_schemas.py
+  PASS TypeScript schemas match normative bytes
+python tools/check_schemas.py
+  PASS 8 bundled schemas match normative bytes
+python tools/check_versions.py
+  PASS contract=0.1.0-alpha.2 python=0.1.0a2 npm_name=@agentrust-io/telemetry npm=0.1.0-alpha.2
+
+## Boundary probes (scripted, against the evaluated source; probe script not part of the repository)
+P1 durable callback returns False: EvidencePersistenceError raised; log projection calls=0; accepted entries=0
+P2 log exporter raises after acceptance: accepted=True; entries=1;
+   projection_errors=['log projection failed: RuntimeError: exporter down']
+P3 empty accumulator sealed: entries=0 completeness=complete
+P4 callback commits externally then raises once, caller retries: external writes=2, local entries=1
+
+## Post-evaluation regression tests run against the evaluated source
+tests/test_trace_adapter_refusals.py copied from main c3515681 (fix merged 2026-09-25, PR #65)
+Ran 14 tests: 3 failures, 1 error
+  FAIL test_an_event_edited_after_sealing_is_refused
+  FAIL test_a_dropped_entry_is_refused
+  FAIL test_a_substituted_chain_digest_is_refused
+  ERROR test_a_consistent_chain_over_a_malformed_event_is_refused
+The evaluated finalizer signs snapshots whose entries no longer match the chain digest.
+
+## Comparison: current main
+Commit c3515681261fd0ab6e6aa38e20eb2f071aee7a20 (release 0.1.0-alpha.5), same Python,
+dependencies resolved 2026-09-27 (agentrust-trace 0.11.0, PyYAML installed)
+python -m unittest discover -s tests: Ran 128 tests, OK
+conformance runner: 13/13 expected verdicts (same 13 fixtures)
+check_otel_compatibility: 16 span attributes, 8 metrics, 6 event families
+
+NOT RERUN: TypeScript test suite (npm run check); collector or backend interoperability;
+performance. No hardware is involved in this evaluation.
