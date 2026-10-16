@@ -1,0 +1,33 @@
+== pin
+P1 refused ack: EvidencePersistenceError raised=True; log projection calls=0; accepted entries=0
+P2 failing exporter: entries=1; projection_errors=['log projection failed: RuntimeError: exporter down']
+P3 empty seal: entries=0 completeness=complete
+P4 lost ack then retry: external writes=2; local entries=1
+deep nesting (5000): RecursionError
+non-string key: AttributeError
+NaN attribute, validate: accepted
+Infinity attribute, validate: accepted
+NaN attribute, accumulator append: EvidenceError
+callback re-entering snapshot(): deadlocked (no return in 5 s)
+== later
+P1 refused ack: EvidencePersistenceError raised=True; log projection calls=0; accepted entries=0
+P2 failing exporter: entries=1; projection_errors=['log projection failed: RuntimeError: exporter down']
+P3 empty seal: entries=0 completeness=complete
+P4 lost ack then retry: external writes=2; local entries=1
+deep nesting (5000): EventValidationError
+non-string key: EventValidationError
+NaN attribute, validate: EventValidationError
+Infinity attribute, validate: EventValidationError
+NaN attribute, accumulator append: EventValidationError
+callback re-entering snapshot(): accepted
+== main
+P1 refused ack: EvidencePersistenceError raised=True; log projection calls=0; accepted entries=0
+P2 failing exporter: entries=1; projection_errors=['log projection failed: RuntimeError: exporter down']
+P3 empty seal: entries=0 completeness=complete
+P4 lost ack then retry: external writes=2; local entries=1
+deep nesting (5000): EventValidationError
+non-string key: EventValidationError
+NaN attribute, validate: EventValidationError
+Infinity attribute, validate: EventValidationError
+NaN attribute, accumulator append: EventValidationError
+callback re-entering snapshot(): accepted

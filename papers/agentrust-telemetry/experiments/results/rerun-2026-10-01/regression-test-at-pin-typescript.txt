@@ -1,0 +1,34 @@
+✔ finalizer derives claims then signs, validates, and self-verifies (14.7155ms)
+✔ tool transcript uses the shared RFC 8785 sequence/event digest (4.1443ms)
+✔ linked approval resolves a challenge while an unrelated approval does not (6.3127ms)
+✔ finalization refuses incomplete evidence, conflicts, unranked data, and missing trust inputs (3.9279ms)
+✔ codec validation or self-verification failure is fail-closed (1.1009ms)
+✖ finalizer refuses a snapshot whose entries no longer hash to its chain digest (2.1761ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 824.5197
+
+✖ failing tests:
+
+test at test\trace-finalizer.test.ts:56:1
+✖ finalizer refuses a snapshot whose entries no longer hash to its chain digest (2.1761ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (<source-root>\ts-pin\packages\typescript\test\trace-finalizer.test.ts:60:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /evidence chain does not verify/,
+    operator: 'throws',
+    diff: 'simple'
+  }

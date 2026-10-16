@@ -1,0 +1,65 @@
+test_a_consistent_chain_over_a_malformed_event_is_refused (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_consistent_chain_over_a_malformed_event_is_refused)
+Digests recomputed over an event the schema never accepted. ... ERROR
+test_a_dropped_entry_is_refused (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_dropped_entry_is_refused) ... FAIL
+test_a_failure_inside_official_signing_is_reported_as_one (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_failure_inside_official_signing_is_reported_as_one)
+A key that satisfies the type check and then fails when used. ... ok
+test_a_policy_decision_without_a_bundle_digest_is_refused (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_policy_decision_without_a_bundle_digest_is_refused) ... ok
+test_a_repeated_classification_cannot_rank_anything (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_repeated_classification_cannot_rank_anything) ... ok
+test_a_run_with_no_data_flow_has_nothing_to_classify (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_run_with_no_data_flow_has_nothing_to_classify) ... ok
+test_a_run_with_no_policy_decision_has_no_policy_to_bind (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_run_with_no_policy_decision_has_no_policy_to_bind) ... ok
+test_a_substituted_chain_digest_is_refused (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_substituted_chain_digest_is_refused) ... FAIL
+test_a_taxonomy_the_configuration_does_not_name_is_refused (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_taxonomy_the_configuration_does_not_name_is_refused) ... ok
+test_an_empty_run_carries_no_chained_evidence (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_an_empty_run_carries_no_chained_evidence) ... ok
+test_an_event_edited_after_sealing_is_refused (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_an_event_edited_after_sealing_is_refused) ... FAIL
+test_every_required_configuration_field_is_named_when_absent (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_every_required_configuration_field_is_named_when_absent) ... ok
+test_the_optional_dependency_is_named_when_it_is_absent (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_the_optional_dependency_is_named_when_it_is_absent) ... ok
+test_two_decisions_disagreeing_on_enforcement_cannot_produce_one_mode (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_two_decisions_disagreeing_on_enforcement_cannot_produce_one_mode) ... ok
+
+======================================================================
+ERROR: test_a_consistent_chain_over_a_malformed_event_is_refused (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_consistent_chain_over_a_malformed_event_is_refused)
+Digests recomputed over an event the schema never accepted.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<source-root>\src-pin-reg\tests\test_trace_adapter_refusals.py", line 277, in test_a_consistent_chain_over_a_malformed_event_is_refused
+    finalize_trace(snapshot, self.config, signing_key=self.key)
+  File "<source-root>\src-pin-reg\src\agentrust_telemetry\trace_adapter.py", line 47, in finalize_trace
+    bundle_hash, enforcement_mode = _policy_binding(events)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "<source-root>\src-pin-reg\src\agentrust_telemetry\trace_adapter.py", line 136, in _policy_binding
+    if any("bundle_digest" not in event["policy"] for event in decisions):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<source-root>\src-pin-reg\src\agentrust_telemetry\trace_adapter.py", line 136, in <genexpr>
+    if any("bundle_digest" not in event["policy"] for event in decisions):
+                                  ~~~~~^^^^^^^^^^
+KeyError: 'policy'
+
+======================================================================
+FAIL: test_a_dropped_entry_is_refused (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_dropped_entry_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<source-root>\src-pin-reg\tests\test_trace_adapter_refusals.py", line 237, in test_a_dropped_entry_is_refused
+    self.assertIn("evidence chain does not verify", str(caught.exception))
+AssertionError: 'evidence chain does not verify' not found in 'no policy decision evidence is present'
+
+======================================================================
+FAIL: test_a_substituted_chain_digest_is_refused (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_a_substituted_chain_digest_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<source-root>\src-pin-reg\tests\test_trace_adapter_refusals.py", line 242, in test_a_substituted_chain_digest_is_refused
+    with self.assertRaises(TraceFinalizationError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: TraceFinalizationError not raised
+
+======================================================================
+FAIL: test_an_event_edited_after_sealing_is_refused (tests.test_trace_adapter_refusals.TraceAdapterRefusalTests.test_an_event_edited_after_sealing_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<source-root>\src-pin-reg\tests\test_trace_adapter_refusals.py", line 228, in test_an_event_edited_after_sealing_is_refused
+    with self.assertRaises(TraceFinalizationError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: TraceFinalizationError not raised
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.571s
+
+FAILED (failures=3, errors=1)

@@ -1,0 +1,151 @@
+
+> @agentrust-io/telemetry@0.1.0-alpha.5 check
+> npm run build && npm test && npm pack --dry-run
+
+
+> @agentrust-io/telemetry@0.1.0-alpha.5 build
+> tsc -p tsconfig.json
+
+
+> @agentrust-io/telemetry@0.1.0-alpha.5 test
+> tsx --test test/*.test.ts
+
+✔ OPA boolean decision logs preserve safe facts and match Python identifiers (12.8381ms)
+✔ OPA rejects ambiguous results, malformed collections, and normalized invalid dates (2.1347ms)
+✔ Cedar sorts stable codes, retains final decision, and rejects prose errors (1.1367ms)
+✔ AGT policy mapping excludes free-form content and sink prevalidates a whole batch (5.4747ms)
+✔ AGT sink reports projection failure and identifiers cannot carry prose (0.4324ms)
+✔ approval chain preserves Python-compatible policy, request, and resolution links (7.4834ms)
+✔ request mapping rejects every policy binding mismatch (2.4333ms)
+✔ resolution mapping rejects request mismatch, chronology reversal, and malformed evidence (1.06ms)
+✔ only terminal outcomes map to terminal approval events (2.2161ms)
+✔ audit policy mapping matches Python ID and excludes free-form and partial hashes (10.8772ms)
+✔ audit action requires caller full digest and computes safe duration (7.474ms)
+✔ audit action rejects absent, reversed, and unsafe timing (2.4852ms)
+✔ classifier sees content while the event contains only closed metadata (3.3033ms)
+✔ classification boundary rejects arbitrary results and prose identifiers (0.5564ms)
+✔ AGT access maps only tier, decision, agent, and time (2.1632ms)
+✔ evidence chain matches the shared Python and TypeScript golden vector (145.7215ms)
+✔ durable acknowledgement is fail-closed, retryable, and copy-isolated (252.169ms)
+✔ cross-run, duplicate, overflow, invalid number, and sealed mutations are rejected (2.6848ms)
+✔ reentrant durable callbacks cannot corrupt sequence state (3.8419ms)
+✔ client does not project an event when evidence persistence fails (143.2795ms)
+✔ usage metrics record totals without high-cardinality identity dimensions (6.5471ms)
+✔ classification dimensions are bounded by an explicit allowlist (1.819ms)
+✔ policy, approval, and action metrics expose only bounded semantic dimensions (2.2672ms)
+✔ W3C and durable AgentTrust context round-trip (5.5184ms)
+✔ headers are case-insensitive and reject line breaks (0.5124ms)
+✔ valid and invalid shared conformance fixtures have identical verdict classes (12.3895ms)
+✔ event construction matches the cross-language golden bytes semantically (6.8337ms)
+✔ uint64-scale nanoseconds survive construction exactly (1.231ms)
+✔ projection matches Python allowlist and does not flatten nested content (0.4337ms)
+✔ client validates context before all caller-owned projections (0.6983ms)
+✔ invalid all-zero OTel context is treated as absent (0.4114ms)
+✔ log body and evidence input are defensive copies (0.5304ms)
+✔ finalizer derives claims then signs, validates, and self-verifies (14.42ms)
+✔ tool transcript uses the shared RFC 8785 sequence/event digest (19.8728ms)
+✔ linked approval resolves a challenge while an unrelated approval does not (100.5955ms)
+✔ finalization refuses incomplete evidence, conflicts, unranked data, and missing trust inputs (13.5107ms)
+✔ codec validation or self-verification failure is fail-closed (0.9121ms)
+✔ finalizer refuses a snapshot whose entries no longer hash to its chain digest (35.9274ms)
+✔ unknown cost stays absent and observations validate provenance (11.7523ms)
+✔ rollups deduplicate leaves, preserve partial coverage, and add costs decimally (6.2445ms)
+✔ rollups reject changed duplicate IDs, non-leaves, mixed currency, and unsafe totals (2.2886ms)
+✔ agent and workflow rollups match the shared Python and TypeScript vector (2.037ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13496.0361
+npm notice
+npm notice package: @agentrust-io/telemetry@0.1.0-alpha.5
+npm notice Tarball Contents
+npm notice 1.1kB LICENSE
+npm notice 1.0kB README.md
+npm notice 2.2kB dist/adapters.d.ts
+npm notice 2.2kB dist/adapters.d.ts.map
+npm notice 9.3kB dist/adapters.js
+npm notice 10.3kB dist/adapters.js.map
+npm notice 1.0kB dist/agt-approval.d.ts
+npm notice 1.1kB dist/agt-approval.d.ts.map
+npm notice 6.8kB dist/agt-approval.js
+npm notice 6.9kB dist/agt-approval.js.map
+npm notice 760B dist/agt-audit.d.ts
+npm notice 816B dist/agt-audit.d.ts.map
+npm notice 5.6kB dist/agt-audit.js
+npm notice 6.3kB dist/agt-audit.js.map
+npm notice 1.0kB dist/client.d.ts
+npm notice 930B dist/client.d.ts.map
+npm notice 2.6kB dist/client.js
+npm notice 2.6kB dist/client.js.map
+npm notice 1.8kB dist/data-flow.d.ts
+npm notice 1.8kB dist/data-flow.d.ts.map
+npm notice 4.8kB dist/data-flow.js
+npm notice 4.9kB dist/data-flow.js.map
+npm notice 219B dist/evidence-digest.d.ts
+npm notice 272B dist/evidence-digest.d.ts.map
+npm notice 918B dist/evidence-digest.js
+npm notice 897B dist/evidence-digest.js.map
+npm notice 1.4kB dist/evidence.d.ts
+npm notice 1.2kB dist/evidence.d.ts.map
+npm notice 4.1kB dist/evidence.js
+npm notice 3.7kB dist/evidence.js.map
+npm notice 921B dist/factory.d.ts
+npm notice 963B dist/factory.d.ts.map
+npm notice 2.4kB dist/factory.js
+npm notice 2.5kB dist/factory.js.map
+npm notice 484B dist/index.d.ts
+npm notice 412B dist/index.d.ts.map
+npm notice 449B dist/index.js
+npm notice 387B dist/index.js.map
+npm notice 336B dist/metrics.d.ts
+npm notice 357B dist/metrics.d.ts.map
+npm notice 4.1kB dist/metrics.js
+npm notice 3.9kB dist/metrics.js.map
+npm notice 444B dist/projection.d.ts
+npm notice 511B dist/projection.d.ts.map
+npm notice 1.4kB dist/projection.js
+npm notice 1.3kB dist/projection.js.map
+npm notice 1.1kB dist/propagation.d.ts
+npm notice 1.0kB dist/propagation.d.ts.map
+npm notice 2.6kB dist/propagation.js
+npm notice 3.0kB dist/propagation.js.map
+npm notice 1.3kB dist/trace-finalizer.d.ts
+npm notice 1.3kB dist/trace-finalizer.d.ts.map
+npm notice 10.7kB dist/trace-finalizer.js
+npm notice 11.1kB dist/trace-finalizer.js.map
+npm notice 1.1kB dist/types.d.ts
+npm notice 1.2kB dist/types.d.ts.map
+npm notice 44B dist/types.js
+npm notice 102B dist/types.js.map
+npm notice 1.7kB dist/usage.d.ts
+npm notice 1.5kB dist/usage.d.ts.map
+npm notice 5.8kB dist/usage.js
+npm notice 6.1kB dist/usage.js.map
+npm notice 479B dist/validation.d.ts
+npm notice 471B dist/validation.d.ts.map
+npm notice 4.2kB dist/validation.js
+npm notice 4.2kB dist/validation.js.map
+npm notice 1.3kB package.json
+npm notice 1.7kB schemas/action.schema.json
+npm notice 1.6kB schemas/approval.schema.json
+npm notice 1.4kB schemas/common.schema.json
+npm notice 1.9kB schemas/data-flow.schema.json
+npm notice 1.2kB schemas/envelope.schema.json
+npm notice 900B schemas/evidence.schema.json
+npm notice 1.6kB schemas/policy-decision.schema.json
+npm notice 3.4kB schemas/usage.schema.json
+npm notice Tarball Details
+npm notice name: @agentrust-io/telemetry
+npm notice version: 0.1.0-alpha.5
+npm notice filename: agentrust-io-telemetry-0.1.0-alpha.5.tgz
+npm notice package size: 37.9 kB
+npm notice unpacked size: 183.7 kB
+npm notice shasum: 5235c6a7ba8da9be08e5d44870ef0809ea3e7dc7
+npm notice integrity: sha512-CRB1SwcOTiuDB[...]Eg5imHfi2tR9Q==
+npm notice total files: 75
+npm notice
+agentrust-io-telemetry-0.1.0-alpha.5.tgz
