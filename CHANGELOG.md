@@ -4,6 +4,9 @@
 
 ### Changed
 
+- CI checks the existing four job-level OIDC grants across all workflow files,
+  refusing source permission drift without changing any publishing grant.
+
 - The project name is spelled AgenTrust (one shared t) in docs, docstrings,
   the compatibility matrix notes and the TypeScript package description, and the
   LICENSE and NOTICE copyright holder reads "AgenTrust Contributors". Package
