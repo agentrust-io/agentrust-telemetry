@@ -65,3 +65,20 @@ Note that npm sets `latest` on a package's very first published version whatever
 `--tag` says. That is expected on a bootstrap publish and corrects itself when
 the first stable version ships. PyPI and npm create registry provenance
 through trusted publishing; GitHub also attests the downloadable release assets.
+
+## OIDC source drift
+
+CI runs `python tools/check_workflow_oidc.py` across every `.yml` and `.yaml`
+workflow. The proposed existing-source baseline preserves `release.yml` jobs
+`publish-pypi`, `publish-npm` and `release-assets`, and `scorecard.yml/analysis`.
+It refuses workflow-wide OIDC grants even when current jobs override them,
+`write-all` at either scope, and additions, removals or renames of these grants.
+An intentional change needs review of the baseline and workflow delta together.
+Unittest controls start from passing copies of the real workflows before each
+mutation; a direct Python `-O` CLI check still refuses a broad grant.
+
+This preserves current permissions, including the release-asset attestation and
+Scorecard grants; it does not establish that each grant remains necessary.
+The guard checks source, not live environment reviewers, administrator bypass,
+deployment restrictions, trusted-publisher bindings or backup-operator coverage.
+Those remain part of [the release-safeguard sweep](https://github.com/agentrust-io/.github/issues/54).
