@@ -1,0 +1,11 @@
+{
+  "scope": "synthetic operational delivery; not a collector or durability claim",
+  "fixtures": ["policy-decision.json", "usage.json"],
+  "cases": [
+    {"mode": "healthy", "delivered_indices": [0, 1], "log_emitted": true, "error_count": 0},
+    {"mode": "drop", "delivered_indices": [], "log_emitted": true, "error_count": 0},
+    {"mode": "duplicate", "delivered_indices": [0, 0, 1, 1], "log_emitted": true, "error_count": 0},
+    {"mode": "reverse", "delivered_indices": [1, 0], "log_emitted": true, "error_count": 0},
+    {"mode": "raise", "delivered_indices": [], "log_emitted": false, "error_count": 1}
+  ]
+}
