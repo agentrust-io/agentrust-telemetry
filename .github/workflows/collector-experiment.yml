@@ -1,0 +1,38 @@
+name: Collector fault experiment
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'experiments/collector/**'
+      - '.github/workflows/collector-experiment.yml'
+permissions:
+  contents: read
+jobs:
+  collector:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Install experiment dependencies and verify collector
+        run: |
+          python -m pip install -r experiments/collector/environment.txt
+          (cd packages/typescript && npm ci --ignore-scripts && npm run build)
+          (cd experiments/collector && npm ci --ignore-scripts)
+          curl -fsSL https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.163.2/otelcol_0.163.2_linux_amd64.tar.gz -o "$RUNNER_TEMP/otelcol.tar.gz"
+          echo "9fbf3101331c88aab4b7f4cfd7c788b252e91e193793e39bd2154971c87f88a7  $RUNNER_TEMP/otelcol.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/otelcol.tar.gz" -C "$RUNNER_TEMP" otelcol
+      - name: Run synthetic loopback delivery cases
+        env:
+          PYTHONPATH: src
+        run: python experiments/collector/run.py --collector "$RUNNER_TEMP/otelcol" --output collector-results
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.0
+        if: always()
+        with:
+          name: collector-experiment-evidence
+          path: collector-results
