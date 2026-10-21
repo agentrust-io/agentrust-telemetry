@@ -1,4 +1,4 @@
-# Collector fault harness — host validation pending
+# Collector fault harness
 
 This experimental harness wires the real Python and TypeScript telemetry SDKs
 through a real OpenTelemetry Collector to a synthetic loopback receiver backed by
@@ -26,7 +26,7 @@ The runner enforces binary SHA256
 Use a fresh output directory. Clear HTTP(S)/ALL proxy environment variables for
 the Python emitter if your environment exports them; child processes clear these.
 
-## Intended assertions (not yet validated on a supported host)
+## Assertions validated on an Ubuntu CI host
 
 For both SDKs: healthy delivery, first-response 503, commit then lost ACK, partial
 rejection, duplicate event ID, and collector idle restart. SQLite stores local
@@ -36,9 +36,9 @@ collector exactly-once guarantee. Retry observations cover the whole pipeline,
 not a unique attribution to collector retry versus exporter retry. The restart
 case restarts an idle collector before emission; it does not test in-flight recovery.
 Queues are disabled; queue saturation and out-of-order delivery remain uncovered.
-Only event IDs are checked at the receiver today, not full projection fidelity.
+Receiver records contain event IDs; assertions compare row counts, not full projection fidelity.
 
-## Actual validation and blocker
+## Validation and local host limitation
 
 Python compilation, JavaScript syntax, dependency installation, and the repository
 TypeScript build succeeded. The downloaded archive matched the release digest and
@@ -51,6 +51,25 @@ Error: failed to register process metrics: process does not exist
 Setting `service.telemetry.metrics.level: none` did not bypass the error. Upstream
 collector v0.163.0 `service/service.go` calls `registerProcessMetrics` on Linux
 regardless of that setting; `service/internal/proctelemetry/process_telemetry.go`
-initializes gopsutil with `os.Getpid()`. No collector delivery case has passed on
-this host. Run this draft on a supported host and fix any discovered integration
-issues before claiming acceptance. No production endpoint or cloud resource was used.
+initializes gopsutil with `os.Getpid()`. No collector delivery case passed on the local sandbox host. The supported Ubuntu
+CI run below completed all twelve cases after correcting the SDK v3 processor
+constructor. No production endpoint or separately provisioned cloud resource was used.
+
+## Recorded supported-host run
+
+[Run 39665288508](https://github.com/agentrust-io/agentrust-telemetry/actions/runs/39665288508),
+head `42fa91f0194741a1a1c7102d08142e7925fc86cb`, Ubuntu 24.04,
+Python 3.12.15 and Node 22.23.3: all twelve cases passed. For both languages:
+
+| Case | Local evidence rows | Observed attempts | Backend commits |
+| --- | ---: | ---: | ---: |
+| Healthy | 1 | 1 | 1 |
+| First 503 | 1 | 2 | 1 |
+| Lost acknowledgement | 1 | 2 | 1 |
+| Partial rejection | 1 | 1 | 0 |
+| Duplicate event | 2 | 2 | 1 |
+| Idle restart | 1 | 1 | 1 |
+
+The run retains configs, collector/emitter logs, synthetic inputs, SQLite observer
+and per-case summary in the `collector-experiment-evidence` artifact. These
+measurements establish the listed synthetic pipeline behaviors only.
