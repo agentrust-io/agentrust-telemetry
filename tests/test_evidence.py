@@ -200,6 +200,17 @@ class EvidenceTests(unittest.TestCase):
         accepted = clean.append(fixture("policy-decision.json"))
         self.assertEqual(accepted.sequence, 0)
 
+    def test_rejects_boolean_or_float_max_events_and_malformed_previous_digest(self):
+        from agentrust_telemetry.evidence import _entry_digest
+
+        for bad_max in (True, False, 0, -1, 1.5, "10"):
+            with self.assertRaises(EvidenceError):
+                EvidenceAccumulator("run-1", self.validator, max_events=bad_max)  # type: ignore[arg-type]
+
+        for bad_prev in ("A" * 64, "a" * 64 + "ZZ", " " + "a" * 64):
+            with self.assertRaises(ValueError):
+                _entry_digest(1, bad_prev, fixture("policy-decision.json"))
+
     def test_reentrant_seal_call_is_refused_not_deadlocked(self):
         accumulator = None
 
