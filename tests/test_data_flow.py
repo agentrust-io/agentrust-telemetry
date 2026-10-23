@@ -149,5 +149,32 @@ class DataFlowTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unsupported AGT data classification"):
                     agt_data_classification(SimpleNamespace(classification=bad))
 
+    def test_data_flow_and_propagation_reject_bool_sizes_control_chars_and_conflicting_headers(self):
+        from agentrust_telemetry import PropagationError
+        from agentrust_telemetry.propagation import _header, _safe_value
+
+        classifier = RecordingClassifier(
+            ClassificationResult("example", "internal", "classifier")
+        )
+        for bad_amount in (True, False, -1, 2**53):
+            with self.assertRaisesRegex(ValueError, "size_bytes"):
+                classified_data_flow(
+                    self.factory,
+                    classifier,
+                    "secret",
+                    run_id="run-1",
+                    agent_id="agent-1",
+                    direction="read",
+                    source=DataEndpoint("repository"),
+                    destination=DataEndpoint("agent"),
+                    purpose="review",
+                    size_bytes=bad_amount,
+                )
+        with self.assertRaises(PropagationError):
+            _safe_value("x-agentrust-run-id", "run\x00bad", required=True)
+        with self.assertRaises(PropagationError):
+            _header({"X-Agentrust-Run-Id": "run-1", "x-agentrust-run-id": "run-2"}, "x-agentrust-run-id")
+
+
 if __name__ == "__main__":
     unittest.main()

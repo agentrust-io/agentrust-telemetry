@@ -8,6 +8,7 @@ from typing import Any, Protocol
 
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:/-]{0,255}")
 _MEDIA_TYPE = re.compile(r"[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+")
+_MAX_SAFE_INTEGER = 9007199254740991
 
 
 @dataclass(frozen=True)
@@ -67,12 +68,23 @@ def classified_data_flow(
     result = classifier.classify(value)
     if not isinstance(result, ClassificationResult):
         raise TypeError("classifier must return ClassificationResult")
+    if not isinstance(source, DataEndpoint):
+        raise TypeError("source must be a DataEndpoint")
+    if not isinstance(destination, DataEndpoint):
+        raise TypeError("destination must be a DataEndpoint")
     _identifier(purpose, "purpose")
     if media_type is not None and (
         not isinstance(media_type, str) or _MEDIA_TYPE.fullmatch(media_type) is None
         or len(media_type) > 255
     ):
         raise ValueError("media_type must be a parameter-free type/subtype identifier")
+    for field_name, amount in (("size_bytes", size_bytes), ("token_count", token_count)):
+        if amount is not None and (
+            isinstance(amount, bool)
+            or not isinstance(amount, int)
+            or not 0 <= amount <= _MAX_SAFE_INTEGER
+        ):
+            raise ValueError(f"{field_name} must be a non-negative safe integer")
     optional = {
         "content_digest": content_digest,
         "size_bytes": size_bytes,
