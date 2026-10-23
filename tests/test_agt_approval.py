@@ -198,6 +198,34 @@ class AgtApprovalAdapterTests(unittest.TestCase):
             )
             self.assertEqual(event["event_type"], expected)
 
+    def test_agt_adapters_reject_boolean_or_overflow_durations_and_bad_bundle_digest(self):
+        for bad_dur in (True, False, -1, 2**53):
+            with self.assertRaisesRegex(ValueError, "evaluation_duration_ns"):
+                agt_policy_decision_record(
+                    self.factory,
+                    self.policy,
+                    run_id="run-1",
+                    agent_id="agent-1",
+                    action_type="deploy",
+                    resource_type="environment",
+                    policy_engine_version="1.0.0",
+                    bundle_digest=BUNDLE,
+                    evaluation_duration_ns=bad_dur,
+                )
+        for bad_bundle in ({"algorithm": "md5", "value": "a" * 32}, {"algorithm": "sha256", "value": "Z" * 64}):
+            with self.assertRaisesRegex(ValueError, "bundle_digest"):
+                agt_policy_decision_record(
+                    self.factory,
+                    self.policy,
+                    run_id="run-1",
+                    agent_id="agent-1",
+                    action_type="deploy",
+                    resource_type="environment",
+                    policy_engine_version="1.0.0",
+                    bundle_digest=bad_bundle,
+                )
+
+
     def test_structured_outcome_or_verdict_is_a_value_error(self):
         for bad in ([], {}, ["allow"]):
             with self.subTest(bad=bad):
