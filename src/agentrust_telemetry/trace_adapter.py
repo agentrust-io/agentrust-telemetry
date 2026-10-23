@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -13,6 +14,7 @@ from .evidence import CANONICALIZATION_PROFILE, EvidenceSnapshot, _entry_digest
 
 
 OriginKind = Literal["self", "third-party-control-plane", "log-import"]
+_TRACE_DIGEST_RE = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})\Z")
 
 
 @dataclass(frozen=True)
@@ -134,6 +136,13 @@ def _require_finalizable(
     missing = sorted(name for name, value in required.items() if not value)
     if missing:
         raise TraceFinalizationError(f"trusted TRACE configuration is missing: {missing}")
+    if (
+        not isinstance(config.build_digest, str)
+        or _TRACE_DIGEST_RE.match(config.build_digest) is None
+    ):
+        raise TraceFinalizationError(
+            "build_digest must match ^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$"
+        )
     if len(set(config.classification_order)) != len(config.classification_order):
         raise TraceFinalizationError("classification_order contains duplicates")
 
@@ -180,8 +189,19 @@ def _policy_binding(events: list[dict[str, Any]]) -> tuple[str, str]:
     decisions = [event for event in events if event["event_type"] == "policy.decision"]
     if not decisions:
         raise TraceFinalizationError("no policy decision evidence is present")
-    if any("bundle_digest" not in event["policy"] for event in decisions):
+    if any(
+        not isinstance(event["policy"].get("bundle_digest"), dict)
+        for event in decisions
+    ):
         raise TraceFinalizationError("every policy decision must carry bundle_digest")
+    for event in decisions:
+        digest = event["policy"]["bundle_digest"]
+        if not isinstance(digest.get("algorithm"), str) or not isinstance(
+            digest.get("value"), str
+        ):
+            raise TraceFinalizationError(
+                "policy bundle_digest requires string algorithm and value"
+            )
     algorithms = {
         event["policy"]["bundle_digest"]["algorithm"] for event in decisions
     }
@@ -194,6 +214,10 @@ def _policy_binding(events: list[dict[str, Any]]) -> tuple[str, str]:
         f"{event['policy']['bundle_digest']['algorithm']}:{event['policy']['bundle_digest']['value']}"
         for event in decisions
     }
+    if any(_TRACE_DIGEST_RE.match(bundle) is None for bundle in bundles):
+        raise TraceFinalizationError(
+            "policy bundle_digest must match ^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$"
+        )
     if len(bundles) != 1:
         raise TraceFinalizationError("conflicting policy bundle digests are present")
     modes = {event["enforcement_mode"] for event in decisions}
