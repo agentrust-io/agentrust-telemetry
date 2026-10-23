@@ -114,6 +114,68 @@ class TraceAdapterRefusalTests(unittest.TestCase):
             config=config,
         )
 
+    def test_a_malformed_build_digest_is_refused(self):
+        for bad_digest in (
+            "not-a-digest",
+            "sha256:short",
+            "sha256:" + "B" * 64,
+            "sha512:" + "b" * 128,
+            "sha256:" + "b" * 96,
+            "sha384:" + "b" * 64,
+            "sha256:" + "b" * 64 + "\n",
+        ):
+            with self.subTest(build_digest=bad_digest):
+                config = replace(self.config, build_digest=bad_digest)
+                self.assertRefuses(
+                    "build_digest must match",
+                    [fixture("policy-decision.json"), fixture("data-flow.json")],
+                    config=config,
+                )
+        valid_384 = replace(self.config, build_digest="sha384:" + "b" * 96)
+        record = self.finalize(
+            [fixture("policy-decision.json"), fixture("data-flow.json")],
+            config=valid_384,
+        )
+        self.assertEqual(record["build_provenance"]["digest"], "sha384:" + "b" * 96)
+
+    def test_a_malformed_policy_bundle_digest_is_refused(self):
+        from agentrust_telemetry.evidence import (
+            CANONICALIZATION_PROFILE,
+            EvidenceEntry,
+            EvidenceSnapshot,
+            _entry_digest,
+        )
+
+        for bad_bundle_digest, expected_message in (
+            ({"algorithm": None, "value": "a" * 64}, "string algorithm and value"),
+            ({"algorithm": "sha256", "value": 123}, "string algorithm and value"),
+            ({"algorithm": "sha256", "value": "A" * 64}, "policy bundle_digest must match"),
+            ({"algorithm": "sha256", "value": "a" * 96}, "policy bundle_digest must match"),
+            ({"algorithm": "sha384", "value": "a" * 64}, "policy bundle_digest must match"),
+        ):
+            with self.subTest(bundle_digest=bad_bundle_digest):
+                decision = copy.deepcopy(fixture("policy-decision.json"))
+                decision["policy"]["bundle_digest"] = bad_bundle_digest
+                entries = []
+                previous = None
+                for sequence, event in enumerate([decision, fixture("data-flow.json")]):
+                    digest = _entry_digest(sequence, previous, event)
+                    entries.append(
+                        EvidenceEntry(sequence, event["event_id"], previous, digest, event)
+                    )
+                    previous = digest
+                snapshot = EvidenceSnapshot(
+                    run_id="run-governed-sdlc-001",
+                    entries=tuple(entries),
+                    chain_digest=previous,
+                    canonicalization_profile=CANONICALIZATION_PROFILE,
+                    completeness="complete",
+                    sealed=True,
+                )
+                with self.assertRaises(TraceFinalizationError) as caught:
+                    finalize_trace(snapshot, self.config, signing_key=self.key)
+                self.assertIn(expected_message, str(caught.exception))
+
     # -- the policy binding ---------------------------------------------------
 
     def test_a_run_with_no_policy_decision_has_no_policy_to_bind(self):

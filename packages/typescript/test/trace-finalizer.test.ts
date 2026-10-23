@@ -3,6 +3,7 @@ import {readdirSync, readFileSync} from "node:fs";
 import test from "node:test";
 import {fileURLToPath} from "node:url";
 import {EvidenceAccumulator, finalizeTrace, SchemaValidator, TraceFinalizationError} from "../src/index.js";
+import {entryDigest} from "../src/evidence-digest.js";
 import type {NormalizedEvent, TraceCodec, TraceConfiguration} from "../src/index.js";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
@@ -67,6 +68,36 @@ test("finalization refuses incomplete evidence, conflicts, unranked data, and mi
   assert.throws(() => finalizeTrace(snapshot(), {...config, classificationOrder: ["public", "internal"]}, {signingKey: "private", codec: new RecordingCodec()}), /unranked/);
   const conflicting = fixture("policy-decision.json"); conflicting.event_id = "018f0f7d-7a13-7cc2-8000-000000000099"; ((conflicting.policy as Record<string, unknown>).bundle_digest as Record<string, unknown>).value = "f".repeat(64);
   assert.throws(() => finalizeTrace(snapshot([conflicting]), config, {signingKey: "private", codec: new RecordingCodec()}), /conflicting policy bundle/);
+  for (const badDigest of ["not-a-digest", "sha256:short", `sha256:${"B".repeat(64)}`, `sha512:${"b".repeat(128)}`, `sha256:${"b".repeat(96)}`, `sha384:${"b".repeat(64)}`]) {
+    assert.throws(() => finalizeTrace(snapshot(), {...config, buildDigest: badDigest}, {signingKey: "private", codec: new RecordingCodec()}), /buildDigest must match/);
+  }
+  const sha384Record = finalizeTrace(snapshot(), {...config, buildDigest: `sha384:${"b".repeat(96)}`}, {signingKey: "private", codec: new RecordingCodec()});
+  assert.equal((sha384Record.build_provenance as Record<string, unknown>).digest, `sha384:${"b".repeat(96)}`);
+});
+test("finalizer refuses non-string or malformed policy bundle_digest fields", () => {
+  for (const [badBundleDigest, pattern] of [
+    [{algorithm: undefined, value: "a".repeat(64)}, /string algorithm and value/],
+    [{algorithm: "sha256", value: 123}, /string algorithm and value/],
+    [{algorithm: 256, value: "a".repeat(64)}, /string algorithm and value/],
+    [{algorithm: "sha256", value: "A".repeat(64)}, /policy bundle_digest must match/],
+    [{algorithm: "sha256", value: "a".repeat(96)}, /policy bundle_digest must match/],
+    [{algorithm: "sha384", value: "a".repeat(64)}, /policy bundle_digest must match/],
+  ] as const) {
+    const decision = fixture("policy-decision.json");
+    (decision.policy as Record<string, unknown>).bundle_digest = badBundleDigest;
+    const flow = fixture("data-flow.json");
+    const d0 = entryDigest(0, undefined, decision);
+    const d1 = entryDigest(1, d0, flow);
+    const crafted = {
+      ...snapshot(),
+      entries: [
+        {sequence: 0, eventId: decision.event_id, previousDigest: undefined, digest: d0, event: decision},
+        {sequence: 1, eventId: flow.event_id, previousDigest: d0, digest: d1, event: flow},
+      ],
+      chainDigest: d1,
+    };
+    assert.throws(() => finalizeTrace(crafted, config, {signingKey: "private", codec: new RecordingCodec()}), pattern);
+  }
 });
 test("codec validation or self-verification failure is fail-closed", () => {
   const codec = new RecordingCodec(); codec.failVerify = true;

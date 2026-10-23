@@ -20,3 +20,34 @@ test("headers are case-insensitive and reject line breaks", () => {
   assert.equal(extractContext({"X-AgenTrust-Run-Id": "run-1"}).runId, "run-1");
   assert.throws(() => injectContext({}, {runId: "run\r\nattack", agentId: "agent-a"}), PropagationError);
 });
+
+test("extractContext rejects array-valued and non-string headers and eventFields checks !== undefined", () => {
+  assert.throws(
+    () => extractContext({"x-agentrust-run-id": ["attacker-run-id", "trusted-run-id"] as unknown as string}),
+    PropagationError,
+  );
+  assert.throws(
+    () => extractContext({"x-agentrust-workflow-id": ["wf-1", "wf-2"] as unknown as string}),
+    PropagationError,
+  );
+  assert.throws(
+    () => extractContext({"x-agentrust-agent-id": ["agent-1"] as unknown as string}),
+    PropagationError,
+  );
+  assert.throws(
+    () => extractContext({"x-agentrust-run-id": 123 as unknown as string}),
+    PropagationError,
+  );
+  const direct = new (extractContext({}).constructor as typeof import("../src/index.js").ExtractedContext)(
+    context.active(),
+    "",
+    "",
+    "",
+  );
+  assert.deepEqual(direct.eventFields("agent-b"), {
+    agent_id: "agent-b",
+    run_id: "",
+    workflow_id: "",
+    parent_agent_id: "",
+  });
+});
