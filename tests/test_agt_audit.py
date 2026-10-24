@@ -143,6 +143,111 @@ class AgtAuditAdapterTests(unittest.TestCase):
                 operation="invoke",
             )
 
+    def test_audit_policy_decision_validates_duration_and_bundle_digest(self):
+        sha384_bundle = {"algorithm": "sha384", "value": "b" * 96}
+        for valid_dur in (0, 2**53 - 1):
+            ev = agt_audit_policy_decision(
+                self.factory,
+                audit_entry(),
+                run_id="run-1",
+                policy_engine_version="1.0.0",
+                bundle_digest=sha384_bundle,
+                resource_type="tool",
+                evaluation_duration_ns=valid_dur,
+            )
+            self.assertEqual(ev["evaluation_duration_ns"], valid_dur)
+            self.assertEqual(ev["policy"]["bundle_digest"], sha384_bundle)
+
+        for bad_dur in (True, False, -1, 2**53, "10", 1.5):
+            with self.subTest(bad_dur=bad_dur):
+                with self.assertRaisesRegex(ValueError, "evaluation_duration_ns"):
+                    agt_audit_policy_decision(
+                        self.factory,
+                        audit_entry(),
+                        run_id="run-1",
+                        policy_engine_version="1.0.0",
+                        bundle_digest=BUNDLE,
+                        resource_type="tool",
+                        evaluation_duration_ns=bad_dur,  # type: ignore[arg-type]
+                    )
+
+        for bad_bundle in (
+            None,
+            {"algorithm": "md5", "value": "a" * 32},
+            {"algorithm": "sha256", "value": "A" * 64},
+            {"algorithm": "sha384", "value": "a" * 64},
+        ):
+            with self.subTest(bad_bundle=bad_bundle):
+                with self.assertRaisesRegex(ValueError, "bundle_digest"):
+                    agt_audit_policy_decision(
+                        self.factory,
+                        audit_entry(),
+                        run_id="run-1",
+                        policy_engine_version="1.0.0",
+                        bundle_digest=bad_bundle,  # type: ignore[arg-type]
+                        resource_type="tool",
+                    )
+
+    def test_audit_action_validates_duration_bounds_and_action_digest(self):
+        sha384_digest = {"algorithm": "sha384", "value": "a" * 96}
+        for valid_dur in (0, 2**53 - 1):
+            ev = agt_audit_action(
+                self.factory,
+                audit_entry(event_type="tool_invocation"),
+                run_id="run-1",
+                action_digest=sha384_digest,
+                action_kind="tool",
+                operation="invoke",
+                duration_ns=valid_dur,
+            )
+            self.assertEqual(ev["duration_ns"], valid_dur)
+            self.assertEqual(ev["action_digest"], sha384_digest)
+
+        for bad_dur in (True, False, -1, 2**53, "10", 1.5):
+            with self.subTest(bad_dur=bad_dur):
+                with self.assertRaisesRegex(ValueError, "duration_ns"):
+                    agt_audit_action(
+                        self.factory,
+                        audit_entry(event_type="tool_invocation"),
+                        run_id="run-1",
+                        action_digest=DIGEST,
+                        action_kind="tool",
+                        operation="invoke",
+                        duration_ns=bad_dur,  # type: ignore[arg-type]
+                    )
+
+        # Computed duration from issued_at/completed_at exceeding 2**53 - 1 is rejected
+        with self.assertRaisesRegex(ValueError, "exceeds the safe integer range"):
+            agt_audit_action(
+                self.factory,
+                audit_entry(
+                    event_type="tool_invocation",
+                    issued_at=NOW,
+                    completed_at=NOW + timedelta(days=200),
+                ),
+                run_id="run-1",
+                action_digest=DIGEST,
+                action_kind="tool",
+                operation="invoke",
+            )
+
+        for bad_digest in (
+            None,
+            {"algorithm": "md5", "value": "a" * 32},
+            {"algorithm": "sha256", "value": "A" * 64},
+            {"algorithm": "sha384", "value": "a" * 64},
+        ):
+            with self.subTest(bad_digest=bad_digest):
+                with self.assertRaisesRegex(ValueError, "action_digest"):
+                    agt_audit_action(
+                        self.factory,
+                        audit_entry(event_type="tool_invocation"),
+                        run_id="run-1",
+                        action_digest=bad_digest,  # type: ignore[arg-type]
+                        action_kind="tool",
+                        operation="invoke",
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()
