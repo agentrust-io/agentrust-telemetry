@@ -73,11 +73,13 @@ def extract_context(carrier: MutableMapping[str, str]) -> ExtractedContext:
 
 
 def _header(carrier: MutableMapping[str, str], name: str) -> str | None:
-    value = carrier.get(name)
-    if value is None:
-        # HTTP field names are case-insensitive even when a plain mapping is used.
-        value = next((item for key, item in carrier.items() if key.lower() == name), None)
-    return None if value is None else _safe_value(name, value, required=True)
+    matches = [item for key, item in carrier.items() if isinstance(key, str) and key.lower() == name]
+    if not matches:
+        return None
+    validated = [_safe_value(name, item, required=True) for item in matches]
+    if len(set(validated)) > 1:
+        raise PropagationError(f"conflicting duplicate {name} header values")
+    return validated[0]
 
 
 def _safe_value(name: str, value: Any, *, required: bool) -> str:
@@ -89,6 +91,8 @@ def _safe_value(name: str, value: Any, *, required: bool) -> str:
         raise PropagationError(f"{name} exceeds {_MAX_VALUE_LENGTH} characters")
     if "\r" in value or "\n" in value:
         raise PropagationError(f"{name} contains a prohibited line break")
+    if any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in value):
+        raise PropagationError(f"{name} contains a prohibited control character")
     return value
 
 

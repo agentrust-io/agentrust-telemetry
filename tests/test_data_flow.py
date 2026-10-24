@@ -149,5 +149,93 @@ class DataFlowTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unsupported AGT data classification"):
                     agt_data_classification(SimpleNamespace(classification=bad))
 
+    def test_data_flow_validates_endpoints_and_safe_integer_size_and_token_bounds(self):
+        classifier = RecordingClassifier(
+            ClassificationResult("example", "internal", "classifier")
+        )
+        # Valid boundary twins (0 and 2**53 - 1) succeed
+        for valid_amount in (0, 2**53 - 1):
+            ev = classified_data_flow(
+                self.factory,
+                classifier,
+                "secret",
+                run_id="run-1",
+                agent_id="agent-1",
+                direction="read",
+                source=DataEndpoint("repository"),
+                destination=DataEndpoint("agent"),
+                purpose="review",
+                size_bytes=valid_amount,
+                token_count=valid_amount,
+            )
+            self.assertEqual(ev["size_bytes"], valid_amount)
+            self.assertEqual(ev["token_count"], valid_amount)
+
+        with self.assertRaisesRegex(TypeError, "source must be a DataEndpoint"):
+            classified_data_flow(
+                self.factory,
+                classifier,
+                "secret",
+                run_id="run-1",
+                agent_id="agent-1",
+                direction="read",
+                source={"kind": "repository"},  # type: ignore[arg-type]
+                destination=DataEndpoint("agent"),
+                purpose="review",
+            )
+        with self.assertRaisesRegex(TypeError, "destination must be a DataEndpoint"):
+            classified_data_flow(
+                self.factory,
+                classifier,
+                "secret",
+                run_id="run-1",
+                agent_id="agent-1",
+                direction="read",
+                source=DataEndpoint("repository"),
+                destination={"kind": "agent"},  # type: ignore[arg-type]
+                purpose="review",
+            )
+
+        for field_name in ("size_bytes", "token_count"):
+            for bad_amount in (True, False, -1, 2**53, "10", 1.5):
+                with self.subTest(field_name=field_name, bad_amount=bad_amount):
+                    with self.assertRaisesRegex(ValueError, field_name):
+                        classified_data_flow(
+                            self.factory,
+                            classifier,
+                            "secret",
+                            run_id="run-1",
+                            agent_id="agent-1",
+                            direction="read",
+                            source=DataEndpoint("repository"),
+                            destination=DataEndpoint("agent"),
+                            purpose="review",
+                            **{field_name: bad_amount},
+                        )
+
+    def test_propagation_rejects_control_characters(self):
+        from agentrust_telemetry import PropagationError
+        from agentrust_telemetry.propagation import _safe_value
+
+        self.assertEqual(_safe_value("x-agentrust-run-id", "run-123_ok", required=True), "run-123_ok")
+        for bad_val in ("run\x00bad", "run\x1fbad", "run\x7fbad", "run\tbad"):
+            with self.subTest(bad_val=bad_val):
+                with self.assertRaises(PropagationError):
+                    _safe_value("x-agentrust-run-id", bad_val, required=True)
+
+    def test_propagation_rejects_conflicting_duplicate_headers_and_accepts_identical_duplicates(self):
+        from agentrust_telemetry import PropagationError
+        from agentrust_telemetry.propagation import _header
+
+        # Identical case-insensitive duplicate headers are accepted
+        self.assertEqual(
+            _header({"X-Agentrust-Run-Id": "run-1", "x-agentrust-run-id": "run-1"}, "x-agentrust-run-id"),
+            "run-1",
+        )
+        # Conflicting case-insensitive duplicate headers are rejected
+        with self.assertRaises(PropagationError):
+            _header({"X-Agentrust-Run-Id": "run-1", "x-agentrust-run-id": "run-2"}, "x-agentrust-run-id")
+
+
 if __name__ == "__main__":
     unittest.main()
