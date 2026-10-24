@@ -44,6 +44,23 @@ class UsageTests(unittest.TestCase):
     def test_bool_is_not_accepted_as_token_integer(self):
         with self.assertRaisesRegex(TypeError, "input_tokens"):
             self.leaf(input_tokens=True)
+        with self.assertRaisesRegex(TypeError, "input_tokens"):
+            self.leaf(input_tokens=2**53)
+        with self.assertRaisesRegex(TypeError, "input_tokens"):
+            self.leaf(input_tokens=-1)
+        acc = UsageAccumulator()
+        acc.add(self.leaf(input_tokens=2**53 - 1))
+        acc.add(self.leaf(input_tokens=1))
+        with self.assertRaisesRegex(ValueError, "safe-integer"):
+            acc.rollup(
+                self.factory,
+                scope="agent_run",
+                run_id="run-1",
+                agent_id="agent-1",
+                workflow_id="workflow-1",
+                operation="chat",
+            )
+
 
     def test_rollup_deduplicates_and_reports_partial_coverage(self):
         first = self.leaf(cost=CostObservation(0.10, "USD", "provider"))
