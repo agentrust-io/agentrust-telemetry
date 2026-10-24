@@ -198,6 +198,56 @@ class AgtApprovalAdapterTests(unittest.TestCase):
             )
             self.assertEqual(event["event_type"], expected)
 
+    def test_agt_adapters_reject_boolean_or_overflow_durations_and_bad_bundle_digest(self):
+        for valid_dur in (0, 2**53 - 1):
+            ev = agt_policy_decision_record(
+                self.factory,
+                self.policy,
+                run_id="run-1",
+                agent_id="agent-1",
+                action_type="deploy",
+                resource_type="environment",
+                policy_engine_version="1.0.0",
+                bundle_digest={"algorithm": "sha384", "value": "b" * 96},
+                evaluation_duration_ns=valid_dur,
+            )
+            self.assertEqual(ev["evaluation_duration_ns"], valid_dur)
+            self.assertEqual(ev["policy"]["bundle_digest"]["algorithm"], "sha384")
+
+        for bad_dur in (True, False, -1, 2**53):
+            with self.subTest(bad_dur=bad_dur):
+                with self.assertRaisesRegex(ValueError, "evaluation_duration_ns"):
+                    agt_policy_decision_record(
+                        self.factory,
+                        self.policy,
+                        run_id="run-1",
+                        agent_id="agent-1",
+                        action_type="deploy",
+                        resource_type="environment",
+                        policy_engine_version="1.0.0",
+                        bundle_digest=BUNDLE,
+                        evaluation_duration_ns=bad_dur,
+                    )
+        for bad_bundle in (
+            None,
+            {"algorithm": "md5", "value": "a" * 32},
+            {"algorithm": "sha256", "value": "Z" * 64},
+            {"algorithm": "sha384", "value": "a" * 64},
+        ):
+            with self.subTest(bad_bundle=bad_bundle):
+                with self.assertRaisesRegex(ValueError, "bundle_digest"):
+                    agt_policy_decision_record(
+                        self.factory,
+                        self.policy,
+                        run_id="run-1",
+                        agent_id="agent-1",
+                        action_type="deploy",
+                        resource_type="environment",
+                        policy_engine_version="1.0.0",
+                        bundle_digest=bad_bundle,  # type: ignore[arg-type]
+                    )
+
+
     def test_structured_outcome_or_verdict_is_a_value_error(self):
         for bad in ([], {}, ["allow"]):
             with self.subTest(bad=bad):

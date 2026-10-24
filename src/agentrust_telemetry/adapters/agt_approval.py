@@ -13,6 +13,28 @@ from .base import EventFactory
 
 _SOURCE_NAMESPACE = uuid.UUID("ea5a1737-5417-4eaa-8bb0-4fc40e4cb837")
 _DIGEST = re.compile(r"^(?P<algorithm>sha256):(?P<value>[0-9a-f]{64})$")
+_DIGEST_OBJ = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
+_MAX_SAFE_INTEGER = 9007199254740991
+
+
+def _validate_digest_obj(digest_obj: Any, field: str) -> dict[str, str]:
+    if not isinstance(digest_obj, dict):
+        raise ValueError(f"AGT {field} must be a digest object")
+    alg = digest_obj.get("algorithm")
+    val = digest_obj.get("value")
+    if (
+        not isinstance(alg, str)
+        or not isinstance(val, str)
+        or _DIGEST_OBJ.fullmatch(f"{alg}:{val}") is None
+    ):
+        raise ValueError(f"AGT {field} must be a valid sha256 or sha384 digest object")
+    return {"algorithm": alg, "value": val}
+
+
+def _safe_duration(value: Any, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= _MAX_SAFE_INTEGER:
+        raise ValueError(f"{field} must be a non-negative safe integer")
+    return value
 
 
 def agt_policy_decision_record(
@@ -35,6 +57,8 @@ def agt_policy_decision_record(
     if verdict != "require_approval":
         raise ValueError("AGT PolicyDecisionRecord verdict must be require_approval")
     source_id = _required_string(_field(source, "policy_decision_id"), "policy_decision_id")
+    duration = _safe_duration(evaluation_duration_ns, "evaluation_duration_ns")
+    checked_bundle = _validate_digest_obj(bundle_digest, "bundle_digest")
     return factory.build(
         "policy.decision",
         run_id=run_id,
@@ -46,14 +70,14 @@ def agt_policy_decision_record(
         decision="challenge",
         policy={
             "engine": "agt",
-            "engine_version": policy_engine_version,
+            "engine_version": _required_string(policy_engine_version, "policy_engine_version"),
             "policy_id": _required_string(_field(source, "policy_rule_id"), "policy_rule_id"),
-            "bundle_digest": bundle_digest,
+            "bundle_digest": checked_bundle,
         },
         action_type=action_type,
         resource_type=resource_type,
         enforcement_mode=enforcement_mode,
-        evaluation_duration_ns=evaluation_duration_ns,
+        evaluation_duration_ns=duration,
         reason_codes=["agt.verdict:require_approval"],
     )
 
