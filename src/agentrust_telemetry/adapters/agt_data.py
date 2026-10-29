@@ -26,7 +26,7 @@ def agt_data_classification(source: Any) -> ClassificationResult:
     """Map only AGT's ordered sensitivity tier; omit auxiliary label content."""
     classification = _field(source, "classification")
     raw = classification.value if isinstance(classification, Enum) else classification
-    if isinstance(raw, bool) or not isinstance(raw, (int, float)) or raw not in _LEVELS:
+    if type(raw) is not int or raw not in _LEVELS:
         raise ValueError(f"unsupported AGT data classification: {raw!r}")
     return ClassificationResult(
         taxonomy="agt.data_classification.v1",
@@ -93,10 +93,12 @@ def _field(source: Any, name: str) -> Any:
 def _datetime_ns(value: Any) -> int:
     from datetime import datetime, timezone
 
-    if not isinstance(value, datetime) or value.tzinfo is None:
+    if not isinstance(value, datetime) or value.tzinfo is None or value.utcoffset() is None:
         raise ValueError("AGT data access evaluated_at must be a timezone-aware datetime")
     utc = value.astimezone(timezone.utc)
     epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    if utc < epoch:
+        raise ValueError("AGT data access evaluated_at must not predate the Unix epoch")
     delta = utc - epoch
     return (
         delta.days * 86_400_000_000_000
