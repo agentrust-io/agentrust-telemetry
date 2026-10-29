@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import math
 from typing import Any
 
 from .context import ContextIds
@@ -32,6 +33,8 @@ def span_attributes(event: dict[str, Any]) -> dict[str, str | int | float | bool
     projected: dict[str, str | int | float | bool] = {}
     for source, destination in DIRECT_ATTRIBUTES.items():
         value = event.get(source)
+        if isinstance(value, float) and not math.isfinite(value):
+            continue
         if isinstance(value, (str, int, float, bool)):
             projected[destination] = value
     return projected
