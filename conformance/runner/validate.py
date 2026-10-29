@@ -53,6 +53,19 @@ def schema_name(event_type: str) -> str:
     raise ValueError(f"unsupported event_type: {event_type!r}")
 
 
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON object key: {key!r}")
+        result[key] = value
+    return result
+
+
+def _loads_json(text: str) -> Any:
+    return json.loads(text, object_pairs_hook=_reject_duplicate_keys)
+
+
 def prohibited_paths(value: Any, prefix: str = "$") -> list[str]:
     found: list[str] = []
     if isinstance(value, dict):
@@ -61,7 +74,7 @@ def prohibited_paths(value: Any, prefix: str = "$") -> list[str]:
             if key.lower() in PROHIBITED_METADATA_KEYS:
                 found.append(path)
             found.extend(prohibited_paths(child, path))
-    elif isinstance(value, list):
+    elif isinstance(value, (list, tuple)):
         for index, child in enumerate(value):
             found.extend(prohibited_paths(child, f"{prefix}[{index}]"))
     return found
@@ -70,7 +83,7 @@ def prohibited_paths(value: Any, prefix: str = "$") -> list[str]:
 def schema_registry() -> Registry:
     registry = Registry()
     for path in SCHEMA_DIR.glob("*.schema.json"):
-        contents = json.loads(path.read_text(encoding="utf-8"))
+        contents = _loads_json(path.read_text(encoding="utf-8"))
         resource = Resource.from_contents(contents)
         registry = registry.with_resource(contents["$id"], resource)
         registry = registry.with_resource(path.as_uri(), resource)
@@ -79,7 +92,7 @@ def schema_registry() -> Registry:
 
 def load_validator(name: str) -> Draft202012Validator:
     schema_path = SCHEMA_DIR / name
-    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    schema = _loads_json(schema_path.read_text(encoding="utf-8"))
     return Draft202012Validator(
         schema, registry=schema_registry(), format_checker=FormatChecker()
     )
@@ -101,8 +114,8 @@ def validate_record(record: dict[str, Any]) -> list[str]:
 
 def validate_fixture(path: Path) -> list[str]:
     try:
-        record = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        record = _loads_json(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
         return [f"invalid JSON: {exc}"]
     if not isinstance(record, dict):
         return ["top-level value must be an object"]
@@ -131,8 +144,8 @@ def validate_appraisal_case(path: Path) -> list[str]:
     finalizes the case; this runner checks only what it can without an SDK.
     """
     try:
-        case = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        case = _loads_json(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
         return [f"invalid JSON: {exc}"]
     if not isinstance(case, dict) or not isinstance(case.get("events"), list):
         return ["case must be an object with an events array"]

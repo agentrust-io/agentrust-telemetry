@@ -42,6 +42,15 @@ def _schema_name(event_type: str) -> str:
 _MAX_DEPTH = 32
 
 
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise EventValidationError(f"duplicate JSON object key: {key!r}")
+        result[key] = value
+    return result
+
+
 def _json_shape_error(value: Any) -> str | None:
     """Return why ``value`` is not a JSON value this validator can walk, if so."""
     stack: list[tuple[Any, str, int]] = [(value, "$", 0)]
@@ -54,7 +63,7 @@ def _json_shape_error(value: Any) -> str | None:
                 if not isinstance(key, str):
                     return f"{path} has a non-string key of type {type(key).__name__}"
                 stack.append((child, f"{path}.{key}", depth + 1))
-        elif isinstance(item, list):
+        elif isinstance(item, (list, tuple)):
             for index, child in enumerate(item):
                 stack.append((child, f"{path}[{index}]", depth + 1))
         elif isinstance(item, float) and not math.isfinite(item):
@@ -70,7 +79,7 @@ def _prohibited_paths(value: Any, prefix: str = "$") -> list[str]:
             if key.lower() in PROHIBITED_KEYS:
                 found.append(path)
             found.extend(_prohibited_paths(child, path))
-    elif isinstance(value, list):
+    elif isinstance(value, (list, tuple)):
         for index, child in enumerate(value):
             found.extend(_prohibited_paths(child, f"{prefix}[{index}]"))
     return found
@@ -94,7 +103,10 @@ class SchemaValidator:
         schemas: dict[str, dict[str, Any]] = {}
         registry = Registry()
         for path in self.schema_directory.glob("*.schema.json"):
-            contents = json.loads(path.read_text(encoding="utf-8"))
+            contents = json.loads(
+                path.read_text(encoding="utf-8"),
+                object_pairs_hook=_reject_duplicate_keys,
+            )
             Draft202012Validator.check_schema(contents)
             schemas[path.name] = contents
             resource = Resource.from_contents(contents)
