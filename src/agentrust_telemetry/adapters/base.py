@@ -25,7 +25,7 @@ class EventFactory:
         self._producer = {
             "name": producer_name,
             "version": producer_version,
-            **({"instance_id": producer_instance_id} if producer_instance_id else {}),
+            **({"instance_id": producer_instance_id} if producer_instance_id is not None else {}),
         }
         self._clock_ns = clock_ns
         self._event_id_factory = event_id_factory
@@ -56,7 +56,7 @@ class EventFactory:
         timestamp = self._clock_ns() if time_unix_nano is None else time_unix_nano
         event: dict[str, Any] = {
             "spec_version": "0.1.0-alpha.6",
-            "event_id": event_id or str(self._event_id_factory()),
+            "event_id": str(self._event_id_factory()) if event_id is None else event_id,
             "event_type": event_type,
             "time_unix_nano": _unix_nano(timestamp),
             "run_id": run_id,
