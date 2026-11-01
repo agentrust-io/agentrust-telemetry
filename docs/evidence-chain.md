@@ -33,3 +33,7 @@ sequence and chain state unchanged. The callback receives an isolated copy.
 Sealing prevents further appends. `completeness` is explicitly supplied by the
 caller and must remain `unknown` unless the caller has an independent basis for
 asserting `complete` or `incomplete`.
+
+See [delivery-fault acceptance tests](delivery-fault-testing.md) for executable
+Python and TypeScript coverage of lost acknowledgements and best-effort
+projection failures, including the limits of those tests.
