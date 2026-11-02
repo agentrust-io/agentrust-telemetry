@@ -14,6 +14,7 @@ export function spanAttributes(event: NormalizedEvent): Record<string, Scalar> {
   const result: Record<string, Scalar> = {};
   for (const [source, destination] of Object.entries(DIRECT_ATTRIBUTES)) {
     const value = event[source];
+    if (typeof value === "number" && !Number.isFinite(value)) continue;
     if (["string", "number", "boolean"].includes(typeof value)) result[destination] = value as Scalar;
   }
   return result;
@@ -22,5 +23,9 @@ export function logRecord(event: NormalizedEvent, context?: ContextIds): Record<
   return {event_name: event.event_type, timestamp_ns: event.time_unix_nano, body: structuredClone(event), ...(context ? {trace_id: context.traceId, span_id: context.spanId} : {})};
 }
 export function hrTime(value: string): [number, number] {
-  const timestamp = BigInt(value); return [Number(timestamp / 1_000_000_000n), Number(timestamp % 1_000_000_000n)];
+  if (typeof value !== "string" || !/^(0|[1-9][0-9]{0,19})$/.test(value)) throw new Error("Unix nanosecond timestamps must be canonical non-negative decimals of at most 20 digits");
+  const timestamp = BigInt(value);
+  const seconds = timestamp / 1_000_000_000n;
+  if (seconds > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error("timestamp seconds exceed safe integer range");
+  return [Number(seconds), Number(timestamp % 1_000_000_000n)];
 }
