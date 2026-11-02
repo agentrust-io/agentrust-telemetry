@@ -134,5 +134,17 @@ input timestamps, the exact input event-ID sequence in local evidence, complete
 backend delivery and per-event projection fidelity. It records submitted and
 observed event-ID sequences separately, allowing transport reordering and
 retries. It does not claim an SDK or Collector arrival-order guarantee. The
-recorded twenty-case run above predates this observer correction; final-head
-confirmation is required.
+recorded twenty-case run above predates this observer correction.
+
+[Run 40204492721](https://github.com/agentrust-io/agentrust-telemetry/actions/runs/40204492721)
+confirmed the corrected observer contract on code head
+`3cf135ad1698d9157e99ff1396e8c1665bb0b4a3`: all twelve baseline cases,
+six observer unit tests and all eight stress cases passed on Ubuntu. This
+records evidence for that code head; this documentation update adds no new
+execution result. In the baseline `lost_ack` case, the receiver commits before
+dropping the acknowledgement, then a retry of the same event identity yields
+one backend commit across multiple attempts. That is synthetic backend
+deduplication, not an exactly-once Collector guarantee. The stress
+`inflight_restart` case commits before acknowledgement, kills the Collector,
+and emits a different event after restart; it does not replay the unacknowledged
+identity or establish persistent queue recovery.
