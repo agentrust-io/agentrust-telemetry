@@ -11,6 +11,9 @@ export type CostSource = "provider" | "caller" | "price_resolver" | "estimate";
 export class CostObservation {
   constructor(readonly amount: number | string, readonly currency: string, readonly source: CostSource, readonly pricingVersion?: string) {}
   asEventValue(): Record<string, unknown> {
+    if (typeof this.amount !== "number" && (typeof this.amount !== "string" || !this.amount.trim())) {
+      throw new Error("cost amount must be a finite non-negative number");
+    }
     const amount = Number(this.amount);
     if (!Number.isFinite(amount) || amount < 0) throw new Error("cost amount must be a finite non-negative number");
     if (!/^[A-Z]{3}$/.test(this.currency)) throw new Error("cost currency must be a three-letter uppercase ASCII code");
