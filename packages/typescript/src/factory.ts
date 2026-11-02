@@ -18,7 +18,7 @@ export class EventFactory {
     readonly clockNs: () => bigint = () => BigInt(Date.now()) * 1_000_000n,
     readonly eventIdFactory: () => string = randomUUID,
   ) {
-    this.#producer = {name: producer.name, version: producer.version, ...(producer.instanceId ? {instance_id: producer.instanceId} : {})};
+    this.#producer = {name: producer.name, version: producer.version, ...(producer.instanceId === undefined ? {} : {instance_id: producer.instanceId})};
   }
 
   build(eventType: string, fields: EnvelopeFields, payload: Record<string, unknown>): NormalizedEvent {

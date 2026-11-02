@@ -54,6 +54,31 @@ class AdapterTests(unittest.TestCase):
                 input_tokens=1,
                 producer={"name": "spoofed", "version": "9"},
             )
+        with self.assertRaises(Exception):
+            self.factory.build(
+                "usage.recorded",
+                run_id="run-1",
+                agent_id="agent-1",
+                event_id="",
+                scope="agent_run",
+                operation="build",
+                input_tokens=1,
+            )
+        empty_inst = EventFactory(
+            SchemaValidator(ROOT / "spec" / "schema"),
+            producer_name="adapter-tests",
+            producer_version="1.0.0",
+            producer_instance_id="",
+        )
+        with self.assertRaises(Exception):
+            empty_inst.build(
+                "usage.recorded",
+                run_id="run-1",
+                agent_id="agent-1",
+                scope="agent_run",
+                operation="build",
+                input_tokens=1,
+            )
 
     def test_factory_matches_cross_language_golden_event(self):
         parity_factory = EventFactory(
