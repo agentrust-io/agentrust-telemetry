@@ -1,4 +1,4 @@
-// Exercise the packed consumer surface outside the checkout, without dev tools.
+// Exercise the packed consumer surface outside the checkout.
 import assert from "node:assert/strict";
 import {execFileSync} from "node:child_process";
 import {mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync} from "node:fs";
@@ -60,7 +60,23 @@ test("installed event construction matches the golden control", () => {
     {scope: "model_call", operation: "chat", input_tokens: 7}), golden);
 });
 `);
-  execFileSync(process.execPath, ["--test", "smoke.test.mjs"], {cwd: directory, stdio: "inherit"});
+  execFileSync(process.execPath, ["--test", "--test-reporter=tap", "smoke.test.mjs"],
+    {cwd: directory, stdio: "inherit"});
+  // Use the compiler installed by npm ci (and pinned by package-lock.json),
+  // but resolve SDK imports only from the isolated consumer's node_modules.
+  writeFileSync(join(directory, "consumer.mts"),
+    readFileSync(join(root, "tools/npm-consumer.mts"), "utf8"));
+  writeFileSync(join(directory, "tsconfig.json"), JSON.stringify({
+    compilerOptions: {
+      target: "ES2022", module: "NodeNext", moduleResolution: "NodeNext",
+      strict: true, noEmit: true, skipLibCheck: false, types: [],
+    },
+    files: ["consumer.mts"],
+  }));
+  execFileSync(process.execPath,
+    [join(root, "packages/typescript/node_modules/typescript/bin/tsc"), "-p", "tsconfig.json"],
+    {cwd: directory, stdio: "inherit"});
+  console.log("Installed TypeScript consumer compiled successfully");
 } finally {
   rmSync(directory, {recursive: true, force: true});
 }
