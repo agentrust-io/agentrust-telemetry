@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -10,7 +11,6 @@ import rfc8785
 
 from .errors import TraceFinalizationError
 from .evidence import CANONICALIZATION_PROFILE, EvidenceSnapshot, _entry_digest
-
 
 OriginKind = Literal["self", "third-party-control-plane", "log-import"]
 
@@ -46,11 +46,20 @@ def finalize_trace(
     events = [entry.event for entry in snapshot.entries]
 
     try:
+        # A consistent evidence hash does not imply schema-valid timestamps.
+        # Validate before appraisal or signing, including approval windows.
+        for event in events:
+            _timestamp(event["time_unix_nano"])
+            for field in ("requested_at_unix_nano", "expires_at_unix_nano"):
+                if field in event:
+                    _timestamp(event[field])
         bundle_hash, enforcement_mode = _policy_binding(events)
         data_class = _highest_data_class(events, config)
         tool_transcript = _tool_transcript(snapshot)
         appraisal_status = _appraisal(events)
-        issued_at = max(int(event["time_unix_nano"]) for event in events) // 1_000_000_000
+        issued_at = max(
+            _timestamp(event["time_unix_nano"]) for event in events
+        ) // 1_000_000_000
     except TraceFinalizationError:
         raise
     except (KeyError, TypeError, ValueError, AttributeError) as exc:
@@ -260,6 +269,13 @@ def _appraisal(events: list[dict[str, Any]]) -> str:
 ActionBinding = Literal["bound", "unresolved", "contradicted"]
 
 
+def _timestamp(value: Any) -> int:
+    """Parse the canonical decimal-string form in common.schema.json."""
+    if not isinstance(value, str) or re.fullmatch(r"0|[1-9][0-9]{0,19}", value) is None:
+        raise ValueError("timestamp must be a canonical decimal string of at most 20 digits")
+    return int(value)
+
+
 def _action_approval_binding(
     events: list[dict[str, Any]],
     decisions: dict[str, Any],
@@ -300,9 +316,16 @@ def _action_approval_binding(
                 else event.get("policy_event_id") == policy_event_id
             )
         ]
-        completed_at = int(action["time_unix_nano"])
+        try:
+            completed_at = _timestamp(action["time_unix_nano"])
+        except (KeyError, ValueError):
+            return "contradicted"
         contradicted = satisfied = False
         for approval in candidates:
+            try:
+                approved_at = _timestamp(approval["time_unix_nano"])
+            except (KeyError, ValueError):
+                return "contradicted"
             approval_policy = approval.get("policy_event_id")
             if (
                 not _same_digest(approval["action_digest"], action["action_digest"])
@@ -311,7 +334,7 @@ def _action_approval_binding(
                     and approval_policy is not None
                     and approval_policy != policy_event_id
                 )
-                or int(approval["time_unix_nano"]) > completed_at
+                or approved_at > completed_at
             ):
                 contradicted = True
             elif id(approval) in bound_ids:
@@ -362,10 +385,17 @@ def _bound_approvals(approvals: list[dict[str, Any]]) -> list[dict[str, Any]]:
             ):
                 continue
             try:
-                requested_at = int(request["requested_at_unix_nano"])
-                approved_at = int(approval["time_unix_nano"])
-                expires_at = int(request["expires_at_unix_nano"])
-            except (TypeError, ValueError):
+                # Check both sides, including the request event time. Equality
+                # alone is not validation (e.g. True == 1 in imported data).
+                for event in (request, approval):
+                    for field in (
+                        "time_unix_nano", "requested_at_unix_nano", "expires_at_unix_nano"
+                    ):
+                        _timestamp(event[field])
+                requested_at = _timestamp(request["requested_at_unix_nano"])
+                approved_at = _timestamp(approval["time_unix_nano"])
+                expires_at = _timestamp(request["expires_at_unix_nano"])
+            except (KeyError, ValueError):
                 continue
             if requested_at <= approved_at <= expires_at:
                 resolved.append(approval)
