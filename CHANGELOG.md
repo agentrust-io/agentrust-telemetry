@@ -9,6 +9,15 @@
   OpenTelemetry sampling/export-failure coverage. These tests do not establish
   collector interoperability or durable backend delivery.
 
+### Fixed
+
+
+- Python TRACE finalization rejects noncanonical timestamps before appraisal or
+  signing, even in a self-consistent imported evidence chain. Approval binding
+  no longer coerces booleans, numbers, or noncanonical strings into timestamps
+  (#126). This enforces the existing decimal-string schema; valid event streams
+  and the wire contract are unchanged.
+
 ### Changed
 
 - CI checks the existing four job-level OIDC grants across all workflow files,
