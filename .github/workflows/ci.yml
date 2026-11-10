@@ -30,6 +30,8 @@ jobs:
           mkdir -p ../../npm-dist
           npm pack --pack-destination ../../npm-dist
           node ../../tools/smoke_npm.mjs ../../npm-dist/*.tgz
+      - name: Reject broken npm declarations
+        run: node ../../tools/test_smoke_npm.mjs ../../npm-dist/*.tgz
 
   test:
     runs-on: ubuntu-latest
