@@ -151,5 +151,28 @@ class TimestampFinalizationTests(unittest.TestCase):
                         sign.assert_not_called()
 
 
+    def test_missing_required_approval_timestamps_refuse_before_signing(self):
+        for index in (1, 2):
+            for field in ("time_unix_nano", "requested_at_unix_nano"):
+                rows = events()
+                del rows[index][field]
+                with self.subTest(index=index, field=field), mock.patch(
+                    "agentrust_trace.sign_record"
+                ) as sign:
+                    with self.assertRaises(TraceFinalizationError):
+                        finalize_trace(snapshot(rows), self.config, signing_key=self.key)
+                    sign.assert_not_called()
+
+    def test_malformed_candidate_refuses_even_with_a_valid_pair(self):
+        rows = events()
+        malformed = dict(rows[2], event_id="01996390-9db3-7d30-a96b-d88876ae3ac5",
+                         expires_at_unix_nano=True)
+        rows.insert(2, malformed)
+        with mock.patch("agentrust_trace.sign_record") as sign:
+            with self.assertRaisesRegex(TraceFinalizationError, "timestamp"):
+                finalize_trace(snapshot(rows), self.config, signing_key=self.key)
+            sign.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -50,6 +50,11 @@ def finalize_trace(
         # Validate before appraisal or signing, including approval windows.
         for event in events:
             _timestamp(event["time_unix_nano"])
+            if (
+                event["event_type"].startswith("approval.")
+                and "requested_at_unix_nano" not in event
+            ):
+                raise TraceFinalizationError("approval timestamp requested_at_unix_nano is required")
             for field in ("requested_at_unix_nano", "expires_at_unix_nano"):
                 if field in event:
                     _timestamp(event[field])

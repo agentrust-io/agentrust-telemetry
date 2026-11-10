@@ -2,7 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- Shared Python/TypeScript delivery-fault tests for dropped, duplicated and
+  reordered projections and lost persistence acknowledgements, plus Python
+  OpenTelemetry sampling/export-failure coverage. These tests do not establish
+  collector interoperability or durable backend delivery.
+
 ### Fixed
+
 
 - Python TRACE finalization rejects noncanonical timestamps before appraisal or
   signing, even in a self-consistent imported evidence chain. Approval binding
