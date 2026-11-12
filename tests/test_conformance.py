@@ -56,6 +56,30 @@ class ConformanceTests(unittest.TestCase):
         self.assertTrue(any("unevaluated" in error.lower() for error in errors))
         self.assertTrue(any("tool_arguments" in error and "privacy" in error for error in errors))
 
+    def test_tuple_prohibited_key_is_rejected_by_privacy_gate(self):
+        record = json.loads(
+            (ROOT / "conformance" / "fixtures" / "valid" / "action.json").read_text()
+        )
+        record["extra"] = ({"prompt": "secret"},)
+        errors = validate.validate_record(record)
+        self.assertTrue(
+            any("$.extra[0].prompt" in error and "privacy" in error for error in errors)
+        )
+
+    def test_duplicate_json_keys_are_rejected_in_fixtures_and_appraisal_cases(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            duplicate_path = Path(tmp) / "duplicate.json"
+            duplicate_path.write_text('{"a": 1, "a": 2}', encoding="utf-8")
+            fixture_errors = validate.validate_fixture(duplicate_path)
+            self.assertEqual(len(fixture_errors), 1)
+            self.assertIn("duplicate JSON object key", fixture_errors[0])
+
+            appraisal_errors = validate.validate_appraisal_case(duplicate_path)
+            self.assertEqual(len(appraisal_errors), 1)
+            self.assertIn("duplicate JSON object key", appraisal_errors[0])
+
 
 if __name__ == "__main__":
     unittest.main()

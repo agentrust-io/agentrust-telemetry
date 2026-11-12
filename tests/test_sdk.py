@@ -101,6 +101,42 @@ class SdkTests(unittest.TestCase):
             TelemetryClient(self.validator, span_resolver=lambda: span).emit(event)
         self.assertEqual(span.events, [])
 
+    def test_tuple_privacy_violation_is_rejected(self):
+        event = fixture("usage.json")
+        event["extra"] = ({"prompt": "sensitive", "authorization": "Bearer secret"},)
+        with self.assertRaises(EventValidationError) as caught:
+            self.validator.validate(event)
+        message = str(caught.exception)
+        self.assertIn("$.extra[0].prompt is prohibited by metadata_only", message)
+        self.assertIn("$.extra[0].authorization is prohibited by metadata_only", message)
+
+    def test_tuple_json_shape_errors_are_rejected(self):
+        event_bad_key = fixture("usage.json")
+        event_bad_key["extra"] = ({1: "value"},)
+        with self.assertRaisesRegex(EventValidationError, "non-string key"):
+            self.validator.validate(event_bad_key)
+
+        event_nan = fixture("usage.json")
+        event_nan["extra"] = (float("nan"),)
+        with self.assertRaisesRegex(EventValidationError, "finite"):
+            self.validator.validate(event_nan)
+
+    def test_duplicate_json_keys_in_schema_are_rejected(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            for schema_file in (ROOT / "spec" / "schema").glob("*.schema.json"):
+                (tmp_path / schema_file.name).write_bytes(schema_file.read_bytes())
+            (tmp_path / "usage.schema.json").write_text(
+                '{"$schema": "https://json-schema.org/draft/2020-12/schema", '
+                '"$id": "https://agentrust-io.com/telemetry/v0.1/schema/usage.schema.json", '
+                '"type": "object", "type": "object"}',
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(EventValidationError, "duplicate JSON object key"):
+                SchemaValidator(tmp_path)
+
     def test_extension_attributes_are_deny_by_default(self):
         event = fixture("usage.json")
         event["attributes"] = {"vendor.note": "could contain raw content"}
