@@ -142,6 +142,10 @@ class OTelProjectorTests(unittest.TestCase):
             OTelMetricEmitter(
                 Meter(), classification_values=frozenset(f"class-{i}" for i in range(65))
             )
+        for bad_vals in ("public", b"public", frozenset({"_other"}), frozenset({" public "}), frozenset({123})):
+            with self.subTest(bad_vals=bad_vals):
+                with self.assertRaises(ValueError):
+                    OTelMetricEmitter(Meter(), classification_values=bad_vals)
 
     def test_action_metrics_exclude_action_and_agent_identifiers(self):
         from opentelemetry.sdk.metrics import MeterProvider

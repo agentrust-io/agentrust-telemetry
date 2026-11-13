@@ -25,6 +25,8 @@ test("classification dimensions are bounded by an explicit allowlist", () => {
   emitter.emit(fixture("data-flow.json"));
   assert.equal(meter.instruments.get("agentrust.data_flow.events")!.calls[0]!.attributes!["agentrust.data_flow.classification"], "_other");
   assert.throws(() => new OTelMetricEmitter(new RecordingMeter() as unknown as Meter, {classificationValues: Array.from({length: 65}, (_, i) => `class-${i}`)}), /more than 64/);
+  assert.throws(() => new OTelMetricEmitter(new RecordingMeter() as unknown as Meter, {classificationValues: "public" as unknown as Iterable<string>}), /not a string/);
+  for (const bad of [["_other"], [" public "], [123 as unknown as string]]) assert.throws(() => new OTelMetricEmitter(new RecordingMeter() as unknown as Meter, {classificationValues: bad}), /classificationValues/);
 });
 
 test("policy, approval, and action metrics expose only bounded semantic dimensions", () => {
