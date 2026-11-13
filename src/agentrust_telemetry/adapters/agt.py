@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable, Iterable, Protocol, Sequence
 
@@ -118,6 +118,9 @@ def agt_policy_decision(
         or not math.isfinite(latency_ms * 1_000_000)
     ):
         raise ValueError("AGT latency_ms must be a finite non-negative number")
+    duration_ns = round(latency_ms * 1_000_000)
+    if duration_ns > 9_007_199_254_740_991:
+        raise ValueError("AGT latency_ms exceeds the safe nanosecond range")
     policy: dict[str, Any] = {
         "engine": "agt",
         "engine_version": _required_string(policy_engine_version, "policy_engine_version"),
@@ -139,7 +142,7 @@ def agt_policy_decision(
         action_type=action_type,
         resource_type=resolved_resource_type,
         enforcement_mode=enforcement_mode,
-        evaluation_duration_ns=round(latency_ms * 1_000_000),
+        evaluation_duration_ns=duration_ns,
         reason_codes=reason_codes,
     )
 
@@ -204,5 +207,9 @@ def _timestamp_ns(value: Any) -> int:
     if match is None:
         raise ValueError("AGT occurred_at must be an RFC 3339 UTC timestamp")
     base = datetime.fromisoformat(match.group("date")).replace(tzinfo=timezone.utc)
+    epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    if base < epoch:
+        raise ValueError("AGT occurred_at must not predate the Unix epoch")
+    seconds = (base - epoch) // timedelta(seconds=1)
     fraction = (match.group("fraction") or "").ljust(9, "0")
-    return int(base.timestamp()) * 1_000_000_000 + int(fraction or "0")
+    return seconds * 1_000_000_000 + int(fraction or "0")

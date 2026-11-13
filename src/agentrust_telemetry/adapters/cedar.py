@@ -35,6 +35,11 @@ def cedar_policy_decision(
     reason_codes = [*(f"cedar.policy:{value}" for value in policy_ids), *(f"cedar.error:{value}" for value in errors)]
     if len(reason_codes) > 32:
         raise ValueError("Cedar reasons and errors exceed the 32-code contract limit")
+    if (
+        type(evaluation_duration_ns) is not int
+        or not 0 <= evaluation_duration_ns <= 9_007_199_254_740_991
+    ):
+        raise ValueError("Cedar evaluation_duration_ns must be a non-negative safe integer")
     policy: dict[str, Any] = {
         "engine": "cedar",
         "engine_version": cedar_version,
