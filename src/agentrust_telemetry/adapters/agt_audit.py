@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -12,6 +13,28 @@ from .base import EventFactory
 _AUDIT_NAMESPACE = uuid.UUID("398428fd-2730-498f-8ed8-6b4290668171")
 _POLICY_EVENTS = {"policy_evaluation", "policy_violation"}
 _ACTION_EVENTS = {"tool_invocation", "tool_blocked", "action"}
+_DIGEST_OBJ = re.compile(r"^sha(256:[0-9a-f]{64}|384:[0-9a-f]{96})$")
+_MAX_SAFE_INTEGER = 9007199254740991
+
+
+def _validate_digest_obj(digest_obj: Any, field: str) -> dict[str, str]:
+    if not isinstance(digest_obj, dict):
+        raise ValueError(f"AGT audit {field} must be a digest object")
+    alg = digest_obj.get("algorithm")
+    val = digest_obj.get("value")
+    if (
+        not isinstance(alg, str)
+        or not isinstance(val, str)
+        or _DIGEST_OBJ.fullmatch(f"{alg}:{val}") is None
+    ):
+        raise ValueError(f"AGT audit {field} must be a valid sha256 or sha384 digest object")
+    return {"algorithm": alg, "value": val}
+
+
+def _safe_duration(value: Any, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= _MAX_SAFE_INTEGER:
+        raise ValueError(f"{field} must be a non-negative safe integer")
+    return value
 
 
 def agt_audit_policy_decision(
@@ -31,10 +54,12 @@ def agt_audit_policy_decision(
         raise ValueError(f"AGT audit event is not a policy event: {event_type!r}")
     decision = _policy_decision(_field(source, "policy_decision"))
     entry_id = _required_string(_field(source, "entry_id"), "entry_id")
+    duration = _safe_duration(evaluation_duration_ns, "evaluation_duration_ns")
+    checked_bundle = _validate_digest_obj(bundle_digest, "bundle_digest")
     policy: dict[str, Any] = {
         "engine": "agt",
         "engine_version": _required_string(policy_engine_version, "policy_engine_version"),
-        "bundle_digest": bundle_digest,
+        "bundle_digest": checked_bundle,
     }
     matched_rule = _field(source, "matched_rule")
     if matched_rule is not None:
@@ -51,7 +76,7 @@ def agt_audit_policy_decision(
         action_type=_required_string(_field(source, "action"), "action"),
         resource_type=_required_string(resource_type, "resource_type"),
         enforcement_mode=enforcement_mode,
-        evaluation_duration_ns=evaluation_duration_ns,
+        evaluation_duration_ns=duration,
         reason_codes=[f"agt.audit:{event_type}"],
     )
 
@@ -77,6 +102,9 @@ def agt_audit_action(
     resolved_duration = duration_ns
     if resolved_duration is None:
         resolved_duration = _audit_duration(source)
+    else:
+        resolved_duration = _safe_duration(resolved_duration, "duration_ns")
+    checked_action_digest = _validate_digest_obj(action_digest, "action_digest")
     target: dict[str, str] | None = None
     target_did = _field(source, "target_did")
     if target_did is not None:
@@ -94,7 +122,7 @@ def agt_audit_action(
         operation=_required_string(operation, "operation"),
         outcome=outcome,
         duration_ns=resolved_duration,
-        action_digest=action_digest,
+        action_digest=checked_action_digest,
         **({"target": target} if target else {}),
     )
 
@@ -141,7 +169,10 @@ def _audit_duration(source: Any) -> int:
     completed_ns = _datetime_ns(completed, "completed_at")
     if completed_ns < issued_ns:
         raise ValueError("AGT completed_at cannot predate issued_at")
-    return completed_ns - issued_ns
+    diff = completed_ns - issued_ns
+    if diff > _MAX_SAFE_INTEGER:
+        raise ValueError("AGT audit duration exceeds the safe integer range")
+    return diff
 
 
 def _source_event_id(kind: str, source_id: str) -> str:
