@@ -18,6 +18,7 @@ TOKEN_FIELDS = (
     "cache_write_tokens",
     "reasoning_tokens",
 )
+_MAX_SAFE_INTEGER = 9007199254740991
 
 
 @dataclass(frozen=True)
@@ -30,18 +31,23 @@ class CostObservation:
     pricing_version: str | None = None
 
     def as_event_value(self) -> dict[str, Any]:
-        if isinstance(self.amount, bool):
+        if isinstance(self.amount, bool) or not isinstance(self.amount, (int, float, Decimal)):
             raise TypeError("cost amount must be a finite non-negative number")
         amount = float(self.amount)
         if not math.isfinite(amount) or amount < 0:
             raise ValueError("cost amount must be a finite non-negative number")
-        if len(self.currency) != 3 or not self.currency.isascii() or not self.currency.isupper():
+        if (
+            not isinstance(self.currency, str)
+            or len(self.currency) != 3
+            or not self.currency.isascii()
+            or not self.currency.isupper()
+        ):
             raise ValueError("cost currency must be a three-letter uppercase ASCII code")
         if self.source not in {"provider", "caller", "price_resolver", "estimate"}:
             raise ValueError("cost source is not supported")
         value = {"amount": amount, "currency": self.currency, "source": self.source}
         if self.pricing_version is not None:
-            if not self.pricing_version:
+            if not isinstance(self.pricing_version, str) or not self.pricing_version:
                 raise ValueError("pricing_version must be non-empty")
             value["pricing_version"] = self.pricing_version
         return value
@@ -84,7 +90,11 @@ def usage_record(
     }
     for field in TOKEN_FIELDS:
         value = optional[field]
-        if value is not None and (isinstance(value, bool) or not isinstance(value, int)):
+        if value is not None and (
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or not 0 <= value <= _MAX_SAFE_INTEGER
+        ):
             raise TypeError(f"{field} must be a non-negative integer")
     payload.update({key: value for key, value in optional.items() if value is not None})
     if cost is not None:
@@ -120,7 +130,11 @@ class UsageAccumulator:
             raise ValueError("usage event must have a non-empty event_id")
         for field in TOKEN_FIELDS:
             value = event.get(field)
-            if value is not None and (isinstance(value, bool) or not isinstance(value, int)):
+            if value is not None and (
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or not 0 <= value <= _MAX_SAFE_INTEGER
+            ):
                 raise TypeError(f"{field} must be a non-negative integer")
         if "cost" in event:
             amount = event["cost"]["amount"]
@@ -162,7 +176,10 @@ class UsageAccumulator:
             observed = [event[field] for event in matches if field in event]
             coverage[field] = len(observed)
             if observed:
-                payload[field] = sum(observed)
+                total = sum(observed)
+                if total > _MAX_SAFE_INTEGER:
+                    raise ValueError(f"{field} rollup exceeds the safe-integer range")
+                payload[field] = total
 
         costs = [event["cost"] for event in matches if "cost" in event]
         currencies = {cost["currency"] for cost in costs}
