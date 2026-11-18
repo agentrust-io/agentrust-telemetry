@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import rfc8785
 
@@ -50,7 +50,9 @@ def finalize_trace(
         data_class = _highest_data_class(events, config)
         tool_transcript = _tool_transcript(snapshot)
         appraisal_status = _appraisal(events)
-        issued_at = max(int(event["time_unix_nano"]) for event in events) // 1_000_000_000
+        issued_at = max(
+            _unix_nano_timestamp(event["time_unix_nano"]) for event in events
+        ) // 1_000_000_000
     except TraceFinalizationError:
         raise
     except (KeyError, TypeError, ValueError, AttributeError) as exc:
@@ -260,6 +262,21 @@ def _appraisal(events: list[dict[str, Any]]) -> str:
 ActionBinding = Literal["bound", "unresolved", "contradicted"]
 
 
+def _unix_nano_timestamp(value: Any) -> int:
+    if not isinstance(value, str):
+        raise TypeError("Unix nanosecond timestamps must be decimal strings")
+    if (
+        not value.isascii()
+        or not value.isdecimal()
+        or len(value) > 20
+        or (len(value) > 1 and value.startswith("0"))
+    ):
+        raise ValueError(
+            "Unix nanosecond timestamps must be canonical non-negative decimals"
+        )
+    return int(value)
+
+
 def _action_approval_binding(
     events: list[dict[str, Any]],
     decisions: dict[str, Any],
@@ -289,7 +306,13 @@ def _action_approval_binding(
             continue
         approval_id = action.get("approval_id")
         policy_event_id = action.get("policy_event_id")
-        if approval_id is None and decisions.get(policy_event_id) != "challenge":
+        if (
+            approval_id is None
+            and (
+                policy_event_id is None
+                or decisions.get(policy_event_id) != "challenge"
+            )
+        ):
             continue
         candidates = [
             event
@@ -300,10 +323,18 @@ def _action_approval_binding(
                 else event.get("policy_event_id") == policy_event_id
             )
         ]
-        completed_at = int(action["time_unix_nano"])
+        try:
+            completed_at = _unix_nano_timestamp(action["time_unix_nano"])
+        except (TypeError, ValueError):
+            result = "unresolved"
+            continue
         contradicted = satisfied = False
         for approval in candidates:
             approval_policy = approval.get("policy_event_id")
+            try:
+                approved_at = _unix_nano_timestamp(approval["time_unix_nano"])
+            except (TypeError, ValueError):
+                continue
             if (
                 not _same_digest(approval["action_digest"], action["action_digest"])
                 or (
@@ -311,7 +342,7 @@ def _action_approval_binding(
                     and approval_policy is not None
                     and approval_policy != policy_event_id
                 )
-                or int(approval["time_unix_nano"]) > completed_at
+                or approved_at > completed_at
             ):
                 contradicted = True
             elif id(approval) in bound_ids:
@@ -362,9 +393,11 @@ def _bound_approvals(approvals: list[dict[str, Any]]) -> list[dict[str, Any]]:
             ):
                 continue
             try:
-                requested_at = int(request["requested_at_unix_nano"])
-                approved_at = int(approval["time_unix_nano"])
-                expires_at = int(request["expires_at_unix_nano"])
+                requested_at = _unix_nano_timestamp(
+                    request["requested_at_unix_nano"]
+                )
+                approved_at = _unix_nano_timestamp(approval["time_unix_nano"])
+                expires_at = _unix_nano_timestamp(request["expires_at_unix_nano"])
             except (TypeError, ValueError):
                 continue
             if requested_at <= approved_at <= expires_at:
@@ -381,7 +414,7 @@ def _tool_transcript(snapshot: EvidenceSnapshot) -> dict[str, Any] | None:
     ]
     if not actions:
         return None
-    canonical = rfc8785.dumps(actions)
+    canonical = rfc8785.dumps(cast(Any, actions))
     return {
         "hash": "sha256:" + hashlib.sha256(canonical).hexdigest(),
         "call_count": len(actions),

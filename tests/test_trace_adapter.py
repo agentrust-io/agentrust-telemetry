@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from agentrust_telemetry import trace_adapter  # noqa: E402
 from agentrust_telemetry import (  # noqa: E402
     EvidenceAccumulator,
     SchemaValidator,
@@ -194,6 +195,75 @@ class TraceAdapterTests(unittest.TestCase):
         return finalize_trace(
             accumulator.seal(completeness="complete"), self.config, signing_key=self.key
         )
+
+    def test_boolean_event_timestamp_cannot_become_issued_at(self):
+        from agentrust_telemetry.evidence import EvidenceEntry, _entry_digest
+
+        for timestamp in (True, False):
+            with self.subTest(timestamp=timestamp):
+                snapshot = self.snapshot()
+                entries = []
+                previous = None
+                for position, original in enumerate(snapshot.entries):
+                    event = dict(original.event)
+                    if position == len(snapshot.entries) - 1:
+                        event["time_unix_nano"] = timestamp
+                    digest = _entry_digest(position, previous, event)
+                    entries.append(
+                        EvidenceEntry(
+                            position, event["event_id"], previous, digest, event
+                        )
+                    )
+                    previous = digest
+                malformed = replace(
+                    snapshot, entries=tuple(entries), chain_digest=previous
+                )
+                with self.assertRaisesRegex(
+                    TraceFinalizationError, "decimal strings"
+                ):
+                    finalize_trace(malformed, self.config, signing_key=self.key)
+
+    def test_boolean_approval_and_action_timestamps_do_not_bind(self):
+        for timestamp in (True, False):
+            with self.subTest(timestamp=timestamp):
+                request = fixture("approval.json")
+                request.update(
+                    {
+                        "event_type": "approval.requested",
+                        "event_id": "018f0f7d-7a13-7cc2-8000-000000000010",
+                        "policy_event_id": "018f0f7d-7a13-7cc2-8000-000000000001",
+                        "chain_id": "operators",
+                        "chain_version": "3",
+                        "requested_at_unix_nano": timestamp,
+                        "expires_at_unix_nano": timestamp,
+                        "time_unix_nano": timestamp,
+                    }
+                )
+                approval = fixture("approval.json")
+                approval.update(
+                    {
+                        "event_type": "approval.approved",
+                        "policy_event_id": request["policy_event_id"],
+                        "chain_id": request["chain_id"],
+                        "chain_version": request["chain_version"],
+                        "requested_at_unix_nano": timestamp,
+                        "expires_at_unix_nano": timestamp,
+                        "time_unix_nano": timestamp,
+                    }
+                )
+                action = fixture("action.json")
+                action["time_unix_nano"] = timestamp
+                approvals = [request, approval]
+                decisions = {request["policy_event_id"]: "challenge"}
+                bound = trace_adapter._bound_approvals(approvals)
+
+                self.assertEqual(bound, [])
+                self.assertEqual(
+                    trace_adapter._action_approval_binding(
+                        [action], decisions, approvals, bound
+                    ),
+                    "unresolved",
+                )
 
     def test_executed_action_must_match_the_digest_its_approval_approved(self):
         case = json.loads(
