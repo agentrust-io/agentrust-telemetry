@@ -19,4 +19,6 @@ test("AGT access maps only tier, decision, agent, and time", () => {
   const event = agtDataAccessFlow(factory, decision, {runId: "run-1", direction: "read", source: new DataEndpoint("database", "customer-records"), destination: new DataEndpoint("agent", "builder"), purpose: "requirements-analysis"});
   assert.equal((event.classification as Record<string, unknown>).value, "confidential"); assert.equal(event.policy_decision, "deny");
   const serialized = JSON.stringify(event); for (const value of ["PII", "customer@example", "alice@example", "123-45-6789", "geography", "matched_policy"]) assert.equal(serialized.includes(value), false);
+  assert.throws(() => agtDataAccessFlow(factory, {...decision, evaluated_at: "1969-12-31T23:59:59Z"}, {runId: "run-1", direction: "read", source: new DataEndpoint("database", "customer-records"), destination: new DataEndpoint("agent", "builder"), purpose: "requirements-analysis"}), /evaluated_at is invalid/);
+  assert.throws(() => agtDataAccessFlow(factory, null as unknown as Record<string, unknown>, {runId: "run-1", direction: "read", source: new DataEndpoint("database", "customer-records"), destination: new DataEndpoint("agent", "builder"), purpose: "requirements-analysis"}), /must be an object/);
 });

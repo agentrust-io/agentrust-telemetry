@@ -155,6 +155,34 @@ class AgtAdapterTests(unittest.TestCase):
         )
         self.assertEqual(sink.emit([FakeAgtEvent()]), Result.FAILURE)
 
+    def test_agt_data_rejects_float_tiers_and_pre_epoch_timestamps(self):
+        from datetime import datetime, timezone
+        from agentrust_telemetry.adapters.agt_data import (
+            DataEndpoint,
+            agt_data_access_flow,
+            agt_data_classification,
+        )
+
+        for bad_tier in (0.0, 2.0, True, False, -1, 5, "public"):
+            with self.subTest(bad_tier=bad_tier):
+                with self.assertRaises(ValueError):
+                    agt_data_classification({"classification": bad_tier})
+        with self.assertRaises(ValueError):
+            agt_data_access_flow(
+                self.factory,
+                {
+                    "allowed": True,
+                    "agent_id": "agent-1",
+                    "data_label": {"classification": 1},
+                    "evaluated_at": datetime(1969, 12, 31, 23, 59, 59, tzinfo=timezone.utc),
+                },
+                run_id="run-1",
+                direction="read",
+                source=DataEndpoint("database", "db"),
+                destination=DataEndpoint("agent", "a1"),
+                purpose="analysis",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
