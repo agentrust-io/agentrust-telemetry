@@ -32,3 +32,12 @@ test("policy, approval, and action metrics expose only bounded semantic dimensio
   for (const name of ["policy-decision.json", "approval.json", "action.json"]) assert.equal(emitter.emit(fixture(name)), true);
   assert.deepEqual(Object.keys(meter.instruments.get("agentrust.action.executions")!.calls[0]!.attributes!).sort(), ["agentrust.action.kind", "agentrust.action.outcome"]);
 });
+
+test("hrTime rejects malformed timestamps and spanAttributes skips non-finite numbers", async () => {
+  const {hrTime, spanAttributes} = await import("../src/projection.js");
+  for (const bad of ["", "   ", "-1", "0x10", "01", "1".repeat(21)]) {
+    assert.throws(() => hrTime(bad), /canonical non-negative decimals/);
+  }
+  const attrs = spanAttributes({run_id: "r1", task_id: Number.NaN, workflow_id: Number.POSITIVE_INFINITY} as unknown as NormalizedEvent);
+  assert.deepEqual(attrs, {"agentrust.run.id": "r1"});
+});

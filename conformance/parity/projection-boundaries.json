@@ -1,0 +1,123 @@
+{
+  "timestamps": [
+    {
+      "input": "0",
+      "tuple": [
+        0,
+        0
+      ]
+    },
+    {
+      "input": "1",
+      "tuple": [
+        0,
+        1
+      ]
+    },
+    {
+      "input": "999999999",
+      "tuple": [
+        0,
+        999999999
+      ]
+    },
+    {
+      "input": "1000000000",
+      "tuple": [
+        1,
+        0
+      ]
+    },
+    {
+      "input": "1000000001",
+      "tuple": [
+        1,
+        1
+      ]
+    },
+    {
+      "input": "99999999999999999999",
+      "tuple": [
+        99999999999,
+        999999999
+      ]
+    }
+  ],
+  "invalid_timestamps": [
+    "",
+    " ",
+    "-1",
+    "+1",
+    "01",
+    "0x10",
+    "1.0",
+    "1e9",
+    "1\n",
+    "1\r",
+    "1 ",
+    "١",
+    "111111111111111111111"
+  ],
+  "projections": [
+    {
+      "id": "finite-scalars",
+      "event": {
+        "run_id": "run-1",
+        "task_id": 0,
+        "decision": false
+      },
+      "expected": {
+        "agentrust.run.id": "run-1",
+        "agentrust.task.id": 0,
+        "agentrust.policy.decision": false
+      }
+    },
+    {
+      "id": "structured-and-null-omit",
+      "event": {
+        "run_id": "run-1",
+        "task_id": null,
+        "workflow_id": [],
+        "agent_id": {}
+      },
+      "expected": {
+        "agentrust.run.id": "run-1"
+      }
+    },
+    {
+      "id": "unmapped-payload-omit",
+      "event": {
+        "run_id": "run-1",
+        "payload": "synthetic"
+      },
+      "expected": {
+        "agentrust.run.id": "run-1"
+      }
+    },
+    {
+      "id": "nonfinite-omit",
+      "event": {
+        "run_id": "run-1"
+      },
+      "special": {
+        "task_id": "nan",
+        "workflow_id": "positive_infinity",
+        "agent_id": "negative_infinity"
+      },
+      "expected": {
+        "agentrust.run.id": "run-1"
+      }
+    },
+    {
+      "id": "fractional-scalar",
+      "event": {
+        "run_id": "run-1",
+        "task_id": 1.5
+      },
+      "expected": {
+        "agentrust.run.id": "run-1",
+        "agentrust.task.id": 1.5
+      }
+    }
+  ]
+}

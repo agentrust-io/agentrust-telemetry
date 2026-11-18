@@ -159,6 +159,18 @@ class OTelProjectorTests(unittest.TestCase):
                     {"agentrust.action.kind", "agentrust.action.outcome"},
                 )
 
+    def test_span_attributes_excludes_nonfinite_floats(self):
+        from agentrust_telemetry.projection import span_attributes
+
+        attrs = span_attributes(
+            {
+                "run_id": "r-1",
+                "task_id": float("nan"),
+                "workflow_id": float("inf"),
+            }
+        )
+        self.assertEqual(attrs, {"agentrust.run.id": "r-1"})
+
 
 if __name__ == "__main__":
     unittest.main()
