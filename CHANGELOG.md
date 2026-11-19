@@ -11,6 +11,12 @@
 
 ### Fixed
 
+
+- Python TRACE finalization rejects noncanonical timestamps before appraisal or
+  signing, even in a self-consistent imported evidence chain. Approval binding
+  no longer coerces booleans, numbers, or noncanonical strings into timestamps
+  (#126). This enforces the existing decimal-string schema; valid event streams
+  and the wire contract are unchanged.
 - Python schema and conformance privacy validation now walks `tuple` containers in
   `_prohibited_paths`, `prohibited_paths`, and `_json_shape_error`, and rejects
   duplicate JSON object keys when loading JSON files. (#101)
