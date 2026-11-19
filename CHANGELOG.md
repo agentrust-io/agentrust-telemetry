@@ -17,6 +17,17 @@
   no longer coerces booleans, numbers, or noncanonical strings into timestamps
   (#126). This enforces the existing decimal-string schema; valid event streams
   and the wire contract are unchanged.
+- Python schema and conformance privacy validation now walks `tuple` containers in
+  `_prohibited_paths`, `prohibited_paths`, and `_json_shape_error`, and rejects
+  duplicate JSON object keys when loading JSON files. (#101)
+- TypeScript `extractContext` now rejects array-valued and non-string AgenTrust
+  carrier headers with `PropagationError`, and `ExtractedContext.eventFields`
+  checks `!== undefined` rather than truthiness, matching Python
+  `extract_context`. (#101)
+- TRACE finalization in both SDKs (`trace_adapter.py` and `trace-finalizer.ts`)
+  now validates `build_digest` / `buildDigest` and policy `bundle_digest`
+  (`algorithm` and `value`) against canonical lowercase `sha256` / `sha384` hex
+  digest syntax before signing. (#101)
 
 ### Changed
 
