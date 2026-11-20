@@ -11,7 +11,7 @@ const EVENT_SCHEMAS: Record<string, string> = {
   "usage.recorded": "usage.schema.json",
   "data_flow.observed": "data-flow.schema.json",
 };
-const PROHIBITED = new Set([
+const METADATA_IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,255}$/;\nconst PROHIBITED = new Set([
   "prompt", "completion", "source_code", "tool_arguments", "tool_result",
   "authorization", "credential", "secret", "access_token", "refresh_token",
 ]);
@@ -61,6 +61,7 @@ export class SchemaValidator {
     const messages: string[] = [];
     if (!validator(value)) messages.push(...formatErrors(validator.errors));
     findProhibited(value, "$", messages);
+    if (eventType === "data_flow.observed") messages.push(...dataFlowSemanticErrors(value));
     if (isRecord(value.attributes)) {
       for (const key of Object.keys(value.attributes).sort()) {
         if (!this.#allowedAttributes.has(key)) messages.push(`$.attributes.${key} is not in the metadata_only attribute allowlist`);
@@ -72,6 +73,54 @@ export class SchemaValidator {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function dataFlowSemanticErrors(event: Record<string, unknown>): string[] {
+  const messages: string[] = [];
+  const taxonomies: string[] = [];
+  const identifier = (value: unknown, path: string): void => {
+    if (typeof value !== "string" || !METADATA_IDENTIFIER.test(value) || value.includes("://")) {
+      messages.push(`${path} must use the metadata identifier profile`);
+    }
+  };
+  const endpoint = (value: unknown, path: string): void => {
+    if (!isRecord(value)) return;
+    if ("kind" in value) identifier(value.kind, `${path}.kind`);
+    if ("id" in value) identifier(value.id, `${path}.id`);
+  };
+  const classification = (value: unknown, path: string): void => {
+    if (!isRecord(value)) return;
+    for (const field of ["taxonomy", "value", "producer"] as const) {
+      if (field in value) identifier(value[field], `${path}.${field}`);
+    }
+    if (typeof value.taxonomy === "string") taxonomies.push(value.taxonomy);
+  };
+
+  identifier(event.purpose, "$.purpose");
+  endpoint(event.source, "$.source");
+  endpoint(event.destination, "$.destination");
+  classification(event.classification, "$.classification");
+  classification(event.observed_classification, "$.observed_classification");
+
+  if (Array.isArray(event.source_classifications)) {
+    const seen = new Set<string>();
+    event.source_classifications.forEach((item, index) => {
+      if (!isRecord(item)) return;
+      const path = `$.source_classifications[${index}]`;
+      endpoint(item.source, `${path}.source`);
+      classification(item.classification, `${path}.classification`);
+      if (isRecord(item.source) && typeof item.source.kind === "string") {
+        const id = typeof item.source.id === "string" ? item.source.id : "";
+        const key = `${item.source.kind}\\u0000${id}`;
+        if (seen.has(key)) messages.push(`${path}.source duplicates a prior (kind, id) reference`);
+        seen.add(key);
+      }
+    });
+  }
+  if (new Set(taxonomies).size > 1) {
+    messages.push("all data-flow classifications must use the same taxonomy");
+  }
+  return messages;
 }
 function formatErrors(errors: ErrorObject[] | null | undefined): string[] {
   return (errors ?? []).map((error) => `${error.instancePath || "$"} ${error.message ?? "is invalid"}`);
