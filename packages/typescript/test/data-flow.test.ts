@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import test from "node:test";
+import {fileURLToPath} from "node:url";
 import {agtDataAccessFlow, ClassificationOrder, ClassificationResult, classifiedDataFlow, DataEndpoint, EventFactory, SchemaValidator, SourceClassification} from "../src/index.js";
 
+const root = fileURLToPath(new URL("../../../", import.meta.url));
 const factory = new EventFactory(SchemaValidator.bundled(), {name: "data-tests", version: "1"}, () => 1n, () => "018f0f7d-7a13-7cc2-8000-000000000042");
 test("classifier sees content while the event contains only closed metadata", () => {
   const secret = {prompt: "customer@example.test token=secret", source_code: "private"}; let seen: unknown;
@@ -166,4 +169,51 @@ test("SchemaValidator enforces data-flow lineage, identifier, and integer invari
   const unsafe = clone();
   unsafe.size_bytes = Number.MAX_SAFE_INTEGER + 1;
   assert.throws(() => validator.validate(unsafe));
+});
+
+
+test("derived flow matches the shared Python/TypeScript golden event", () => {
+  const expected = JSON.parse(readFileSync(
+    `${root}/compatibility/golden/derived-data-flow.json`, "utf8"
+  )) as Record<string, unknown>;
+  const goldenFactory = new EventFactory(
+    SchemaValidator.bundled(),
+    {name: "derived-flow-golden", version: "1.0.0"},
+    () => 1n,
+    () => "018f0f7d-7a13-7cc2-8000-000000000042",
+  );
+  const taxonomy = "example.enterprise.v1";
+  const event = classifiedDataFlow(
+    goldenFactory,
+    {classify: () => new ClassificationResult(taxonomy, "public", "output-dlp")},
+    "summary",
+    {
+      runId: "run-golden-derived-flow",
+      agentId: "agent-1",
+      direction: "output",
+      source: new DataEndpoint("transform", "summarizer"),
+      destination: new DataEndpoint("memory", "summary-1"),
+      purpose: "memory-compaction",
+      policyDecision: "allow",
+      transformation: "aggregated",
+      sourceClassifications: [
+        new SourceClassification(
+          new DataEndpoint("knowledge_graph", "public-faq"),
+          new ClassificationResult(taxonomy, "public", "source-dlp"),
+        ),
+        new SourceClassification(
+          new DataEndpoint("document", "staff-notes"),
+          new ClassificationResult(taxonomy, "confidential", "trusted-label-store"),
+        ),
+      ],
+      classificationOrder: new ClassificationOrder(
+        taxonomy, ["public", "internal", "confidential", "restricted"]
+      ),
+      envelope: {
+        eventId: "018f0f7d-7a13-7cc2-8000-000000000042",
+        timeUnixNano: "1787079400000000000",
+      },
+    },
+  );
+  assert.deepEqual(event, expected);
 });
