@@ -1,4 +1,6 @@
+import copy
 import sys
+from collections.abc import Sequence
 import unittest
 from datetime import datetime, timezone
 from enum import IntEnum
@@ -13,6 +15,7 @@ from agentrust_telemetry import (  # noqa: E402
     ClassificationResult,
     DataEndpoint,
     EventFactory,
+    EventValidationError,
     SchemaValidator,
     agt_data_access_flow,
     classified_data_flow,
@@ -263,6 +266,81 @@ class DataFlowTests(unittest.TestCase):
         )
         self.assertEqual(tied_event["classification"]["value"], "confidential")
         self.assertEqual(tied_event["classification"]["producer"], "output-dlp")
+
+
+    def test_classification_order_accepts_general_string_sequences(self):
+        class Levels(Sequence):
+            def __getitem__(self, index):
+                return ("public", "confidential")[index]
+
+            def __len__(self):
+                return 2
+
+        from agentrust_telemetry import ClassificationOrder
+
+        order = ClassificationOrder("example.enterprise.v1", Levels())
+        self.assertEqual(
+            order.rank(ClassificationResult("example.enterprise.v1", "confidential", "dlp")),
+            1,
+        )
+
+    def test_cheap_lineage_and_size_checks_precede_classifier(self):
+        from agentrust_telemetry import ClassificationOrder, SourceClassification
+
+        taxonomy = "example.enterprise.v1"
+        classifier = RecordingClassifier(ClassificationResult(taxonomy, "public", "dlp"))
+        duplicate = SourceClassification(
+            DataEndpoint("document", "same"),
+            ClassificationResult(taxonomy, "confidential", "trusted-store"),
+        )
+        common = dict(
+            run_id="run-1", agent_id="agent-1", direction="output",
+            source=DataEndpoint("transform"), destination=DataEndpoint("memory"),
+            purpose="memory-compaction",
+        )
+        order = ClassificationOrder(taxonomy, ("public", "confidential"))
+        with self.assertRaisesRegex(ValueError, "duplicate source"):
+            classified_data_flow(
+                self.factory, classifier, "summary", **common,
+                source_classifications=(duplicate for _ in range(2)),
+                classification_order=order,
+            )
+        self.assertIsNone(classifier.seen)
+
+        with self.assertRaisesRegex(ValueError, "safe integer"):
+            classified_data_flow(
+                self.factory, classifier, "summary", **common,
+                size_bytes=9007199254740992,
+            )
+        self.assertIsNone(classifier.seen)
+
+    def test_schema_validator_enforces_lineage_identifier_and_safe_integer_rules(self):
+        validator = SchemaValidator(ROOT / "spec" / "schema")
+        fixture_path = ROOT / "conformance" / "fixtures" / "valid" / "derived-data-flow.json"
+        event = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+        duplicate = copy.deepcopy(event)
+        duplicate["source_classifications"][1]["source"] = copy.deepcopy(
+            duplicate["source_classifications"][0]["source"]
+        )
+        with self.assertRaisesRegex(EventValidationError, "duplicates a prior"):
+            validator.validate(duplicate)
+
+        mixed = copy.deepcopy(event)
+        mixed["source_classifications"][0]["classification"]["taxonomy"] = "other.taxonomy"
+        with self.assertRaisesRegex(EventValidationError, "same taxonomy"):
+            validator.validate(mixed)
+
+        invalid_identifier = copy.deepcopy(event)
+        invalid_identifier["source_classifications"][0]["source"]["kind"] = "customer data"
+        with self.assertRaisesRegex(EventValidationError, "metadata identifier profile"):
+            validator.validate(invalid_identifier)
+
+        unsafe_integer = copy.deepcopy(event)
+        unsafe_integer["size_bytes"] = 9007199254740992
+        with self.assertRaises(EventValidationError):
+            validator.validate(unsafe_integer)
+
 
 
 if __name__ == "__main__":
