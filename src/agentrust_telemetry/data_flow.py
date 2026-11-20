@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from itertools import islice
-from typing import Any, Iterable, Protocol, Sequence
+from typing import Any, Protocol
 
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:/-]{0,255}")
 _MEDIA_TYPE = re.compile(r"[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+")
@@ -68,7 +69,7 @@ class ClassificationOrder:
 
     def __post_init__(self) -> None:
         _identifier(self.taxonomy, "classification taxonomy")
-        if not isinstance(self.levels, (tuple, list)) or not self.levels:
+        if not isinstance(self.levels, Sequence) or isinstance(self.levels, (str, bytes, bytearray)) or not self.levels:
             raise ValueError("classification levels must be a non-empty sequence")
         levels = tuple(self.levels)
         for level in levels:
@@ -92,20 +93,19 @@ class ClassificationOrder:
             ) from exc
 
 
-def _derived_classification_fields(
-    observed: ClassificationResult,
+def _validate_source_classifications(
     sources: Iterable[SourceClassification] | None,
     order: ClassificationOrder | None,
-) -> dict[str, Any]:
+) -> tuple[SourceClassification, ...] | None:
+    """Validate caller-supplied lineage before invoking an expensive classifier."""
     if sources is None and order is None:
-        return {}
+        return None
     if sources is None or order is None:
         raise ValueError(
             "source_classifications and classification_order must be supplied together"
         )
     if not isinstance(order, ClassificationOrder):
         raise TypeError("classification_order must be a ClassificationOrder")
-    order.rank(observed)
     try:
         records = tuple(islice(iter(sources), 1025))
     except TypeError as exc:
@@ -116,8 +116,6 @@ def _derived_classification_fields(
         raise ValueError("derived data may identify at most 1024 sources")
 
     seen: set[tuple[str, str | None]] = set()
-    candidates = [observed]
-    event_sources: list[dict[str, Any]] = []
     for record in records:
         if not isinstance(record, SourceClassification):
             raise TypeError("each source must be a SourceClassification")
@@ -126,6 +124,24 @@ def _derived_classification_fields(
             raise ValueError("duplicate source reference")
         seen.add(key)
         order.rank(record.classification)
+    return records
+
+
+def _derived_classification_fields(
+    observed: ClassificationResult,
+    records: tuple[SourceClassification, ...] | None,
+    order: ClassificationOrder | None,
+) -> dict[str, Any]:
+    if records is None and order is None:
+        return {}
+    if records is None or order is None:
+        raise ValueError(
+            "source_classifications and classification_order must be supplied together"
+        )
+    order.rank(observed)
+    candidates = [observed]
+    event_sources: list[dict[str, Any]] = []
+    for record in records:
         candidates.append(record.classification)
         event_sources.append({
             "source": record.source.as_event_value(),
@@ -136,7 +152,8 @@ def _derived_classification_fields(
             },
         })
 
-    # Keep the output label on ties; source labels can only raise its rank.
+    # max() is stable: the observed output wins equal-rank ties, then the first
+    # source at a higher rank wins ties with later sources in input order.
     effective = max(candidates, key=order.rank)
     return {
         "classification": {
@@ -151,7 +168,6 @@ def _derived_classification_fields(
         },
         "source_classifications": event_sources,
     }
-
 
 
 def classified_data_flow(
@@ -176,18 +192,28 @@ def classified_data_flow(
     **envelope: Any,
 ) -> dict[str, Any]:
     """Classify ``value`` and emit only the classifier's closed metadata result."""
-    result = classifier.classify(value)
-    if not isinstance(result, ClassificationResult):
-        raise TypeError("classifier must return ClassificationResult")
     _identifier(purpose, "purpose")
+    if not isinstance(source, DataEndpoint) or not isinstance(destination, DataEndpoint):
+        raise TypeError("source and destination must be DataEndpoint instances")
     if media_type is not None and (
         not isinstance(media_type, str) or _MEDIA_TYPE.fullmatch(media_type) is None
         or len(media_type) > 255
     ):
         raise ValueError("media_type must be a parameter-free type/subtype identifier")
-    derived = _derived_classification_fields(
-        result, source_classifications, classification_order
-    )
+    for field, amount in (("size_bytes", size_bytes), ("token_count", token_count)):
+        if amount is not None and (
+            isinstance(amount, bool) or not isinstance(amount, int)
+            or amount < 0 or amount > 9007199254740991
+        ):
+            raise ValueError(f"{field} must be a non-negative safe integer")
+    records = _validate_source_classifications(source_classifications, classification_order)
+
+    # Only invoke the adopter-owned classifier after inexpensive argument and
+    # lineage checks have passed.
+    result = classifier.classify(value)
+    if not isinstance(result, ClassificationResult):
+        raise TypeError("classifier must return ClassificationResult")
+    derived = _derived_classification_fields(result, records, classification_order)
     optional = {
         "content_digest": content_digest,
         "size_bytes": size_bytes,
