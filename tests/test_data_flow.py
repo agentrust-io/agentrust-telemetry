@@ -1,7 +1,8 @@
 import copy
+import json
 import sys
-from collections.abc import Sequence
 import unittest
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from enum import IntEnum
 from pathlib import Path
@@ -340,6 +341,54 @@ class DataFlowTests(unittest.TestCase):
         unsafe_integer["size_bytes"] = 9007199254740992
         with self.assertRaises(EventValidationError):
             validator.validate(unsafe_integer)
+
+
+
+    def test_derived_flow_matches_shared_cross_language_golden(self):
+        from agentrust_telemetry import ClassificationOrder, SourceClassification
+
+        expected = json.loads(
+            (ROOT / "compatibility" / "golden" / "derived-data-flow.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        factory = EventFactory(
+            SchemaValidator(ROOT / "spec" / "schema"),
+            producer_name="derived-flow-golden",
+            producer_version="1.0.0",
+            clock_ns=lambda: 1,
+            event_id_factory=lambda: "018f0f7d-7a13-7cc2-8000-000000000042",
+        )
+        taxonomy = "example.enterprise.v1"
+        event = classified_data_flow(
+            factory,
+            RecordingClassifier(ClassificationResult(taxonomy, "public", "output-dlp")),
+            "summary",
+            run_id="run-golden-derived-flow",
+            agent_id="agent-1",
+            direction="output",
+            source=DataEndpoint("transform", "summarizer"),
+            destination=DataEndpoint("memory", "summary-1"),
+            purpose="memory-compaction",
+            policy_decision="allow",
+            transformation="aggregated",
+            source_classifications=[
+                SourceClassification(
+                    DataEndpoint("knowledge_graph", "public-faq"),
+                    ClassificationResult(taxonomy, "public", "source-dlp"),
+                ),
+                SourceClassification(
+                    DataEndpoint("document", "staff-notes"),
+                    ClassificationResult(taxonomy, "confidential", "trusted-label-store"),
+                ),
+            ],
+            classification_order=ClassificationOrder(
+                taxonomy, ("public", "internal", "confidential", "restricted")
+            ),
+            event_id="018f0f7d-7a13-7cc2-8000-000000000042",
+            time_unix_nano="1787079400000000000",
+        )
+        self.assertEqual(event, expected)
 
 
 
