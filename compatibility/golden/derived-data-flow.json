@@ -1,0 +1,58 @@
+{
+  "spec_version": "0.2.0-alpha.1",
+  "event_id": "018f0f7d-7a13-7cc2-8000-000000000042",
+  "event_type": "data_flow.observed",
+  "time_unix_nano": "1787079400000000000",
+  "run_id": "run-golden-derived-flow",
+  "producer": {
+    "name": "derived-flow-golden",
+    "version": "1.0.0"
+  },
+  "agent_id": "agent-1",
+  "direction": "output",
+  "source": {
+    "kind": "transform",
+    "id": "summarizer"
+  },
+  "destination": {
+    "kind": "memory",
+    "id": "summary-1"
+  },
+  "classification": {
+    "taxonomy": "example.enterprise.v1",
+    "value": "confidential",
+    "producer": "trusted-label-store"
+  },
+  "observed_classification": {
+    "taxonomy": "example.enterprise.v1",
+    "value": "public",
+    "producer": "output-dlp"
+  },
+  "source_classifications": [
+    {
+      "source": {
+        "kind": "knowledge_graph",
+        "id": "public-faq"
+      },
+      "classification": {
+        "taxonomy": "example.enterprise.v1",
+        "value": "public",
+        "producer": "source-dlp"
+      }
+    },
+    {
+      "source": {
+        "kind": "document",
+        "id": "staff-notes"
+      },
+      "classification": {
+        "taxonomy": "example.enterprise.v1",
+        "value": "confidential",
+        "producer": "trusted-label-store"
+      }
+    }
+  ],
+  "purpose": "memory-compaction",
+  "policy_decision": "allow",
+  "transformation": "aggregated"
+}
