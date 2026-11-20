@@ -4,6 +4,16 @@
 
 ### Added
 
+- Derived `data_flow.observed` events can include trusted source classifications.
+  The Python and TypeScript SDKs compute an effective label using an explicit
+  per-taxonomy order, retain the output classifier's observed label, and emit
+  metadata-only source references. Source-label authenticity and lineage
+  completeness remain caller responsibilities. The contract advances to
+  `0.2.0-alpha.1`: consumers pinned to pre-0.2 schema copies reject events
+  carrying these fields and must update their schema copy before consuming
+  opted-in derived-flow events; producers that omit both fields retain the
+  previous event shape.
+
 - Shared Python/TypeScript delivery-fault tests for dropped, duplicated and
   reordered projections and lost persistence acknowledgements, plus Python
   OpenTelemetry sampling/export-failure coverage. These tests do not establish

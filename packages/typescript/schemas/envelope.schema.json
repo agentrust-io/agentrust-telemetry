@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agentrust-io.com/telemetry/v0.1/schema/envelope.schema.json",
+  "$id": "https://agentrust-io.com/telemetry/v0.2/schema/envelope.schema.json",
   "type": "object",
   "required": ["spec_version", "event_id", "event_type", "time_unix_nano", "run_id", "producer"],
   "properties": {
-    "spec_version": {"const": "0.1.0-alpha.6"},
+    "spec_version": {"const": "0.2.0-alpha.1"},
     "event_id": {"$ref": "common.schema.json#/$defs/event_id"},
     "event_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$", "maxLength": 128},
     "time_unix_nano": {"$ref": "common.schema.json#/$defs/time_unix_nano"},

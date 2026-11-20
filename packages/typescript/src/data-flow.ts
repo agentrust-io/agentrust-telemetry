@@ -12,16 +12,80 @@ export class DataEndpoint {
   constructor(readonly kind: string, readonly id?: string) { identifier(kind, "endpoint kind"); if (id !== undefined) identifier(id, "endpoint id"); }
   asEventValue(): {kind: string; id?: string} { return {kind: this.kind, ...(this.id === undefined ? {} : {id: this.id})}; }
 }
+
+export class SourceClassification {
+  constructor(readonly source: DataEndpoint, readonly classification: ClassificationResult) {
+    if (!(source instanceof DataEndpoint)) throw new TypeError("source must be a DataEndpoint");
+    if (!(classification instanceof ClassificationResult)) throw new TypeError("classification must be a ClassificationResult");
+  }
+}
+
+export class ClassificationOrder {
+  readonly levels: readonly string[];
+
+  constructor(readonly taxonomy: string, levels: readonly string[]) {
+    identifier(taxonomy, "classification taxonomy");
+    if (!Array.isArray(levels) || levels.length === 0) throw new Error("classification levels must be a non-empty array");
+    for (const level of levels) identifier(level, "classification level");
+    if (new Set(levels).size !== levels.length) throw new Error("classification levels must be unique");
+    this.levels = Object.freeze([...levels]);
+  }
+
+  rank(result: ClassificationResult): number {
+    if (!(result instanceof ClassificationResult)) throw new TypeError("classification must be a ClassificationResult");
+    if (result.taxonomy !== this.taxonomy) throw new Error(`taxonomy mismatch: expected ${this.taxonomy}, got ${result.taxonomy}`);
+    const rank = this.levels.indexOf(result.value);
+    if (rank < 0) throw new Error(`unknown classification value for ${this.taxonomy}: ${result.value}`);
+    return rank;
+  }
+}
+
+function derivedClassificationFields(
+  observed: ClassificationResult,
+  sources: readonly SourceClassification[] | undefined,
+  order: ClassificationOrder | undefined,
+): Record<string, unknown> {
+  if (sources === undefined && order === undefined) return {};
+  if (sources === undefined || order === undefined) throw new Error("sourceClassifications and classificationOrder must be supplied together");
+  if (!(order instanceof ClassificationOrder)) throw new TypeError("classificationOrder must be a ClassificationOrder");
+  order.rank(observed);
+  if (!Array.isArray(sources) || sources.length === 0) throw new Error("derived data must identify at least one source");
+  if (sources.length > 1024) throw new Error("derived data may identify at most 1024 sources");
+
+  const seen = new Set<string>();
+  let effective = observed;
+  let effectiveRank = order.rank(observed);
+  const sourceValues = sources.map((record) => {
+    if (!(record instanceof SourceClassification)) throw new TypeError("each source must be a SourceClassification");
+    const key = `${record.source.kind}\u0000${record.source.id ?? ""}`;
+    if (seen.has(key)) throw new Error("duplicate source reference");
+    seen.add(key);
+    const rank = order.rank(record.classification);
+    if (rank > effectiveRank) { effective = record.classification; effectiveRank = rank; }
+    return {
+      source: record.source.asEventValue(),
+      classification: {taxonomy: record.classification.taxonomy, value: record.classification.value, producer: record.classification.producer},
+    };
+  });
+
+  return {
+    classification: {taxonomy: effective.taxonomy, value: effective.value, producer: effective.producer},
+    observed_classification: {taxonomy: observed.taxonomy, value: observed.value, producer: observed.producer},
+    source_classifications: sourceValues,
+  };
+}
+
 export interface DataClassifier {classify(value: unknown): ClassificationResult}
 
-export function classifiedDataFlow(factory: EventFactory, classifier: DataClassifier, value: unknown, options: {runId: string; agentId: string; direction: string; source: DataEndpoint; destination: DataEndpoint; purpose: string; policyDecision?: string; contentDigest?: Digest; sizeBytes?: number; tokenCount?: number; mediaType?: string; transformation?: string; envelope?: Omit<EnvelopeFields, "runId" | "agentId">}): NormalizedEvent {
+export function classifiedDataFlow(factory: EventFactory, classifier: DataClassifier, value: unknown, options: {runId: string; agentId: string; direction: string; source: DataEndpoint; destination: DataEndpoint; purpose: string; policyDecision?: string; contentDigest?: Digest; sizeBytes?: number; tokenCount?: number; mediaType?: string; transformation?: string; sourceClassifications?: readonly SourceClassification[]; classificationOrder?: ClassificationOrder; envelope?: Omit<EnvelopeFields, "runId" | "agentId">}): NormalizedEvent {
   const result = classifier.classify(value);
   if (!(result instanceof ClassificationResult)) throw new TypeError("classifier must return ClassificationResult");
   identifier(options.purpose, "purpose");
   if (options.mediaType !== undefined && (!MEDIA_TYPE.test(options.mediaType) || options.mediaType.length > 255)) throw new Error("mediaType must be a parameter-free type/subtype identifier");
   for (const [field, amount] of [["sizeBytes", options.sizeBytes], ["tokenCount", options.tokenCount]] as const) if (amount !== undefined && (!Number.isSafeInteger(amount) || amount < 0)) throw new Error(`${field} must be a non-negative safe integer`);
+  const derived = derivedClassificationFields(result, options.sourceClassifications, options.classificationOrder);
   return factory.build("data_flow.observed", {runId: options.runId, agentId: options.agentId, ...options.envelope}, {
-    direction: options.direction, source: options.source.asEventValue(), destination: options.destination.asEventValue(), classification: {taxonomy: result.taxonomy, value: result.value, producer: result.producer}, purpose: options.purpose, policy_decision: options.policyDecision ?? "not_evaluated",
+    direction: options.direction, source: options.source.asEventValue(), destination: options.destination.asEventValue(), classification: (derived.classification as Record<string, string> | undefined) ?? {taxonomy: result.taxonomy, value: result.value, producer: result.producer}, ...omitClassification(derived), purpose: options.purpose, policy_decision: options.policyDecision ?? "not_evaluated",
     ...present("content_digest", options.contentDigest), ...present("size_bytes", options.sizeBytes), ...present("token_count", options.tokenCount), ...present("media_type", options.mediaType), ...present("transformation", options.transformation),
   });
 }
@@ -40,6 +104,8 @@ export function agtDataAccessFlow(factory: EventFactory, decision: Record<string
   const classification = agtDataClassification(label);
   return classifiedDataFlow(factory, {classify: () => classification}, undefined, {...options, agentId: required(rec.agent_id, "AGT data access agent_id"), policyDecision: rec.allowed ? "allow" : "deny", envelope: {timeUnixNano: timestampNs(rec.evaluated_at, "evaluated_at"), ...options.envelope}});
 }
+
+function omitClassification(fields: Record<string, unknown>): Record<string, unknown> { const {classification: _classification, ...rest} = fields; return rest; }
 
 function identifier(value: unknown, field: string): string { if (typeof value !== "string" || !IDENTIFIER.test(value) || value.includes("://")) throw new Error(`${field} must be a 1-256 character metadata identifier without whitespace, URLs, query strings, fragments, or key/value delimiters`); return value; }
 function required(value: unknown, field: string): string { if (typeof value !== "string" || !value) throw new Error(`${field} must be a non-empty string`); return value; }

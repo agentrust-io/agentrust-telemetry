@@ -149,5 +149,121 @@ class DataFlowTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unsupported AGT data classification"):
                     agt_data_classification(SimpleNamespace(classification=bad))
 
+
+    def test_derived_flow_inherits_strictest_source_classification(self):
+        from agentrust_telemetry import ClassificationOrder, SourceClassification
+
+        taxonomy = "example.enterprise.v1"
+        order = ClassificationOrder(
+            taxonomy, ("public", "internal", "confidential", "restricted")
+        )
+        observed = ClassificationResult(taxonomy, "public", "output-dlp")
+        classifier = RecordingClassifier(observed)
+        event = classified_data_flow(
+            self.factory, classifier, "summary text",
+            run_id="run-1", agent_id="agent-1", direction="output",
+            source=DataEndpoint("transform", "summarizer"),
+            destination=DataEndpoint("memory", "summary-1"),
+            purpose="memory-compaction", transformation="aggregated",
+            source_classifications=[
+                SourceClassification(DataEndpoint("document", "public-faq"),
+                    ClassificationResult(taxonomy, "public", "source-dlp")),
+                SourceClassification(DataEndpoint("document", "staff-notes"),
+                    ClassificationResult(taxonomy, "confidential", "trusted-label-store")),
+            ],
+            classification_order=order,
+        )
+        self.assertEqual(event["classification"]["value"], "confidential")
+        self.assertEqual(event["observed_classification"]["value"], "public")
+        self.assertEqual(len(event["source_classifications"]), 2)
+        self.assertNotIn("summary text", repr(event))
+
+    def test_derived_flow_requires_complete_unique_same_taxonomy_lineage(self):
+        from agentrust_telemetry import ClassificationOrder, SourceClassification
+
+        taxonomy = "example.enterprise.v1"
+        order = ClassificationOrder(taxonomy, ("public", "confidential"))
+        common = dict(
+            run_id="run-1", agent_id="agent-1", direction="output",
+            source=DataEndpoint("transform"), destination=DataEndpoint("memory"),
+            purpose="memory-compaction",
+        )
+        classifier = RecordingClassifier(ClassificationResult(taxonomy, "public", "dlp"))
+        with self.assertRaisesRegex(ValueError, "supplied together"):
+            classified_data_flow(self.factory, classifier, "summary", **common,
+                source_classifications=[],)
+        with self.assertRaisesRegex(ValueError, "at least one source"):
+            classified_data_flow(self.factory, classifier, "summary", **common,
+                source_classifications=[], classification_order=order)
+        duplicate = SourceClassification(DataEndpoint("document", "same"),
+            ClassificationResult(taxonomy, "confidential", "dlp"))
+        with self.assertRaisesRegex(ValueError, "duplicate source"):
+            classified_data_flow(self.factory, classifier, "summary", **common,
+                source_classifications=[duplicate, duplicate], classification_order=order)
+        wrong_taxonomy = SourceClassification(DataEndpoint("document", "other"),
+            ClassificationResult("example.other.v1", "confidential", "dlp"))
+        with self.assertRaisesRegex(ValueError, "taxonomy mismatch"):
+            classified_data_flow(self.factory, classifier, "summary", **common,
+                source_classifications=[wrong_taxonomy], classification_order=order)
+
+        unknown = SourceClassification(DataEndpoint("document", "unknown"),
+            ClassificationResult(taxonomy, "top_secret", "dlp"))
+        with self.assertRaisesRegex(ValueError, "unknown classification value"):
+            classified_data_flow(self.factory, classifier, "summary", **common,
+                source_classifications=[unknown], classification_order=order)
+
+        too_many = (SourceClassification(DataEndpoint("document", f"source-{i}"),
+            ClassificationResult(taxonomy, "public", "dlp")) for i in range(1025))
+        with self.assertRaisesRegex(ValueError, "at most 1024"):
+            classified_data_flow(self.factory, classifier, "summary", **common,
+                source_classifications=too_many, classification_order=order)
+
+        exactly_limit = [
+            SourceClassification(
+                DataEndpoint("document", f"source-{i}"),
+                ClassificationResult(taxonomy, "public", "dlp"),
+            )
+            for i in range(1024)
+        ]
+        at_limit = classified_data_flow(
+            self.factory, classifier, "summary", **common,
+            source_classifications=exactly_limit, classification_order=order,
+        )
+        self.assertEqual(len(at_limit["source_classifications"]), 1024)
+
+
+    def test_output_classification_is_not_downgraded_and_wins_ties(self):
+        from agentrust_telemetry import ClassificationOrder, SourceClassification
+
+        taxonomy = "example.enterprise.v1"
+        order = ClassificationOrder(taxonomy, ("public", "confidential", "restricted"))
+        source = SourceClassification(
+            DataEndpoint("document", "staff-notes"),
+            ClassificationResult(taxonomy, "confidential", "trusted-label-store"),
+        )
+        common = dict(
+            run_id="run-1", agent_id="agent-1", direction="output",
+            source=DataEndpoint("transform", "summarizer"),
+            destination=DataEndpoint("memory", "summary-1"),
+            purpose="memory-compaction",
+            source_classifications=[source],
+            classification_order=order,
+        )
+
+        stricter_output = ClassificationResult(taxonomy, "restricted", "output-dlp")
+        event = classified_data_flow(
+            self.factory, RecordingClassifier(stricter_output), "summary", **common
+        )
+        self.assertEqual(event["classification"]["value"], "restricted")
+        self.assertEqual(event["classification"]["producer"], "output-dlp")
+
+        tied_output = ClassificationResult(taxonomy, "confidential", "output-dlp")
+        tied_event = classified_data_flow(
+            self.factory, RecordingClassifier(tied_output), "summary", **common
+        )
+        self.assertEqual(tied_event["classification"]["value"], "confidential")
+        self.assertEqual(tied_event["classification"]["producer"], "output-dlp")
+
+
 if __name__ == "__main__":
     unittest.main()

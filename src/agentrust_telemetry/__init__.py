@@ -15,7 +15,14 @@ from .adapters import (
     opa_decision_log,
 )
 from .client import EmitResult, TelemetryClient
-from .data_flow import ClassificationResult, DataClassifier, DataEndpoint, classified_data_flow
+from .data_flow import (
+    ClassificationOrder,
+    ClassificationResult,
+    DataClassifier,
+    DataEndpoint,
+    SourceClassification,
+    classified_data_flow,
+)
 from .context import ContextIds, active_context_ids
 from .errors import (
     ContextMismatchError,
@@ -37,9 +44,11 @@ __all__ = [
     "ContextIds",
     "ContextMismatchError",
     "CostObservation",
+    "ClassificationOrder",
     "ClassificationResult",
     "DataClassifier",
     "DataEndpoint",
+    "SourceClassification",
     "AgtGovernanceEventSink",
     "EmitResult",
     "EventValidationError",
@@ -77,4 +86,4 @@ __all__ = [
     "finalize_trace",
 ]
 
-__version__ = "0.1.0a6"
+__version__ = "0.2.0a1"
