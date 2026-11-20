@@ -9,10 +9,12 @@
   per-taxonomy order, retain the output classifier's observed label, and emit
   metadata-only source references. Source-label authenticity and lineage
   completeness remain caller responsibilities. The contract advances to
-  `0.2.0-alpha.1`: consumers pinned to pre-0.2 schema copies reject events
-  carrying these fields and must update their schema copy before consuming
-  opted-in derived-flow events; producers that omit both fields retain the
-  previous event shape.
+  `0.2.0-alpha.1`: every event emitted by a 0.2 SDK carries the new envelope
+  version, so consumers pinned to pre-0.2 closed schemas reject all events from
+  the new SDK, including direct-flow events that omit both lineage fields.
+  Consumers must update their schema copy and validator to 0.2 before
+  consuming any event emitted by a 0.2 SDK; producers that omit both lineage
+  fields retain the previous data-flow payload shape.
 
 - Shared Python/TypeScript delivery-fault tests for dropped, duplicated and
   reordered projections and lost persistence acknowledgements, plus Python
