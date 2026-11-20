@@ -6,7 +6,7 @@ AgenTrust Telemetry is a shared format for the governance facts an AI agent prod
 
 In technical terms, this repository defines a backend-neutral contract, a fixed set of event formats that works with any monitoring or storage system, for policy decisions, approval lifecycles, usage, classified data flows, and evidence lifecycle events. It works alongside OpenTelemetry. It is not a tracing backend, policy engine, agent framework, or dashboard.
 
-> **Status:** alpha contract `0.1.0-alpha.6`. No stable SDK API or compatibility guarantee exists yet.
+> **Status:** alpha contract `0.2.0-alpha.1`. No stable SDK API or compatibility guarantee exists yet.
 
 ## Why
 
