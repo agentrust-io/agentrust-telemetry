@@ -26,7 +26,7 @@ The optional event fields are:
 - `source_classifications`: one source endpoint and its classification metadata for every supplied contributing source;
 - `classification`: the effective result after applying the explicit order.
 
-The two lineage fields must appear together. Existing direct data-flow calls remain unchanged when neither is supplied. The implementation bounds lineage to 1,024 sources and rejects empty lineage, duplicate endpoint references, unknown labels, mixed taxonomies, and missing or mismatched ordering input. Events carry references and labels only, never source content.
+The two lineage fields must appear together. Existing direct data-flow calls remain unchanged when neither is supplied. The implementation bounds lineage to 1,024 sources and rejects empty lineage, duplicate endpoint references, unknown labels, mixed taxonomies, and missing or mismatched ordering input. When several sources share the highest rank, the first source in supplied iterable/array order wins the deterministic tie-break. Events carry references and labels only, never source content.
 
 ## Trust and security boundaries
 
@@ -45,9 +45,9 @@ Endpoint identifiers remain metadata and may still be sensitive. Integrators mus
 
 ## Compatibility and versioning
 
-The contract version advances from `0.1.0-alpha.6` to `0.2.0-alpha.1`, with matching Python and TypeScript package versions. The two lineage fields remain optional as a pair, so producers that omit them retain the previous event shape.
+The contract version advances from `0.1.0-alpha.6` to `0.2.0-alpha.1`, with matching Python and TypeScript package versions. The two lineage fields remain optional as a pair, so producers that omit them retain the previous data-flow payload shape.
 
-The schemas are closed to unknown properties. A consumer pinned to a pre-0.2 schema will reject an event containing the new fields even though they are optional at the producer. Consumers must update their schema copy to 0.2 before processing opted-in derived-flow events. This is an explicit pre-1.0 compatibility change and is called out in the Unreleased changelog.
+The envelope version is part of every event. All events emitted by a 0.2 SDK carry `spec_version: 0.2.0-alpha.1`, including direct data-flow events that omit the optional lineage fields. Because schemas are closed and the pre-0.2 envelope requires the earlier version, a consumer pinned to a pre-0.2 schema rejects every event from the 0.2 SDK, not only opted-in derived-flow events. Consumers must update their schema copy and validator to 0.2 before consuming any event emitted by a 0.2 SDK. This is an explicit pre-1.0 compatibility change and is called out in the Unreleased changelog.
 
 ## Consequences
 
