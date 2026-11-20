@@ -73,14 +73,19 @@ classifier or policy/label store, and supply the complete lineage. Unknown label
 mixed taxonomies, duplicate source references, missing lineage, or a missing
 order are rejected. At most 1,024 sources may be attached to one event. The SDK
 does not infer declassification or implement reclassification/revocation
-propagation. Existing direct-flow calls remain unchanged when the two new
-arguments are omitted. Both lineage fields are optional as a pair, so producers
-that do not opt in retain the previous event shape. However, consumers using
-pre-0.2 closed schemas reject events that include these fields; update the schema
-copy to 0.2 before consuming opted-in derived-flow events.
+propagation. Existing direct-flow calls retain the previous data-flow
+payload shape when the two new arguments are omitted.
+
+This is a 0.2 contract change, not merely an optional-field change. Every event
+from a 0.2 SDK carries `spec_version: 0.2.0-alpha.1`; therefore consumers pinned
+to pre-0.2 closed schemas reject all events from the new SDK, including ordinary
+direct-flow events that omit both lineage fields. Update the schema copy and
+validator to 0.2 before consuming any event produced by a 0.2 SDK.
 
 Source identity is the `(kind, id)` pair. Because `id` is optional, two distinct
 same-kind endpoints without IDs are treated as duplicate references; provide
 stable, pseudonymized IDs when multiple same-kind sources must be distinguished.
 The Python API accepts a bounded iterable of source classifications, while the
-TypeScript API requires a readonly array.
+TypeScript API requires a readonly array. When several sources share the highest rank, the first source in supplied
+order wins the deterministic tie-break; iterable/array order is therefore part
+of the contract.
