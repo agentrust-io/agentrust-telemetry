@@ -91,3 +91,79 @@ test("output classification is not downgraded and wins ties", () => {
   assert.equal((tiedEvent.classification as Record<string, unknown>).producer, "output-dlp");
 });
 
+
+test("classification metadata objects are immutable at runtime", () => {
+  const taxonomy = "example.enterprise.v1";
+  const classification = new ClassificationResult(taxonomy, "confidential", "trusted-store");
+  const endpoint = new DataEndpoint("document", "staff-notes");
+  const source = new SourceClassification(endpoint, classification);
+  const order = new ClassificationOrder(taxonomy, ["public", "confidential"]);
+  for (const value of [classification, endpoint, source, order]) assert.equal(Object.isFrozen(value), true);
+  assert.equal(Object.isFrozen(order.levels), true);
+  assert.equal(Reflect.set(classification, "value", "public"), false);
+  assert.equal(Reflect.set(endpoint, "id", "replacement"), false);
+  assert.equal(Reflect.set(order, "taxonomy", "other.taxonomy"), false);
+  assert.deepEqual(order.levels, ["public", "confidential"]);
+});
+
+test("cheap lineage validation runs before the classifier", () => {
+  const taxonomy = "example.enterprise.v1";
+  const order = new ClassificationOrder(taxonomy, ["public", "confidential"]);
+  const classification = new ClassificationResult(taxonomy, "confidential", "trusted-store");
+  const duplicate = new SourceClassification(new DataEndpoint("document", "same"), classification);
+  let called = false;
+  const options = {
+    runId: "run-1", agentId: "agent-1", direction: "output",
+    source: new DataEndpoint("transform"), destination: new DataEndpoint("memory"),
+    purpose: "memory-compaction",
+    sourceClassifications: [duplicate, duplicate],
+    classificationOrder: order,
+  };
+  assert.throws(() => classifiedDataFlow(factory, {classify: () => {
+    called = true;
+    return new ClassificationResult(taxonomy, "public", "dlp");
+  }}, "summary", options), /duplicate source/);
+  assert.equal(called, false);
+});
+
+test("SchemaValidator enforces data-flow lineage, identifier, and integer invariants", () => {
+  const taxonomy = "example.enterprise.v1";
+  const order = new ClassificationOrder(taxonomy, ["public", "confidential"]);
+  const sources = [
+    new SourceClassification(new DataEndpoint("document", "public-faq"),
+      new ClassificationResult(taxonomy, "public", "source-dlp")),
+    new SourceClassification(new DataEndpoint("document", "staff-notes"),
+      new ClassificationResult(taxonomy, "confidential", "trusted-store")),
+  ];
+  const event = classifiedDataFlow(factory,
+    {classify: () => new ClassificationResult(taxonomy, "public", "output-dlp")},
+    "summary", {
+      runId: "run-1", agentId: "agent-1", direction: "output",
+      source: new DataEndpoint("transform", "summarizer"),
+      destination: new DataEndpoint("memory", "summary-1"),
+      purpose: "memory-compaction",
+      sourceClassifications: sources,
+      classificationOrder: order,
+    });
+  const validator = SchemaValidator.bundled();
+  const clone = () => JSON.parse(JSON.stringify(event)) as Record<string, unknown>;
+
+  const duplicate = clone();
+  const duplicateSources = duplicate.source_classifications as Array<Record<string, unknown>>;
+  duplicateSources[1]!.source = {...duplicateSources[0]!.source as Record<string, unknown>};
+  assert.throws(() => validator.validate(duplicate), /duplicates a prior/);
+
+  const mixed = clone();
+  const mixedSources = mixed.source_classifications as Array<Record<string, unknown>>;
+  (mixedSources[0]!.classification as Record<string, unknown>).taxonomy = "other.taxonomy";
+  assert.throws(() => validator.validate(mixed), /same taxonomy/);
+
+  const badIdentifier = clone();
+  const badSources = badIdentifier.source_classifications as Array<Record<string, unknown>>;
+  (badSources[0]!.source as Record<string, unknown>).kind = "customer data";
+  assert.throws(() => validator.validate(badIdentifier), /metadata identifier profile/);
+
+  const unsafe = clone();
+  unsafe.size_bytes = Number.MAX_SAFE_INTEGER + 1;
+  assert.throws(() => validator.validate(unsafe));
+});
