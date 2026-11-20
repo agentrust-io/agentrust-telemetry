@@ -11,7 +11,8 @@ const EVENT_SCHEMAS: Record<string, string> = {
   "usage.recorded": "usage.schema.json",
   "data_flow.observed": "data-flow.schema.json",
 };
-const METADATA_IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,255}$/;\nconst PROHIBITED = new Set([
+const METADATA_IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,255}$/;
+const PROHIBITED = new Set([
   "prompt", "completion", "source_code", "tool_arguments", "tool_result",
   "authorization", "credential", "secret", "access_token", "refresh_token",
 ]);
