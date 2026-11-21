@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from importlib.resources import as_file, files
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,8 @@ from referencing import Registry, Resource
 
 from .errors import EventValidationError
 
+
+METADATA_IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:/-]{0,255}")
 
 EVENT_SCHEMAS = {
     "action.executed": "action.schema.json",
@@ -84,6 +87,71 @@ def _prohibited_paths(value: Any, prefix: str = "$") -> list[str]:
             found.extend(_prohibited_paths(child, f"{prefix}[{index}]"))
     return found
 
+def _data_flow_semantic_errors(event: dict[str, Any]) -> list[str]:
+    """Enforce data-flow invariants that JSON Schema cannot express."""
+    messages: list[str] = []
+
+    def check_identifier(value: Any, path: str) -> None:
+        if (
+            not isinstance(value, str)
+            or METADATA_IDENTIFIER.fullmatch(value) is None
+            or "://" in value
+        ):
+            messages.append(f"{path} must use the metadata identifier profile")
+
+    def check_endpoint(value: Any, path: str) -> None:
+        if not isinstance(value, dict):
+            return
+        if "kind" in value:
+            check_identifier(value["kind"], f"{path}.kind")
+        if "id" in value:
+            check_identifier(value["id"], f"{path}.id")
+
+    def check_classification(value: Any, path: str) -> str | None:
+        if not isinstance(value, dict):
+            return None
+        for key in ("taxonomy", "value", "producer"):
+            if key in value:
+                check_identifier(value[key], f"{path}.{key}")
+        taxonomy = value.get("taxonomy")
+        return taxonomy if isinstance(taxonomy, str) else None
+
+    check_identifier(event.get("purpose"), "$.purpose")
+    check_endpoint(event.get("source"), "$.source")
+    check_endpoint(event.get("destination"), "$.destination")
+    taxonomies = [
+        taxonomy
+        for taxonomy in (
+            check_classification(event.get("classification"), "$.classification"),
+            check_classification(event.get("observed_classification"), "$.observed_classification"),
+        )
+        if taxonomy is not None
+    ]
+
+    sources = event.get("source_classifications")
+    if isinstance(sources, list):
+        seen: set[tuple[str, str | None]] = set()
+        for index, record in enumerate(sources):
+            if not isinstance(record, dict):
+                continue
+            path = f"$.source_classifications[{index}]"
+            endpoint = record.get("source")
+            check_endpoint(endpoint, f"{path}.source")
+            classification = record.get("classification")
+            taxonomy = check_classification(classification, f"{path}.classification")
+            if taxonomy is not None:
+                taxonomies.append(taxonomy)
+            if isinstance(endpoint, dict) and isinstance(endpoint.get("kind"), str):
+                key = (endpoint["kind"], endpoint.get("id"))
+                if key in seen:
+                    messages.append(f"{path}.source duplicates a prior (kind, id) reference")
+                seen.add(key)
+
+    if len(set(taxonomies)) > 1:
+        messages.append("all data-flow classifications must use the same taxonomy")
+    return messages
+
+
 
 class SchemaValidator:
     @classmethod
@@ -134,6 +202,8 @@ class SchemaValidator:
         privacy_paths = _prohibited_paths(event)
         messages = [error.message for error in errors]
         messages.extend(f"{path} is prohibited by metadata_only" for path in privacy_paths)
+        if event.get("event_type") == "data_flow.observed":
+            messages.extend(_data_flow_semantic_errors(event))
         attributes = event.get("attributes", {})
         if isinstance(attributes, dict):
             for key in sorted(set(attributes) - self.allowed_attribute_keys):

@@ -12,6 +12,7 @@ EXPECTED_FIXTURES = {
         "action.json",
         "approval.json",
         "data-flow.json",
+        "derived-data-flow.json",
         "evidence.json",
         "policy-decision.json",
         "usage.json"
@@ -19,6 +20,7 @@ EXPECTED_FIXTURES = {
     "invalid": [
         "action-without-digest.json",
         "aggregate-cost-without-rollup.json",
+        "derived-data-flow-missing-observed.json",
         "model-call-with-rollup.json",
         "numeric-timestamp.json",
         "raw-content.json",

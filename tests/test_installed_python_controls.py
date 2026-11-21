@@ -31,7 +31,7 @@ class InstalledControlsTests(unittest.TestCase):
 
     def test_real_controls(self):
         counts = controls_module.check_controls(self.controls, self.validator, self.factory, self.error)
-        self.assertEqual(counts, {"valid": 6, "invalid": 7})
+        self.assertEqual(counts, {"valid": 7, "invalid": 8})
 
     def test_accept_all_is_caught(self):
         with self.assertRaisesRegex(AssertionError, "invalid control admitted"):

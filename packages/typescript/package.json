@@ -1,6 +1,6 @@
 {
   "name": "@agentrust-io/telemetry",
-  "version": "0.1.0-alpha.6",
+  "version": "0.2.0-alpha.1",
   "description": "TypeScript reference SDK for AgenTrust governance telemetry",
   "keywords": ["ai-agents", "governance", "opentelemetry", "observability", "telemetry"],
   "type": "module",

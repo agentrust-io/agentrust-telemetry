@@ -78,10 +78,10 @@ class RepositoryGateTests(unittest.TestCase):
             check_versions.ecosystem_versions("0.1")
 
     def test_release_tag_must_match_contract(self):
-        self.assertEqual(check_release_tag.validate_tag("v0.1.0-alpha.6"), [])
+        self.assertEqual(check_release_tag.validate_tag("v0.2.0-alpha.1"), [])
         self.assertEqual(
             check_release_tag.validate_tag("v0.1.0"),
-            ["release tag 'v0.1.0' must equal 'v0.1.0-alpha.6'"],
+            ["release tag 'v0.1.0' must equal 'v0.2.0-alpha.1'"],
         )
 
     def test_otel_matrix_matches_shipped_projection(self):

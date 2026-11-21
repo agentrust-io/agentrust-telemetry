@@ -204,7 +204,7 @@ def run_scenario() -> dict[str, Any]:
                 span_id=span_id,
                 direction="read",
                 source={"kind": "repository", "id": "application-source"},
-                destination={"kind": "agent", "id": AGENT_ID},
+                destination={"kind": "agent", "id": "builder"},
                 classification={
                     "taxonomy": "example.enterprise.v1",
                     "value": "confidential",
