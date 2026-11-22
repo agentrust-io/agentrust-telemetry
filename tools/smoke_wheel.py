@@ -48,8 +48,10 @@ def main() -> int:
         )
         shutil.copyfile(root / "examples/manual_governance.py", env / "manual_governance.py")
         shutil.copyfile(Path(__file__).with_name("installed_example_control.py"), env / "example_control.py")
+        shutil.copyfile(Path(__file__).with_name("test_installed_example_control.py"),
+                        env / "test_example_control.py")
         subprocess.run(
-            [python, "-I", "example_control.py", "manual_governance.py"],
+            [python, "-I", "test_example_control.py", "example_control.py", "manual_governance.py"],
             check=True, cwd=env, env=clean_env,
         )
     print(f"PASS installed distribution smoke test: {distribution.name}")
