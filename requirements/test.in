@@ -16,4 +16,4 @@ tomli>=2.5.0,<3; python_version < '3.11'
 build
 
 # Source-only workflow OIDC regression guard. Not a runtime dependency.
-PyYAML==6.0.3
+PyYAML==6.0.4
