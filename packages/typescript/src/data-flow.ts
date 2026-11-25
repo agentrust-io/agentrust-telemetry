@@ -34,14 +34,15 @@ export function agtDataClassification(source: Record<string, unknown>): Classifi
 }
 
 export function agtDataAccessFlow(factory: EventFactory, decision: Record<string, unknown>, options: {runId: string; direction: string; source: DataEndpoint; destination: DataEndpoint; purpose: string; contentDigest?: Digest; sizeBytes?: number; tokenCount?: number; mediaType?: string; transformation?: string; envelope?: Omit<EnvelopeFields, "runId" | "agentId" | "timeUnixNano">}): NormalizedEvent {
-  if (typeof decision.allowed !== "boolean") throw new Error("AGT data access allowed must be a boolean");
-  const label = object(decision.data_label, "AGT data_label");
+  const rec = object(decision, "AGT decision");
+  if (typeof rec.allowed !== "boolean") throw new Error("AGT data access allowed must be a boolean");
+  const label = object(rec.data_label, "AGT data_label");
   const classification = agtDataClassification(label);
-  return classifiedDataFlow(factory, {classify: () => classification}, undefined, {...options, agentId: required(decision.agent_id, "AGT data access agent_id"), policyDecision: decision.allowed ? "allow" : "deny", envelope: {timeUnixNano: timestampNs(decision.evaluated_at, "evaluated_at"), ...options.envelope}});
+  return classifiedDataFlow(factory, {classify: () => classification}, undefined, {...options, agentId: required(rec.agent_id, "AGT data access agent_id"), policyDecision: rec.allowed ? "allow" : "deny", envelope: {timeUnixNano: timestampNs(rec.evaluated_at, "evaluated_at"), ...options.envelope}});
 }
 
 function identifier(value: unknown, field: string): string { if (typeof value !== "string" || !IDENTIFIER.test(value) || value.includes("://")) throw new Error(`${field} must be a 1-256 character metadata identifier without whitespace, URLs, query strings, fragments, or key/value delimiters`); return value; }
 function required(value: unknown, field: string): string { if (typeof value !== "string" || !value) throw new Error(`${field} must be a non-empty string`); return value; }
 function object(value: unknown, field: string): Record<string, unknown> { if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error(`${field} must be an object`); return value as Record<string, unknown>; }
 function present(key: string, value: unknown): Record<string, unknown> { return value === undefined ? {} : {[key]: value}; }
-function timestampNs(value: unknown, field: string): bigint { if (typeof value !== "string") throw new Error(`AGT data access ${field} must be an RFC 3339 UTC timestamp`); const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?(?:Z|\+00:00)$/.exec(value); if (!match) throw new Error(`AGT data access ${field} must be an RFC 3339 UTC timestamp`); const milliseconds = Date.parse(`${match[1]}Z`); if (match[1]!.startsWith("0000") || !Number.isFinite(milliseconds) || new Date(milliseconds).toISOString().slice(0, 19) !== match[1]) throw new Error(`AGT data access ${field} is invalid`); return BigInt(milliseconds) * 1_000_000n + BigInt((match[2] ?? "").padEnd(9, "0") || "0"); }
+function timestampNs(value: unknown, field: string): bigint { if (typeof value !== "string") throw new Error(`AGT data access ${field} must be an RFC 3339 UTC timestamp`); const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?(?:Z|\+00:00)$/.exec(value); if (!match) throw new Error(`AGT data access ${field} must be an RFC 3339 UTC timestamp`); const milliseconds = Date.parse(`${match[1]}Z`); if (match[1]!.startsWith("0000") || !Number.isFinite(milliseconds) || milliseconds < 0 || new Date(milliseconds).toISOString().slice(0, 19) !== match[1]) throw new Error(`AGT data access ${field} is invalid`); return BigInt(milliseconds) * 1_000_000n + BigInt((match[2] ?? "").padEnd(9, "0") || "0"); }

@@ -39,8 +39,9 @@ export class EvidenceAccumulator {
     readonly validator: SchemaValidator,
     readonly options: {durableAppend?: DurableAppend; maxEvents?: number} = {},
   ) {
-    if (!runId) throw new EvidenceError("runId must be a non-empty string");
-    if ((options.maxEvents ?? 10_000) < 1) throw new EvidenceError("maxEvents must be at least 1");
+    if (typeof runId !== "string" || !runId) throw new EvidenceError("runId must be a non-empty string");
+    const maxEvents = options.maxEvents ?? 10_000;
+    if (!Number.isSafeInteger(maxEvents) || maxEvents < 1) throw new EvidenceError("maxEvents must be at least 1");
   }
 
   get mode(): "memory" | "callback" { return this.options.durableAppend ? "callback" : "memory"; }

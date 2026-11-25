@@ -142,6 +142,10 @@ class OTelProjectorTests(unittest.TestCase):
             OTelMetricEmitter(
                 Meter(), classification_values=frozenset(f"class-{i}" for i in range(65))
             )
+        for bad_vals in ("public", b"public", frozenset({"_other"}), frozenset({" public "}), frozenset({123})):
+            with self.subTest(bad_vals=bad_vals):
+                with self.assertRaises(ValueError):
+                    OTelMetricEmitter(Meter(), classification_values=bad_vals)
 
     def test_action_metrics_exclude_action_and_agent_identifiers(self):
         from opentelemetry.sdk.metrics import MeterProvider
@@ -158,6 +162,18 @@ class OTelProjectorTests(unittest.TestCase):
                     set(point.attributes),
                     {"agentrust.action.kind", "agentrust.action.outcome"},
                 )
+
+    def test_span_attributes_excludes_nonfinite_floats(self):
+        from agentrust_telemetry.projection import span_attributes
+
+        attrs = span_attributes(
+            {
+                "run_id": "r-1",
+                "task_id": float("nan"),
+                "workflow_id": float("inf"),
+            }
+        )
+        self.assertEqual(attrs, {"agentrust.run.id": "r-1"})
 
 
 if __name__ == "__main__":

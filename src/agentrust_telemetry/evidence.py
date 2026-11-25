@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from copy import deepcopy
 from dataclasses import dataclass
 from threading import Lock, get_ident
@@ -17,6 +18,7 @@ from .validation import SchemaValidator
 Completeness = Literal["complete", "incomplete", "unknown"]
 CANONICALIZATION_PROFILE = "rfc8785-jcs-v1"
 _GENESIS_DIGEST = bytes(32)
+_HEX_32_RE = re.compile(r"[0-9a-f]{64}")
 
 
 @dataclass(frozen=True)
@@ -68,7 +70,7 @@ class EvidenceAccumulator:
     ) -> None:
         if not isinstance(run_id, str) or not run_id:
             raise EvidenceError("run_id must be a non-empty string")
-        if max_events < 1:
+        if isinstance(max_events, bool) or not isinstance(max_events, int) or max_events < 1:
             raise EvidenceError("max_events must be at least 1")
         self._run_id = run_id
         self._validator = validator
@@ -189,7 +191,12 @@ class EvidenceAccumulator:
 
 def _entry_digest(sequence: int, previous_digest: str | None, event: dict[str, Any]) -> str:
     canonical = rfc8785.dumps(event)
-    previous = bytes.fromhex(previous_digest) if previous_digest else _GENESIS_DIGEST
+    if previous_digest is None:
+        previous = _GENESIS_DIGEST
+    else:
+        if not isinstance(previous_digest, str) or not _HEX_32_RE.fullmatch(previous_digest):
+            raise ValueError("previous_digest must be 64 lowercase hex characters")
+        previous = bytes.fromhex(previous_digest)
     material = previous + sequence.to_bytes(8, "big") + canonical
     return hashlib.sha256(material).hexdigest()
 
