@@ -15,6 +15,8 @@ export class DataEndpoint {
 export interface DataClassifier {classify(value: unknown): ClassificationResult}
 
 export function classifiedDataFlow(factory: EventFactory, classifier: DataClassifier, value: unknown, options: {runId: string; agentId: string; direction: string; source: DataEndpoint; destination: DataEndpoint; purpose: string; policyDecision?: string; contentDigest?: Digest; sizeBytes?: number; tokenCount?: number; mediaType?: string; transformation?: string; envelope?: Omit<EnvelopeFields, "runId" | "agentId">}): NormalizedEvent {
+  if (!(options.source instanceof DataEndpoint)) throw new TypeError("source must be a DataEndpoint");
+  if (!(options.destination instanceof DataEndpoint)) throw new TypeError("destination must be a DataEndpoint");
   const result = classifier.classify(value);
   if (!(result instanceof ClassificationResult)) throw new TypeError("classifier must return ClassificationResult");
   identifier(options.purpose, "purpose");

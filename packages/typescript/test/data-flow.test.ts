@@ -14,6 +14,22 @@ test("classification boundary rejects arbitrary results and prose identifiers", 
   assert.throws(() => new ClassificationResult("example", "customer secret", "classifier"), /metadata identifier/);
   assert.throws(() => classifiedDataFlow(factory, {classify: () => new ClassificationResult("example", "internal", "classifier")}, null, {runId: "r", agentId: "a", direction: "read", source: new DataEndpoint("repository"), destination: new DataEndpoint("agent"), purpose: "review", sizeBytes: Number.MAX_SAFE_INTEGER + 1}), /safe integer/);
 });
+test("invalid source or destination is refused before the classifier runs", () => {
+  const lookalike = {kind: "repository", id: undefined, asEventValue: () => ({kind: "repository"})};
+  for (const field of ["source", "destination"] as const) {
+    for (const bad of [{kind: "repository"}, lookalike, null, undefined, "repository"]) {
+      let calls = 0;
+      const classifier = {classify: () => { calls += 1; return new ClassificationResult("example", "internal", "classifier"); }};
+      const endpoints = {source: new DataEndpoint("repository"), destination: new DataEndpoint("agent"), [field]: bad};
+      assert.throws(() => classifiedDataFlow(factory, classifier, "secret", {runId: "r", agentId: "a", direction: "read", purpose: "review", ...endpoints} as Parameters<typeof classifiedDataFlow>[3]), (error) => error instanceof TypeError && error.message === `${field} must be a DataEndpoint`, `${field} ${String(bad)}`);
+      assert.equal(calls, 0);
+    }
+  }
+  // Valid twin: the same call with real endpoints reaches the classifier.
+  let calls = 0;
+  classifiedDataFlow(factory, {classify: () => { calls += 1; return new ClassificationResult("example", "internal", "classifier"); }}, "secret", {runId: "r", agentId: "a", direction: "read", source: new DataEndpoint("repository"), destination: new DataEndpoint("agent"), purpose: "review"});
+  assert.equal(calls, 1);
+});
 test("AGT access maps only tier, decision, agent, and time", () => {
   const decision = {allowed: false, reason: "SSN 123-45-6789 denied", agent_id: "agent-1", data_label: {classification: 2, categories: ["PII", "customer@example.test"], owner: "alice@example.test", geography: "EU"}, matched_policy: "secret", evaluated_at: "2026-08-18T12:00:00Z"};
   const event = agtDataAccessFlow(factory, decision, {runId: "run-1", direction: "read", source: new DataEndpoint("database", "customer-records"), destination: new DataEndpoint("agent", "builder"), purpose: "requirements-analysis"});

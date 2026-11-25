@@ -4,6 +4,7 @@ export const RUN_ID_HEADER = "x-agentrust-run-id";
 export const WORKFLOW_ID_HEADER = "x-agentrust-workflow-id";
 export const UPSTREAM_AGENT_ID_HEADER = "x-agentrust-agent-id";
 const MAX = 512;
+const CONTROL = /[\x00-\x1f\x7f]/;
 export class PropagationError extends Error {}
 
 export class ExtractedContext {
@@ -19,6 +20,10 @@ export function injectContext(carrier: Record<string, string>, fields: {runId: s
 export function extractContext(carrier: Record<string, string>): ExtractedContext {
   return new ExtractedContext(propagation.extract(context.active(), carrier, {keys: (c) => Object.keys(c), get: (c, key) => header(c, key)}), value(carrier, RUN_ID_HEADER), value(carrier, WORKFLOW_ID_HEADER), value(carrier, UPSTREAM_AGENT_ID_HEADER));
 }
-function value(carrier: Record<string, string>, name: string): string | undefined {const found = header(carrier, name); return found === undefined ? undefined : safe(name, found);}
+function value(carrier: Record<string, string>, name: string): string | undefined {
+  const found = Object.keys(carrier).filter((key) => key.toLowerCase() === name.toLowerCase() && carrier[key] !== undefined).map((key) => safe(name, carrier[key]));
+  if (new Set(found).size > 1) throw new PropagationError(`conflicting duplicate ${name} header values`);
+  return found[0];
+}
 function header(carrier: Record<string, string>, name: string): string | string[] | undefined {const key = Object.keys(carrier).find((candidate) => candidate.toLowerCase() === name.toLowerCase()); return key ? carrier[key] : undefined;}
-function safe(name: string, value: unknown): string {if (typeof value !== "string" || !value) throw new PropagationError(`${name} must be a non-empty string`); if (value.length > MAX) throw new PropagationError(`${name} exceeds ${MAX} characters`); if (/\r|\n/.test(value)) throw new PropagationError(`${name} contains a prohibited line break`); return value;}
+function safe(name: string, value: unknown): string {if (typeof value !== "string" || !value) throw new PropagationError(`${name} must be a non-empty string`); if (value.length > MAX) throw new PropagationError(`${name} exceeds ${MAX} characters`); if (/\r|\n/.test(value)) throw new PropagationError(`${name} contains a prohibited line break`); if (CONTROL.test(value)) throw new PropagationError(`${name} contains a prohibited control character`); return value;}
