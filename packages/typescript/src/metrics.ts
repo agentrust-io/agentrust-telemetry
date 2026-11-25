@@ -7,9 +7,10 @@ export class OTelMetricEmitter {
   readonly #actionCount: Counter; readonly #actionDuration: Histogram; readonly #dataFlowCount: Counter;
   readonly #tokenCount: Counter; readonly #cost: Counter; readonly #classifications: ReadonlySet<string>;
   constructor(meter: Meter, options: {classificationValues?: Iterable<string>} = {}) {
+    if (typeof options.classificationValues === "string") throw new Error("classificationValues must be an iterable of strings, not a string");
     this.#classifications = new Set(options.classificationValues ?? []);
     if (this.#classifications.size > 64) throw new Error("classificationValues cannot contain more than 64 entries");
-    for (const value of this.#classifications) if (!value || value.length > 128) throw new Error("classificationValues must be non-empty and at most 128 characters");
+    for (const value of this.#classifications) if (typeof value !== "string" || !value || value.length > 128 || value !== value.trim() || value === "_other") throw new Error("classificationValues must be non-empty and at most 128 characters");
     this.#policyCount = meter.createCounter("agentrust.policy.decisions", {unit: "{decision}", description: "Policy decisions"});
     this.#policyDuration = meter.createHistogram("agentrust.policy.evaluation.duration", {unit: "s", description: "Policy evaluation duration"});
     this.#approvalCount = meter.createCounter("agentrust.approval.events", {unit: "{event}", description: "Approval lifecycle events"});
