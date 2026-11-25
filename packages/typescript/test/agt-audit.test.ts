@@ -19,4 +19,7 @@ test("audit action rejects absent, reversed, and unsafe timing", () => {
   assert.throws(() => agtAuditAction(factory, source({event_type: "tool_invocation", issued_at: null}), {runId: "run-1", actionDigest: digest, actionKind: "tool", operation: "invoke"}), /requires durationNs/);
   assert.throws(() => agtAuditAction(factory, source({event_type: "tool_invocation", issued_at: "2026-08-18T12:00:01Z"}), {runId: "run-1", actionDigest: digest, actionKind: "tool", operation: "invoke"}), /cannot predate/);
   assert.throws(() => agtAuditAction(factory, source({event_type: "tool_invocation"}), {runId: "run-1", actionDigest: digest, actionKind: "tool", operation: "invoke", durationNs: Number.MAX_SAFE_INTEGER + 1}), /safe integer/);
+  assert.throws(() => agtAuditPolicyDecision(factory, source({timestamp: "1969-12-31T23:59:59Z"}), {runId: "run-1", policyEngineVersion: "5.0.0", bundleDigest: bundle, resourceType: "tool"}), /timestamp is invalid/);
+  const emptyInstFactory = new EventFactory(SchemaValidator.bundled(), {name: "audit-tests", version: "1", instanceId: ""});
+  assert.throws(() => emptyInstFactory.build("usage.recorded", {runId: "run-1", agentId: "agent-1"}, {scope: "agent_run", operation: "build", input_tokens: 1}));
 });

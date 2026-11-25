@@ -25,10 +25,21 @@ test("classification dimensions are bounded by an explicit allowlist", () => {
   emitter.emit(fixture("data-flow.json"));
   assert.equal(meter.instruments.get("agentrust.data_flow.events")!.calls[0]!.attributes!["agentrust.data_flow.classification"], "_other");
   assert.throws(() => new OTelMetricEmitter(new RecordingMeter() as unknown as Meter, {classificationValues: Array.from({length: 65}, (_, i) => `class-${i}`)}), /more than 64/);
+  assert.throws(() => new OTelMetricEmitter(new RecordingMeter() as unknown as Meter, {classificationValues: "public" as unknown as Iterable<string>}), /not a string/);
+  for (const bad of [["_other"], [" public "], [123 as unknown as string]]) assert.throws(() => new OTelMetricEmitter(new RecordingMeter() as unknown as Meter, {classificationValues: bad}), /classificationValues/);
 });
 
 test("policy, approval, and action metrics expose only bounded semantic dimensions", () => {
   const meter = new RecordingMeter(); const emitter = new OTelMetricEmitter(meter as unknown as Meter);
   for (const name of ["policy-decision.json", "approval.json", "action.json"]) assert.equal(emitter.emit(fixture(name)), true);
   assert.deepEqual(Object.keys(meter.instruments.get("agentrust.action.executions")!.calls[0]!.attributes!).sort(), ["agentrust.action.kind", "agentrust.action.outcome"]);
+});
+
+test("hrTime rejects malformed timestamps and spanAttributes skips non-finite numbers", async () => {
+  const {hrTime, spanAttributes} = await import("../src/projection.js");
+  for (const bad of ["", "   ", "-1", "0x10", "01", "1".repeat(21)]) {
+    assert.throws(() => hrTime(bad), /canonical non-negative decimals/);
+  }
+  const attrs = spanAttributes({run_id: "r1", task_id: Number.NaN, workflow_id: Number.POSITIVE_INFINITY} as unknown as NormalizedEvent);
+  assert.deepEqual(attrs, {"agentrust.run.id": "r1"});
 });
