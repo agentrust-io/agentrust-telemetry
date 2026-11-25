@@ -28,6 +28,17 @@
   now validates `build_digest` / `buildDigest` and policy `bundle_digest`
   (`algorithm` and `value`) against canonical lowercase `sha256` / `sha384` hex
   digest syntax before signing. (#101)
+- Python and TypeScript propagation now reject ASCII control characters
+  (`U+0000`-`U+001F`, `U+007F`) in the `x-agentrust-run-id`,
+  `x-agentrust-workflow-id` and `x-agentrust-agent-id` values, and reject
+  case-insensitive duplicates of those headers that carry different values
+  (identical duplicates are accepted). TypeScript previously accepted both and
+  silently used the first header it found. (#104)
+- Python `classified_data_flow` validates `size_bytes` and `token_count` as
+  non-negative safe integers (booleans refused), and `classified_data_flow` and
+  `classifiedDataFlow` check that `source` and `destination` are `DataEndpoint`s
+  before they call the caller's classifier, so a malformed endpoint no longer
+  runs it. (#104)
 
 ### Changed
 

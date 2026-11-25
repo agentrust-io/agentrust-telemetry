@@ -65,13 +65,13 @@ def classified_data_flow(
     **envelope: Any,
 ) -> dict[str, Any]:
     """Classify ``value`` and emit only the classifier's closed metadata result."""
-    result = classifier.classify(value)
-    if not isinstance(result, ClassificationResult):
-        raise TypeError("classifier must return ClassificationResult")
     if not isinstance(source, DataEndpoint):
         raise TypeError("source must be a DataEndpoint")
     if not isinstance(destination, DataEndpoint):
         raise TypeError("destination must be a DataEndpoint")
+    result = classifier.classify(value)
+    if not isinstance(result, ClassificationResult):
+        raise TypeError("classifier must return ClassificationResult")
     _identifier(purpose, "purpose")
     if media_type is not None and (
         not isinstance(media_type, str) or _MEDIA_TYPE.fullmatch(media_type) is None

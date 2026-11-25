@@ -213,6 +213,48 @@ class DataFlowTests(unittest.TestCase):
                             **{field_name: bad_amount},
                         )
 
+    def test_invalid_endpoint_is_refused_before_the_classifier_runs(self):
+        class LookalikeEndpoint:
+            kind = "repository"
+            id = None
+
+            def as_event_value(self):
+                return {"kind": self.kind}
+
+        classifier = RecordingClassifier(
+            ClassificationResult("example", "internal", "classifier")
+        )
+        valid = DataEndpoint("repository")
+        for field, other in (("source", "destination"), ("destination", "source")):
+            for bad in ({"kind": "repository"}, None, "repository", LookalikeEndpoint()):
+                with self.subTest(field=field, bad=bad):
+                    with self.assertRaisesRegex(TypeError, f"{field} must be a DataEndpoint"):
+                        classified_data_flow(
+                            self.factory,
+                            classifier,
+                            "secret",
+                            run_id="run-1",
+                            agent_id="agent-1",
+                            direction="read",
+                            purpose="review",
+                            **{field: bad, other: valid},  # type: ignore[arg-type]
+                        )
+                    self.assertIsNone(classifier.seen)
+
+        # Valid twin: the same call with real endpoints reaches the classifier.
+        classified_data_flow(
+            self.factory,
+            classifier,
+            "secret",
+            run_id="run-1",
+            agent_id="agent-1",
+            direction="read",
+            source=valid,
+            destination=DataEndpoint("agent"),
+            purpose="review",
+        )
+        self.assertEqual(classifier.seen, "secret")
+
     def test_propagation_rejects_control_characters(self):
         from agentrust_telemetry import PropagationError
         from agentrust_telemetry.propagation import _safe_value
