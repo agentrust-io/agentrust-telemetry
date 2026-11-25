@@ -48,4 +48,6 @@ test("AGT sink reports projection failure and identifiers cannot carry prose", (
   assert.equal(sink.emit([agtSource()]), 1);
   const source = agtSource(); source.attributes = {resource_type: "tool", reason_codes: ["customer secret denied"]};
   assert.throws(() => mapAgt(source), /unique identifiers/);
+  assert.throws(() => mapAgt({...agtSource(), occurred_at: "1969-12-31T23:59:59Z"}), /not a valid timestamp/);
+  assert.throws(() => mapAgt({...agtSource(), latency_ms: 9_007_199_255}), /safe nanosecond range/);
 });

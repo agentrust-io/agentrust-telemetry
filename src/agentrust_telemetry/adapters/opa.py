@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
 from .base import EventFactory
@@ -53,7 +53,12 @@ def opa_decision_log(
     if not isinstance(metrics, dict):
         raise ValueError("OPA metrics must be an object")
     duration = metrics.get("timer_rego_query_eval_ns", 0)
-    if not isinstance(duration, int) or isinstance(duration, bool) or duration < 0:
+    if (
+        not isinstance(duration, int)
+        or isinstance(duration, bool)
+        or duration < 0
+        or duration > 9_007_199_254_740_991
+    ):
         raise ValueError("OPA timer_rego_query_eval_ns must be a non-negative integer")
     path = decision_log.get("path")
     policy: dict[str, Any] = {
@@ -104,5 +109,9 @@ def _timestamp_ns(value: Any) -> int:
     if match is None:
         raise ValueError("OPA timestamp must use RFC 3339 UTC form ending in Z")
     base = datetime.fromisoformat(match.group("date")).replace(tzinfo=timezone.utc)
+    epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    if base < epoch:
+        raise ValueError("OPA timestamp must not predate the Unix epoch")
+    seconds = (base - epoch) // timedelta(seconds=1)
     fraction = (match.group("fraction") or "").ljust(9, "0")
-    return int(base.timestamp()) * 1_000_000_000 + int(fraction or "0")
+    return seconds * 1_000_000_000 + int(fraction or "0")
