@@ -54,6 +54,31 @@ class AdapterTests(unittest.TestCase):
                 input_tokens=1,
                 producer={"name": "spoofed", "version": "9"},
             )
+        with self.assertRaises(Exception):
+            self.factory.build(
+                "usage.recorded",
+                run_id="run-1",
+                agent_id="agent-1",
+                event_id="",
+                scope="agent_run",
+                operation="build",
+                input_tokens=1,
+            )
+        empty_inst = EventFactory(
+            SchemaValidator(ROOT / "spec" / "schema"),
+            producer_name="adapter-tests",
+            producer_version="1.0.0",
+            producer_instance_id="",
+        )
+        with self.assertRaises(Exception):
+            empty_inst.build(
+                "usage.recorded",
+                run_id="run-1",
+                agent_id="agent-1",
+                scope="agent_run",
+                operation="build",
+                input_tokens=1,
+            )
 
     def test_factory_matches_cross_language_golden_event(self):
         parity_factory = EventFactory(
@@ -328,6 +353,74 @@ class AdapterTests(unittest.TestCase):
                 resource_type="Document",
                 evaluation_duration_ns=1,
                 determining_policy_ids="deny-secret",
+            )
+
+    def test_policy_adapters_enforce_safe_integer_durations_and_epoch_timestamps(self):
+        from agentrust_telemetry import agt_policy_decision
+
+        for bad_dur in (True, False, -1, 1.5, 2**53):
+            with self.subTest(bad_dur=bad_dur):
+                with self.assertRaises(ValueError):
+                    cedar_policy_decision(
+                        self.factory,
+                        run_id="run-1",
+                        agent_id="agent-1",
+                        decision="Allow",
+                        cedar_version="4.11.2",
+                        bundle_digest=DIGEST,
+                        action_type="Document::read",
+                        resource_type="Document",
+                        evaluation_duration_ns=bad_dur,
+                    )
+                with self.assertRaises(ValueError):
+                    self.opa_event(
+                        {
+                            "decision_id": "d-1",
+                            "result": True,
+                            "metrics": {"timer_rego_query_eval_ns": bad_dur},
+                        }
+                    )
+        with self.assertRaises(ValueError):
+            self.opa_event(
+                {
+                    "decision_id": "d-1",
+                    "result": True,
+                    "timestamp": "1969-12-31T23:59:59Z",
+                }
+            )
+        for bad_latency in (9_007_199_255.0,):
+            with self.assertRaises(ValueError):
+                agt_policy_decision(
+                    self.factory,
+                    {
+                        "event_id": "018f0f7d7a137cc28000000000000042",
+                        "occurred_at": "2026-08-18T12:34:56Z",
+                        "kind": "policy_check",
+                        "agent_id": "agent-1",
+                        "action": "tool.invoke",
+                        "decision": "allow",
+                        "latency_ms": bad_latency,
+                        "attributes": {"resource_type": "tool"},
+                    },
+                    run_id="run-1",
+                    policy_engine_version="1.2.3",
+                    bundle_digest=DIGEST,
+                )
+        with self.assertRaises(ValueError):
+            agt_policy_decision(
+                self.factory,
+                {
+                    "event_id": "018f0f7d7a137cc28000000000000042",
+                    "occurred_at": "1969-12-31T23:59:59Z",
+                    "kind": "policy_check",
+                    "agent_id": "agent-1",
+                    "action": "tool.invoke",
+                    "decision": "allow",
+                    "attributes": {"resource_type": "tool"},
+                },
+                run_id="run-1",
+                policy_engine_version="1.2.3",
+                bundle_digest=DIGEST,
             )
 
 

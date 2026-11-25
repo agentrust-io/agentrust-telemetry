@@ -35,11 +35,21 @@ class OTelMetricEmitter:
         *,
         classification_values: frozenset[str] = frozenset(),
     ) -> None:
-        if len(classification_values) > 64:
+        if isinstance(classification_values, (str, bytes)):
+            raise ValueError("classification_values must be an iterable of strings, not a string")
+        normalized = frozenset(classification_values)
+        if len(normalized) > 64:
             raise ValueError("classification_values cannot contain more than 64 entries")
-        if any(not value or len(value) > 128 for value in classification_values):
+        if any(
+            not isinstance(value, str)
+            or not value
+            or len(value) > 128
+            or value != value.strip()
+            or value == "_other"
+            for value in normalized
+        ):
             raise ValueError("classification_values must be non-empty and at most 128 characters")
-        self._classification_values = classification_values
+        self._classification_values = normalized
         self._policy_count = meter.create_counter(
             "agentrust.policy.decisions", unit="{decision}", description="Policy decisions"
         )

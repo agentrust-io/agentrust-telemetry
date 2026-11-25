@@ -31,4 +31,5 @@ test("resolution mapping rejects request mismatch, chronology reversal, and malf
 test("only terminal outcomes map to terminal approval events", () => {
   for (const [outcome, expected] of [["allow", "approval.approved"], ["deny", "approval.rejected"], ["expired", "approval.expired"]]) assert.equal(agtApprovalResolution(factory, {...resolution, outcome}, request, {runId: "run-1"}).event_type, expected);
   assert.throws(() => agtApprovalResolution(factory, {...resolution, outcome: "vote"}, request, {runId: "run-1"}), /unsupported/);
+  assert.throws(() => agtPolicyDecisionRecord(factory, {...policy, decided_at: "1969-12-31T23:59:59Z"}, {runId: "run-1", agentId: "agent-1", actionType: "deploy", resourceType: "environment", policyEngineVersion: "1.0.0", bundleDigest: bundle}), /not a valid timestamp/);
 });
